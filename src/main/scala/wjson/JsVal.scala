@@ -42,6 +42,9 @@ given JsValMapper[Int] with
     case _ => throw new Exception("Expected JsNumber")
   override def toJson(t: Int): JsVal = JsNumber(t)
 
+given Conversion[Int, JsVal] with
+  override def apply(x: Int): JsVal = JsNumber(x)
+
 given JsValMapper[Double] with
   override def fromJson(js: JsVal): Double = js match
     case JsNumber(value) => value
@@ -55,6 +58,8 @@ given JsValMapper[String] with
     case _ => throw new Exception("Expected JsString")
 
   override def toJson(t: String): JsVal = JsString(t)
+given Conversion[String, JsVal] with
+  override def apply(x: String): JsVal = JsString(x)
 
 given [T:JsValMapper]: JsValMapper[List[T]] with
   override def fromJson(js: JsVal): List[T] = js match

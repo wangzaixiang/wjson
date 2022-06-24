@@ -6,10 +6,11 @@ import JsVal.*
 class TestJsonInterpolation extends AnyFunSuite {
 
   test("json interpolation") {
+    val age = 30
     val js1 = json"""
     {
-      "name": "John",
-      "age": 30,
+      name: "John",
+      age: $age,
     }
     """
     assert( js1 == JsObj(
@@ -21,12 +22,17 @@ class TestJsonInterpolation extends AnyFunSuite {
   test("json unapply") {
     val js = JsObj(
       "name" -> JsString("John"),
-      "age" -> JsNumber(30)
+      "age" -> JsNumber(30),
+      "address" -> JsObj(
+        "street" -> JsString("Main St"),
+        "city" -> JsString("New York"),
+        "state" -> JsString("NY")
+      )
     )
     js match {
-      case json"""{name: $name, age: $age}""" =>
+      case json"""{name: $name, address: { state: "NY" } }""" =>
         assert( name == JsString("John") )
-        assert( age == JsNumber(30) )
+//        assert( age == JsNumber(30) )
     }
   }
 }
