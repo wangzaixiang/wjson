@@ -25,11 +25,6 @@ object JsValMapperMacro:
 
       names.zip(idents).toMap
 
-    def defaultExpr[t:Type](name: String): Option[Expr[t]] =
-      defaultParams.get(name) match
-        case Some(deff) => Some( deff.asInstanceOf[Expr[t]] )
-        case None => None
-
     // '{ new CaseField[t](field, default).apply(jso) }'
     def getField(jso: Expr[JsObject], field: Symbol): Term =
       val name = field.name
@@ -71,19 +66,14 @@ object JsValMapperMacro:
 
     def buildBeanFrom(jso: Expr[JsObject]): Expr[T] =
       val tpeSym = TypeTree.of[T].symbol
-//      val jso = '{ $js.asInstanceOf[JsObject] }
       val terms: List[Term] = tpeSym.caseFields.map( field => getField(jso, field) )
       val constructor = tpeSym.primaryConstructor
 
-      // val companion = tpeSym.companionModule
-      // val applyMethod = companion.memberMethod("apply").apply(0) // TODO
       ValDef.let( Symbol.spliceOwner, terms ) { refs =>
-        // Apply( Select(Ref(companion), applyMethod), refs)
         Apply( Select( New(TypeTree.of[T]), constructor), refs)
       }.asExpr.asInstanceOf[Expr[T]]
 
     def buildJsVal(value: Expr[T]): Expr[JsValue] =
-      // JsObject( (String, JsValue)* )
       val tpeSym = TypeTree.of[T].symbol
       val terms: List[Expr[(String, JsValue)]] = tpeSym.caseFields.map( field => getFieldAsKV(value, field) )
       val asSeq = Expr.ofSeq(terms)
@@ -96,8 +86,6 @@ object JsValMapperMacro:
           ${ buildBeanFrom('{jso}) }
         def toJson(value: T): JsValue = ${ buildJsVal('{value} ) }
     }
-
-    println(s"expr = ${expr.show}")
 
     expr.asInstanceOf[Expr[JsValueMapper[T]]]
 

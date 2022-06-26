@@ -57,16 +57,16 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
     def simpleValue(matched: Boolean, value: JsValue) = if (matched) jsValue = value else fail("JSON Value", mark)
 
     (cursorChar: @switch) match {
-      case 'f' => simpleValue(`false`(), JsFalse)
-      case 'n' => simpleValue(`null`(), JsNull)
-      case 't' => simpleValue(`true`(), JsTrue)
+      case 'f' => simpleValue(`false`(), JsValue.JsFalse)
+      case 'n' => simpleValue(`null`(), JsValue.JsNull)
+      case 't' => simpleValue(`true`(), JsValue.JsTrue)
       case '{' => advance(); `object`()
       case '[' => advance(); `array`()
       case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '-' => `number`()
-      case '"' => `string`(); jsValue = if (sb.length == 0) JsEmptyString else JsString(sb.toString)
+      case '"' => `string`(); jsValue = if (sb.length == 0) JsValue.JsEmptyString else JsString(sb.toString)
       case '\'' =>
         if(jsonExtensionSupport) {
-          single_quoted_string(); jsValue = if(sb.length == 0) JsEmptyString else JsString(sb.toString)
+          single_quoted_string(); jsValue = if(sb.length == 0) JsValue.JsEmptyString else JsString(sb.toString)
         }
         else fail("JSON Value")
       case EOS =>  jsValue = input.currentArgument(); advance(); ws();
@@ -105,7 +105,7 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
       JsObject(map)
     } else {
       advance()
-      JsEmptyObject
+      JsValue.JsEmptyObject
     }
     ws()
   }
@@ -125,7 +125,7 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
       JsArray(list.result().toList)
     } else {
       advance()
-      JsEmptyArray
+      JsValue.JsEmptyArray
     }
     ws()
   }
