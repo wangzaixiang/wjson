@@ -1,9 +1,9 @@
-package lexer;
+package wjson.lexer;
 
 import java.io.IOException;
 import java.util.function.Function;
 
-import rejson.parser.Program;
+import wjson.parser.Program;
 
 public class RejsonLexer implements Program.Lexer {
 
@@ -194,10 +194,12 @@ public class RejsonLexer implements Program.Lexer {
             while(identityTail()) ;
         }
         if(cursorChar == '"'){
+            String tag = new String( sliceCharArray(start, cursor) );
+            int start2 = cursor;
             yylex_string('\"');
-            String c = new String(sliceCharArray(start, cursor));
-            last_val = c;
-            return StringContext;
+            String c = new String(sliceCharArray(start2, cursor));
+            last_val = new String[]{tag, c};
+            return TagedString;
         }
 
         String content = new String(sliceCharArray(start, cursor));

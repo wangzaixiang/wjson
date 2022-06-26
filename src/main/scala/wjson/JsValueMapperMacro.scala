@@ -7,7 +7,7 @@ import scala.compiletime.{erasedValue, summonInline}
 /**
  * Macro to generate a JsValueMapper for a given case class.
  */
-object JsValMapperMacro:
+object JsValueMapperMacro:
 
   def generate[T: Type](using Quotes): Expr[JsValueMapper[T]] =
     import quotes.reflect.*

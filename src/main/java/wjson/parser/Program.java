@@ -34,7 +34,7 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-package rejson.parser;
+package wjson.parser;
 
 
 
@@ -43,10 +43,10 @@ import java.util.ArrayList;
 /* "%code imports" blocks.  */
 /* "Program.y":8  */
 
- import static rejson.ast.Tree.*;
+ import static wjson.patterns.ast.Tree.*;
  import java.util.*;
 
-/* "../src/main/java/rejson/parser/Program.java":50  */
+/* "../src/main/java/wjson/parser/Program.java":50  */
 
 /**
  * A Bison parser, automatically generated from <tt>Program.y</tt>.
@@ -100,7 +100,7 @@ public class Program
     S_INTEGER(12),                 /* INTEGER  */
     S_Any1(13),                    /* Any1  */
     S_Anys(14),                    /* Anys  */
-    S_StringContext(15),           /* StringContext  */
+    S_TagedString(15),             /* TagedString  */
     S_16_(16),                     /* '@'  */
     S_17_(17),                     /* '['  */
     S_18_(18),                     /* ']'  */
@@ -112,10 +112,10 @@ public class Program
     S_24_(24),                     /* ':'  */
     S_25_(25),                     /* '/'  */
     S_YYACCEPT(26),                /* $accept  */
-    S_rejson(27),                  /* rejson  */
-    S_jsval(28),                   /* jsval  */
+    S_program(27),                 /* program  */
+    S_bind_jsval(28),              /* bind_jsval  */
     S_opt_bind(29),                /* opt_bind  */
-    S_jsval1(30),                  /* jsval1  */
+    S_jsval(30),                   /* jsval  */
     S_opt_arr_items(31),           /* opt_arr_items  */
     S_arr_items(32),               /* arr_items  */
     S_opt_fields(33),              /* opt_fields  */
@@ -146,7 +146,7 @@ public class Program
       SymbolKind.S_INTEGER,
       SymbolKind.S_Any1,
       SymbolKind.S_Anys,
-      SymbolKind.S_StringContext,
+      SymbolKind.S_TagedString,
       SymbolKind.S_16_,
       SymbolKind.S_17_,
       SymbolKind.S_18_,
@@ -158,10 +158,10 @@ public class Program
       SymbolKind.S_24_,
       SymbolKind.S_25_,
       SymbolKind.S_YYACCEPT,
-      SymbolKind.S_rejson,
-      SymbolKind.S_jsval,
+      SymbolKind.S_program,
+      SymbolKind.S_bind_jsval,
       SymbolKind.S_opt_bind,
-      SymbolKind.S_jsval1,
+      SymbolKind.S_jsval,
       SymbolKind.S_opt_arr_items,
       SymbolKind.S_arr_items,
       SymbolKind.S_opt_fields,
@@ -219,10 +219,10 @@ public class Program
     {
   "\"end of file\"", "error", "\"invalid token\"", "ID", "NULL", "TRUE",
   "FALSE", "LiteralString", "LiteralNumber", "STRING", "NUMBER", "BOOLEAN",
-  "INTEGER", "Any1", "Anys", "StringContext", "'@'", "'['", "']'", "'('",
-  "')'", "'{'", "'}'", "','", "':'", "'/'", "$accept", "rejson", "jsval",
-  "opt_bind", "jsval1", "opt_arr_items", "arr_items", "opt_fields",
-  "fields", "field", "path", null
+  "INTEGER", "Any1", "Anys", "TagedString", "'@'", "'['", "']'", "'('",
+  "')'", "'{'", "'}'", "','", "':'", "'/'", "$accept", "program",
+  "bind_jsval", "opt_bind", "jsval", "opt_arr_items", "arr_items",
+  "opt_fields", "fields", "field", "path", null
     };
   }
 
@@ -270,8 +270,8 @@ public class Program
     static final int Any1 = 268;
     /** Token Anys, to be returned by the scanner.  */
     static final int Anys = 269;
-    /** Token StringContext, to be returned by the scanner.  */
-    static final int StringContext = 270;
+    /** Token TagedString, to be returned by the scanner.  */
+    static final int TagedString = 270;
 
     /** Deprecated, use YYEOF instead.  */
     public static final int EOF = YYEOF;
@@ -469,246 +469,253 @@ public class Program
 
     switch (yyn)
       {
-          case 2: /* rejson: jsval  */
+          case 2: /* program: bind_jsval  */
   if (yyn == 2)
-    /* "Program.y":26  */
-                        { yyval = ((JsValWithId)(yystack.valueAt (0))); root = ((JsValWithId)(yystack.valueAt (0))); };
+    /* "Program.y":29  */
+                             { yyval = ((PatternWithName)(yystack.valueAt (0))); root = ((PatternWithName)(yystack.valueAt (0))); };
   break;
 
 
-  case 3: /* jsval: opt_bind jsval1  */
+  case 3: /* bind_jsval: opt_bind jsval  */
   if (yyn == 3)
-    /* "Program.y":28  */
-                                  { yyval = ((JsValWithId)(yystack.valueAt (0))).identity(((String)(yystack.valueAt (1))));};
+    /* "Program.y":32  */
+                                 { yyval = ((Pattern)(yystack.valueAt (0))).bind(((String)(yystack.valueAt (1))));};
   break;
 
 
   case 4: /* opt_bind: %empty  */
   if (yyn == 4)
-    /* "Program.y":30  */
+    /* "Program.y":35  */
                    { yyval = null; };
   break;
 
 
   case 5: /* opt_bind: ID '@'  */
   if (yyn == 5)
-    /* "Program.y":31  */
+    /* "Program.y":36  */
                          { yyval = ((String)(yystack.valueAt (1)));};
   break;
 
 
-  case 6: /* jsval1: NULL  */
+  case 6: /* jsval: NULL  */
   if (yyn == 6)
-    /* "Program.y":33  */
-                       { yyval = new JsValWithId(null, new JsNull()); };
-  break;
-
-
-  case 7: /* jsval1: TRUE  */
-  if (yyn == 7)
-    /* "Program.y":34  */
-                       { yyval = new JsValWithId(null, new JsBoolean(true)); };
-  break;
-
-
-  case 8: /* jsval1: FALSE  */
-  if (yyn == 8)
-    /* "Program.y":35  */
-                        { yyval = new JsValWithId(null, new JsBoolean(false)); };
-  break;
-
-
-  case 9: /* jsval1: LiteralString  */
-  if (yyn == 9)
-    /* "Program.y":36  */
-                                { yyval = new JsValWithId(null, new JsString(((String)(yystack.valueAt (0))))); };
-  break;
-
-
-  case 10: /* jsval1: LiteralNumber  */
-  if (yyn == 10)
-    /* "Program.y":37  */
-                                { yyval = new JsValWithId(null, new JsNumber(((double)(yystack.valueAt (0))))); };
-  break;
-
-
-  case 11: /* jsval1: STRING  */
-  if (yyn == 11)
-    /* "Program.y":38  */
-                         { yyval = new JsValWithId(null, new JsAny("string")); };
-  break;
-
-
-  case 12: /* jsval1: NUMBER  */
-  if (yyn == 12)
     /* "Program.y":39  */
-                         { yyval = new JsValWithId(null, new JsAny("number")); };
+               { yyval = new NullPattern(); };
   break;
 
 
-  case 13: /* jsval1: BOOLEAN  */
-  if (yyn == 13)
+  case 7: /* jsval: TRUE  */
+  if (yyn == 7)
     /* "Program.y":40  */
-                          { yyval = new JsValWithId(null, new JsAny("boolean")); };
+                       { yyval = new BooleanPattern(true); };
   break;
 
 
-  case 14: /* jsval1: INTEGER  */
-  if (yyn == 14)
+  case 8: /* jsval: FALSE  */
+  if (yyn == 8)
     /* "Program.y":41  */
-                          { yyval = new JsValWithId(null, new JsAny("integer")); };
+                        { yyval = new BooleanPattern(false); };
   break;
 
 
-  case 15: /* jsval1: Any1  */
-  if (yyn == 15)
+  case 9: /* jsval: LiteralString  */
+  if (yyn == 9)
     /* "Program.y":42  */
-                       { yyval = new JsValWithId(null, new JsAny("any")); };
+                                { yyval = new StringPattern(((String)(yystack.valueAt (0)))); };
   break;
 
 
-  case 16: /* jsval1: Anys  */
-  if (yyn == 16)
+  case 10: /* jsval: LiteralNumber  */
+  if (yyn == 10)
     /* "Program.y":43  */
-                       { yyval = new JsValWithId(null, new JsAny("anys")); };
+                                { yyval = new NumberPattern(((double)(yystack.valueAt (0)))); };
   break;
 
 
-  case 17: /* jsval1: StringContext  */
-  if (yyn == 17)
+  case 11: /* jsval: STRING  */
+  if (yyn == 11)
     /* "Program.y":44  */
-                                { yyval = new JsValWithId(null, new JsString(((String)(yystack.valueAt (0))))); };
+                         { yyval = new AnyVal("string"); };
   break;
 
 
-  case 18: /* jsval1: '[' opt_arr_items ']'  */
-  if (yyn == 18)
+  case 12: /* jsval: NUMBER  */
+  if (yyn == 12)
     /* "Program.y":45  */
-                                        { yyval = new JsValWithId(null, new JsArr(((List<JsValWithId>)(yystack.valueAt (1))))); };
+                         { yyval = new AnyVal("number"); };
   break;
 
 
-  case 19: /* jsval1: '(' opt_arr_items ')'  */
-  if (yyn == 19)
+  case 13: /* jsval: BOOLEAN  */
+  if (yyn == 13)
     /* "Program.y":46  */
-                                        { yyval = new JsValWithId(null, new JsArr(((List<JsValWithId>)(yystack.valueAt (1))))); };
+                          { yyval = new AnyVal("boolean"); };
   break;
 
 
-  case 20: /* jsval1: '{' opt_fields '}'  */
-  if (yyn == 20)
+  case 14: /* jsval: INTEGER  */
+  if (yyn == 14)
     /* "Program.y":47  */
-                                     { yyval = new JsValWithId(null, new JsObj(((Map<String, JsValWithId>)(yystack.valueAt (1))))); };
+                          { yyval = new AnyVal("integer"); };
+  break;
+
+
+  case 15: /* jsval: Any1  */
+  if (yyn == 15)
+    /* "Program.y":48  */
+                       { yyval = new AnyVal("any"); };
+  break;
+
+
+  case 16: /* jsval: Anys  */
+  if (yyn == 16)
+    /* "Program.y":49  */
+                       { yyval = new AnyVals(); };
+  break;
+
+
+  case 17: /* jsval: TagedString  */
+  if (yyn == 17)
+    /* "Program.y":50  */
+                              { yyval = new TagedString(((String[])(yystack.valueAt (0)))[0], ((String[])(yystack.valueAt (0)))[1]); };
+  break;
+
+
+  case 18: /* jsval: '[' opt_arr_items ']'  */
+  if (yyn == 18)
+    /* "Program.y":51  */
+                                        { yyval = new ArrayPattern(((List<PatternWithName>)(yystack.valueAt (1)))); };
+  break;
+
+
+  case 19: /* jsval: '(' opt_arr_items ')'  */
+  if (yyn == 19)
+    /* "Program.y":52  */
+                                        { yyval = new ArrayPattern(((List<PatternWithName>)(yystack.valueAt (1)))); };
+  break;
+
+
+  case 20: /* jsval: '{' opt_fields '}'  */
+  if (yyn == 20)
+    /* "Program.y":53  */
+                                     { yyval = new ObjPattern(((Map<String, PatternWithName>)(yystack.valueAt (1)))); };
   break;
 
 
   case 21: /* opt_arr_items: %empty  */
   if (yyn == 21)
-    /* "Program.y":50  */
-                   { yyval = new ArrayList<JsValWithId>(); };
+    /* "Program.y":56  */
+                   { yyval = new ArrayList<PatternWithName>(); };
   break;
 
 
   case 22: /* opt_arr_items: arr_items  */
   if (yyn == 22)
-    /* "Program.y":51  */
-                                  { yyval = ((List<JsValWithId>)(yystack.valueAt (0))); };
+    /* "Program.y":57  */
+                                  { yyval = ((List<PatternWithName>)(yystack.valueAt (0))); };
   break;
 
 
-  case 23: /* arr_items: jsval  */
+  case 23: /* arr_items: bind_jsval  */
   if (yyn == 23)
-    /* "Program.y":53  */
-                              { yyval = Arrays.asList(((JsValWithId)(yystack.valueAt (0)))); };
+    /* "Program.y":60  */
+                                   { yyval = Arrays.asList(((PatternWithName)(yystack.valueAt (0)))); };
   break;
 
 
-  case 24: /* arr_items: arr_items ',' jsval  */
+  case 24: /* arr_items: arr_items ',' bind_jsval  */
   if (yyn == 24)
-    /* "Program.y":54  */
-                                            { yyval = append(((List<JsValWithId>)(yystack.valueAt (2))), ((JsValWithId)(yystack.valueAt (0)))); };
+    /* "Program.y":61  */
+                                                 { yyval = append(((List<PatternWithName>)(yystack.valueAt (2))), ((PatternWithName)(yystack.valueAt (0)))); };
   break;
 
 
   case 25: /* opt_fields: %empty  */
   if (yyn == 25)
-    /* "Program.y":56  */
-                        { yyval = new HashMap<String, JsValWithId>(); };
+    /* "Program.y":64  */
+                        { yyval = new HashMap<String, PatternWithName>(); };
   break;
 
 
   case 26: /* opt_fields: fields  */
   if (yyn == 26)
-    /* "Program.y":57  */
-                               { yyval = ((Map<String, JsValWithId>)(yystack.valueAt (0))); };
-  break;
-
-
-  case 27: /* fields: field  */
-  if (yyn == 27)
-    /* "Program.y":59  */
-                              { yyval = ((Map<String, JsValWithId>)(yystack.valueAt (0))); };
-  break;
-
-
-  case 28: /* fields: fields ',' field  */
-  if (yyn == 28)
-    /* "Program.y":60  */
-                                         { yyval = append(((Map<String, JsValWithId>)(yystack.valueAt (2))), ((Map<String, JsValWithId>)(yystack.valueAt (0)))); };
-  break;
-
-
-  case 29: /* field: opt_bind path  */
-  if (yyn == 29)
-    /* "Program.y":63  */
-                                      { yyval = append( new HashMap<String, JsValWithId>(), ((String)(yystack.valueAt (0))), new JsValWithId(((String)(yystack.valueAt (1))), new JsAny("any"))); };
-  break;
-
-
-  case 30: /* field: path ':' opt_bind jsval1  */
-  if (yyn == 30)
-    /* "Program.y":64  */
-                                                 { yyval = append( new HashMap<String, JsValWithId>(), ((String)(yystack.valueAt (3))), ((JsValWithId)(yystack.valueAt (0))).identity(((String)(yystack.valueAt (1))))); };
-  break;
-
-
-  case 31: /* field: Any1  */
-  if (yyn == 31)
     /* "Program.y":65  */
-                         { yyval = new HashMap<String,JsValWithId>(); };
+                               { yyval = ((Map<String, PatternWithName>)(yystack.valueAt (0))); };
   break;
 
 
-  case 32: /* path: ID  */
+  case 27: /* opt_fields: fields ','  */
+  if (yyn == 27)
+    /* "Program.y":66  */
+                               { yyval = ((Map<String, PatternWithName>)(yystack.valueAt (1))); };
+  break;
+
+
+  case 28: /* fields: field  */
+  if (yyn == 28)
+    /* "Program.y":69  */
+                              { yyval = append( new HashMap<String, PatternWithName>(), ((Field)(yystack.valueAt (0))).name, ((Field)(yystack.valueAt (0))).pattern);  };
+  break;
+
+
+  case 29: /* fields: fields ',' field  */
+  if (yyn == 29)
+    /* "Program.y":70  */
+                                         { yyval = append(((Map<String, PatternWithName>)(yystack.valueAt (2))), ((Field)(yystack.valueAt (0))).name, ((Field)(yystack.valueAt (0))).pattern); };
+  break;
+
+
+  case 30: /* field: opt_bind path  */
+  if (yyn == 30)
+    /* "Program.y":73  */
+                                      { yyval = new Field(((String)(yystack.valueAt (0))), new PatternWithName(((String)(yystack.valueAt (1))), new AnyVal("any")) ); };
+  break;
+
+
+  case 31: /* field: path ':' opt_bind jsval  */
+  if (yyn == 31)
+    /* "Program.y":74  */
+                                                { yyval = new Field(((String)(yystack.valueAt (3))), new PatternWithName(((String)(yystack.valueAt (1))), ((Pattern)(yystack.valueAt (0))))); };
+  break;
+
+
+  case 32: /* field: opt_bind Anys  */
   if (yyn == 32)
-    /* "Program.y":68  */
+    /* "Program.y":75  */
+                                  { yyval = new Field("_*", new PatternWithName(((String)(yystack.valueAt (1))), new AnyVals())); };
+  break;
+
+
+  case 33: /* path: ID  */
+  if (yyn == 33)
+    /* "Program.y":78  */
                            { yyval = ((String)(yystack.valueAt (0))); };
   break;
 
 
-  case 33: /* path: LiteralString  */
-  if (yyn == 33)
-    /* "Program.y":69  */
+  case 34: /* path: LiteralString  */
+  if (yyn == 34)
+    /* "Program.y":79  */
                                       { yyval = ((String)(yystack.valueAt (0))); };
   break;
 
 
-  case 34: /* path: path '/' ID  */
-  if (yyn == 34)
-    /* "Program.y":70  */
+  case 35: /* path: path '/' ID  */
+  if (yyn == 35)
+    /* "Program.y":80  */
                                     { yyval = ((String)(yystack.valueAt (2))) + "/" + ((String)(yystack.valueAt (0))); };
   break;
 
 
-  case 35: /* path: path '/' LiteralString  */
-  if (yyn == 35)
-    /* "Program.y":71  */
+  case 36: /* path: path '/' LiteralString  */
+  if (yyn == 36)
+    /* "Program.y":81  */
                                                { yyval = ((String)(yystack.valueAt (2))) + "/" + ((String)(yystack.valueAt (0))); };
   break;
 
 
 
-/* "../src/main/java/rejson/parser/Program.java":712  */
+/* "../src/main/java/wjson/parser/Program.java":719  */
 
         default: break;
       }
@@ -1121,7 +1128,7 @@ public class Program
   }
 
   private static final byte yypact_ninf_ = -21;
-  private static final byte yytable_ninf_ = -22;
+  private static final byte yytable_ninf_ = -28;
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
@@ -1130,11 +1137,11 @@ public class Program
   {
     return new byte[]
     {
-      22,    16,    34,   -21,    -2,   -21,   -21,   -21,   -21,   -21,
-     -21,   -21,   -21,   -21,   -21,   -21,   -21,   -21,   -21,    15,
-      11,    13,   -21,   -21,    17,    14,    18,    16,   -21,   -21,
-      20,    19,    23,   -21,     5,   -21,    22,   -21,   -21,    24,
-     -21,    13,    22,    21,   -21,   -21,    -2,   -21,   -21,   -21
+       3,   -13,    15,   -21,    32,   -21,   -21,   -21,   -21,   -21,
+     -21,   -21,   -21,   -21,   -21,   -21,   -21,   -21,   -21,     7,
+      -1,     1,   -21,   -21,     8,    -6,    10,   -13,   -21,     4,
+      -2,     5,   -21,   -11,   -21,     3,   -21,   -21,   -21,     6,
+     -21,     2,     3,     9,   -21,   -21,    32,   -21,   -21,   -21
     };
   }
 
@@ -1148,9 +1155,9 @@ public class Program
     {
        4,     0,     0,     2,     0,     5,     1,     6,     7,     8,
        9,    10,    11,    12,    13,    14,    15,    16,    17,     4,
-       4,    25,     3,    23,     0,    22,     0,    32,    33,    31,
-       0,     0,    26,    27,     0,    18,     4,    19,    32,    29,
-      20,     0,     4,     0,    24,    28,     0,    34,    35,    30
+       4,     4,     3,    23,     0,    22,     0,    33,    34,     0,
+       0,    26,    28,     0,    18,     4,    19,    33,    32,    30,
+      20,     4,     4,     0,    24,    29,     0,    35,    36,    31
     };
   }
 
@@ -1160,8 +1167,8 @@ public class Program
   {
     return new byte[]
     {
-     -21,   -21,     0,   -20,    -7,    25,   -21,   -21,   -21,    -1,
-      12
+     -21,   -21,     0,   -20,   -19,    12,   -21,   -21,   -21,   -12,
+      19
     };
   }
 
@@ -1171,8 +1178,8 @@ public class Program
   {
     return new byte[]
     {
-       0,     2,    23,     4,    22,    24,    25,    31,    32,    33,
-      34
+       0,     2,    23,     4,    22,    24,    25,    30,    31,    32,
+      33
     };
   }
 
@@ -1184,11 +1191,12 @@ public class Program
   {
     return new byte[]
     {
-       3,    30,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,     1,    19,    27,    20,     1,    21,
-      28,    30,    46,    38,    47,     1,    29,    28,    48,    42,
-      43,   -21,     5,   -21,     6,    35,    44,    36,    37,    49,
-      45,    40,    39,     0,     0,    26,    41,     0,     0,    43
+       3,    29,     1,     5,    27,    27,     1,    37,    28,    28,
+       1,    28,    47,    42,    43,     6,    48,    35,    38,   -21,
+      40,    29,    46,   -25,   -27,   -21,    34,    49,    41,    45,
+      36,    43,    26,     0,     0,    44,     7,     8,     9,    10,
+      11,    12,    13,    14,    15,    16,    17,    18,    39,    19,
+       0,    20,     0,    21
     };
   }
 
@@ -1197,11 +1205,12 @@ private static final byte[] yycheck_ = yycheck_init();
   {
     return new byte[]
     {
-       0,    21,     4,     5,     6,     7,     8,     9,    10,    11,
-      12,    13,    14,    15,     3,    17,     3,    19,     3,    21,
-       7,    41,    42,     3,     3,     3,    13,     7,     7,    24,
-      25,    20,    16,    18,     0,    18,    36,    23,    20,    46,
-      41,    22,    30,    -1,    -1,    20,    23,    -1,    -1,    25
+       0,    21,     3,    16,     3,     3,     3,     3,     7,     7,
+       3,     7,     3,    24,    25,     0,     7,    23,    14,    20,
+      22,    41,    42,    22,    22,    18,    18,    46,    23,    41,
+      20,    25,    20,    -1,    -1,    35,     4,     5,     6,     7,
+       8,     9,    10,    11,    12,    13,    14,    15,    29,    17,
+      -1,    19,    -1,    21
     };
   }
 
@@ -1214,8 +1223,8 @@ private static final byte[] yycheck_ = yycheck_init();
     {
        0,     3,    27,    28,    29,    16,     0,     4,     5,     6,
        7,     8,     9,    10,    11,    12,    13,    14,    15,    17,
-      19,    21,    30,    28,    31,    32,    31,     3,     7,    13,
-      29,    33,    34,    35,    36,    18,    23,    20,     3,    36,
+      19,    21,    30,    28,    31,    32,    31,     3,     7,    29,
+      33,    34,    35,    36,    18,    23,    20,     3,    14,    36,
       22,    23,    24,    25,    28,    35,    29,     3,     7,    30
     };
   }
@@ -1228,8 +1237,8 @@ private static final byte[] yycheck_ = yycheck_init();
     {
        0,    26,    27,    28,    29,    29,    30,    30,    30,    30,
       30,    30,    30,    30,    30,    30,    30,    30,    30,    30,
-      30,    31,    31,    32,    32,    33,    33,    34,    34,    35,
-      35,    35,    36,    36,    36,    36
+      30,    31,    31,    32,    32,    33,    33,    33,    34,    34,
+      35,    35,    35,    36,    36,    36,    36
     };
   }
 
@@ -1241,8 +1250,8 @@ private static final byte[] yycheck_ = yycheck_init();
     {
        0,     2,     1,     2,     0,     2,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     3,     3,
-       3,     0,     1,     1,     3,     0,     1,     1,     3,     2,
-       4,     1,     1,     1,     3,     3
+       3,     0,     1,     1,     3,     0,     1,     2,     1,     3,
+       2,     4,     2,     1,     1,     3,     3
     };
   }
 
@@ -1299,7 +1308,7 @@ private static final byte[] yycheck_ = yycheck_init();
   }
 
 
-  private static final int YYLAST_ = 49;
+  private static final int YYLAST_ = 53;
   private static final int YYEMPTY_ = -2;
   private static final int YYFINAL_ = 6;
   private static final int YYNTOKENS_ = 26;
@@ -1307,8 +1316,8 @@ private static final byte[] yycheck_ = yycheck_init();
 /* Unqualified %code blocks.  */
 /* "Program.y":12  */
 
-  public JsValWithId root;
+  public PatternWithName root;
 
-/* "../src/main/java/rejson/parser/Program.java":1313  */
+/* "../src/main/java/wjson/parser/Program.java":1322  */
 
 }

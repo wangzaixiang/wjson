@@ -31,7 +31,6 @@ class TestJsonInterpolation extends AnyFunSuite {
     js match {
       case json"""{name: $name, address: { state: "NY" } }""" =>
         assert( name == JsString("John") )
-//        assert( age == JsNumber(30) )
     }
   }
 }
