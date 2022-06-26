@@ -19,7 +19,6 @@ import scala.annotation.{switch, tailrec}
 import java.lang.{StringBuilder => JStringBuilder}
 import java.nio.{CharBuffer, ByteBuffer}
 import java.nio.charset.Charset
-import JsVal.*
 
 /**
  * Fast, no-dependency parser for JSON as defined by http://tools.ietf.org/html/rfc4627.

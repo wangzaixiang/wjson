@@ -21,10 +21,10 @@ object JsVal:
   def JsObj(fields: (String, JsVal)*): JsObj = JsObj(Map(fields: _*))
   def JsArr(elements: JsVal*): JsArr = JsArr(elements.toList)
 
+export JsVal.*
+
 extension (str:String)
   def parseJson: JsVal = JsVal.parse(str)
-
-import JsVal.*
 
 trait JsValMapper[T]:
   def fromJson(js: JsVal): T

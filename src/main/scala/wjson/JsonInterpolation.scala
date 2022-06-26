@@ -1,7 +1,6 @@
 package wjson
 
 import scala.collection.SortedMap
-import JsVal.*
 
 /**
  * Created by wangzx on 15/7/6.

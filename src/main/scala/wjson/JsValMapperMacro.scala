@@ -3,38 +3,10 @@ package wjson
 import scala.quoted.*
 import scala.deriving.*
 import scala.compiletime.{erasedValue, summonInline}
-import JsVal.*
 
 object JsValMapperMacro:
 
-  case class User(name: String, age: Int)
-
-  inline def summonAll[T <: Tuple]: List[JsValMapper[?]] =
-    inline erasedValue[T] match
-      case _: EmptyTuple => Nil
-      case _: (t *: ts) =>
-        summonInline[JsValMapper[t]] :: summonAll[ts]
-
-//  inline def derived[T](using m: Mirror.ProductOf[T]): JsValMapper[T] =
-//    new JsValMapper[T] {
-//      def fromJson(json: JsVal): T =
-//        val mappers: List[JsValMapper[Any]] = summonAll[m.MirroredElemTypes].asInstanceOf[List[JsValMapper[Any]]]
-//        val jso = json.asInstanceOf[JsVal.JsObj]
-//        val fields = mappers.zipWithIndex.map {
-//          case (mapper, i) =>
-//            (i, mapper.fromJson(jso.fields(i)))
-//        }
-//        val prod = ???
-//        m.fromProduct(prod)
-//      def toJson(value: T): JsVal =
-//        val prod = value.asInstanceOf[Product]
-//        val mappers: List[JsValMapper[Any]] = summonAll[m.MirroredElemTypes].asInstanceOf[List[JsValMapper[Any]]]
-//        val fields = mappers.zipWithIndex.map { e =>
-//          val (mapper, i) = e
-//          prod.productElementName(i) -> mapper.toJson(prod.productElement(i))
-//        }.toMap
-//        JsVal.JsObj(fields)
-//    }
+//  case class User(name: String, age: Int)
 
   def generate[T: Type](using Quotes): Expr[JsValMapper[T]] = // TODO ???
     import quotes.reflect.*
@@ -109,38 +81,6 @@ object JsValMapperMacro:
         def fromJson(json: JsVal): T = ${ buildBeanFrom('{json}) }
         def toJson(value: T): JsVal = ${ buildJsVal('{value} ) }
     }
-
-//    val exp =  '{
-//       new JsValMapper[User]:
-//         def fromJson(jsVal: JsVal): User = {
-//           val obj = jsVal.asInstanceOf[JsVal.JsObj]
-//           val name = obj.fields.get("name") match {
-//               case Some(js) => summon[JsValMapper[String]].fromJson(js)
-//               case None => ??? // or default value
-//             }
-//           val age = {
-//               obj.fields.get("age") match {
-//                 case Some(js) => summon[JsValMapper[Int]].fromJson(js)
-//                 case None => ???
-//               }
-//           }
-//
-//           val age = summon[JsValMapper[Int]].from(obj.fields["age"])
-//           new User(name, age)
-//         }
-//         def toJson(user: User): JsVal = {
-//           val name = "name" -> {
-//             if (user.name == null) JsNull
-//             else summon[JsValMapper[String]].to(user.name)
-//           }
-//           val age = "age" -> {
-//             summon[JsValMapper[Int]].to(user.age)
-//           }
-//           JsVal.JsObj( name, age )
-//         }
-//     }
-
-    // println("generated type " + expr.show)
 
     expr.asInstanceOf[Expr[JsValMapper[T]]]
 
