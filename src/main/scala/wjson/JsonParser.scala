@@ -27,7 +27,7 @@ object JsonParser {
   final val EOI = '\uFFFF' // compile-time constant End Of Input
   final val EOS = '\uFFFE' // compile-time constant, End Of Section (StringContext section), EOS means nextArg
 
-  def parse(input: ParserInput): JsVal = new JsonParser(input).parseJsValue()
+  def parse(input: ParserInput): JsValue = new JsonParser(input).parseJsValue()
 
   class ParsingException(val summary: String, val detail: String = "")
     extends RuntimeException(if (summary.isEmpty) detail else if (detail.isEmpty) summary else summary + ":" + detail)
@@ -38,9 +38,9 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
 
   private[this] val sb = new JStringBuilder
   private[this] var cursorChar: Char = input.nextChar()
-  private[this] var jsValue: JsVal = _
+  private[this] var jsValue: JsValue = _
 
-  def parseJsValue(): JsVal = {
+  def parseJsValue(): JsValue = {
     ws()
     `value`()
     require(EOI)
@@ -54,7 +54,7 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
   // http://tools.ietf.org/html/rfc4627#section-2.1
   private def `value`(): Unit = {
     val mark = input.cursor
-    def simpleValue(matched: Boolean, value: JsVal) = if (matched) jsValue = value else fail("JSON Value", mark)
+    def simpleValue(matched: Boolean, value: JsValue) = if (matched) jsValue = value else fail("JSON Value", mark)
 
     (cursorChar: @switch) match {
       case 'f' => simpleValue(`false`(), JsFalse)
@@ -81,7 +81,7 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
   // http://tools.ietf.org/html/rfc4627#section-2.2
   private def `object`(): Unit = {
 
-    @tailrec def members(map: Map[String, JsVal]): Map[String, JsVal] = {
+    @tailrec def members(map: Map[String, JsValue]): Map[String, JsValue] = {
       if(jsonExtensionSupport) IDorString()
       else `string`()
 
@@ -99,10 +99,10 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
 
     ws()
     jsValue = if (cursorChar != '}') {
-      var map = Map.empty[String, JsVal]
+      var map = Map.empty[String, JsValue]
       map = members(map)
       require('}')
-      JsObj(map)
+      JsObject(map)
     } else {
       advance()
       JsEmptyObject
@@ -114,7 +114,7 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
   private def `array`(): Unit = {
     ws()
     jsValue = if (cursorChar != ']') {
-      val list = Vector.newBuilder[JsVal]
+      val list = Vector.newBuilder[JsValue]
       @tailrec def values(): Unit = {
         `value`()
         list += jsValue
@@ -122,7 +122,7 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
       }
       values()
       require(']')
-      JsArr(list.result().toList)
+      JsArray(list.result().toList)
     } else {
       advance()
       JsEmptyArray
@@ -139,7 +139,7 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
     `frac`()
     `exp`()
     jsValue =
-      if (startChar == '0' && input.cursor - start == 1) JsVal.JsZero
+      if (startChar == '0' && input.cursor - start == 1) JsValue.JsZero
       else JsNumber(new String(input.sliceCharArray(start, input.cursor)).toDouble)
     ws()
   }
@@ -289,7 +289,7 @@ trait ParserInput {
    */
   def nextUtf8Char(): Char
 
-  def currentArgument(): JsVal
+  def currentArgument(): JsValue
 
   def cursor: Int
   //def length: Int
@@ -307,7 +307,7 @@ object ParserInput {
   def apply(chars: Array[Char]): CharArrayBasedParserInput = new CharArrayBasedParserInput(chars)
   def apply(bytes: Array[Byte]): ByteArrayBasedParserInput = new ByteArrayBasedParserInput(bytes)
 
-  def apply(sc: StringContext, args: Seq[JsVal]): ParserInput = new InterpolationParserInput(sc, args)
+  def apply(sc: StringContext, args: Seq[JsValue]): ParserInput = new InterpolationParserInput(sc, args)
 
   case class Line(lineNr: Int, column: Int, text: String)
 
@@ -419,7 +419,7 @@ object ParserInput {
     def sliceCharArray(start: Int, end: Int) = java.util.Arrays.copyOfRange(chars, start, end)
   }
 
-  class InterpolationParserInput(sc: StringContext, args: Seq[JsVal]) extends DefaultParserInput {
+  class InterpolationParserInput(sc: StringContext, args: Seq[JsValue]) extends DefaultParserInput {
     private var _gCursor = -1
 
     private var _sectionIndex = 0 // 0 .. sc.parts.length-1
@@ -475,7 +475,7 @@ object ParserInput {
       }
     }
 
-    def currentArgument(): JsVal = args(_sectionIndex)
+    def currentArgument(): JsValue = args(_sectionIndex)
 
     override def nextUtf8Char(): Char = nextChar()
 

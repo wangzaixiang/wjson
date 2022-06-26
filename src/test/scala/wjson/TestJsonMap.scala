@@ -1,7 +1,6 @@
 package wjson
 
 import org.scalatest.funsuite.AnyFunSuite
-import JsVal.*
 
 class TestJsonMap extends AnyFunSuite {
 

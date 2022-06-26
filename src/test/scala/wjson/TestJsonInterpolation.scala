@@ -1,7 +1,6 @@
 package wjson
 
 import org.scalatest.funsuite.AnyFunSuite
-import JsVal.*
 
 class TestJsonInterpolation extends AnyFunSuite {
 
@@ -13,17 +12,17 @@ class TestJsonInterpolation extends AnyFunSuite {
       age: $age,
     }
     """
-    assert( js1 == JsObj(
+    assert( js1 == JsObject(
       "name" -> JsString("John"),
       "age" -> JsNumber(30)
     ) )
   }
 
   test("json unapply") {
-    val js = JsObj(
+    val js = JsObject(
       "name" -> JsString("John"),
       "age" -> JsNumber(30),
-      "address" -> JsObj(
+      "address" -> JsObject(
         "street" -> JsString("Main St"),
         "city" -> JsString("New York"),
         "state" -> JsString("NY")

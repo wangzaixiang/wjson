@@ -8,17 +8,17 @@ import scala.collection.SortedMap
 
 class JsonInterpolation(sc: StringContext) {
 
-  def apply(args: JsVal*): JsVal =
+  def apply(args: JsValue*): JsValue =
     new JsonParser(ParserInput(sc, args), true).parseJsValue()
 
-  def unapplySeq(input: JsVal): Option[Seq[JsVal]] = {
+  def unapplySeq(input: JsValue): Option[Seq[JsValue]] = {
 
     val placeHolders = Seq.range(0, sc.parts.length-1).map(x => JsNumber(Integer.MAX_VALUE - x) )
 
     val pi = ParserInput(sc, placeHolders)
     val pattern = new JsonParser(pi, true).parseJsValue()
 
-    val results = collection.mutable.ArrayBuffer[JsVal]()
+    val results = collection.mutable.ArrayBuffer[JsValue]()
     Seq.range(0, sc.parts.length-1).foreach { x => results += null }
 
     try {
@@ -32,8 +32,8 @@ class JsonInterpolation(sc: StringContext) {
   }
 
   // TODO report friendly
-  private def patternMatch(pattern: JsVal, input: JsVal, placeHolders: Seq[JsVal],
-                           results: collection.mutable.ArrayBuffer[JsVal]): Unit = {
+  private def patternMatch(pattern: JsValue, input: JsValue, placeHolders: Seq[JsValue],
+                           results: collection.mutable.ArrayBuffer[JsValue]): Unit = {
 
     def isPlaceHolder(value: JsNumber) = {
       val num = value.value.toInt
@@ -42,9 +42,9 @@ class JsonInterpolation(sc: StringContext) {
     }
 
     pattern match {
-      case x: JsObj =>
-        assert( input.isInstanceOf[JsObj] )
-        val inputObj = input.asInstanceOf[JsObj]
+      case x: JsObject =>
+        assert( input.isInstanceOf[JsObject] )
+        val inputObj = input.asInstanceOf[JsObject]
         x.fields.foreach {
           case (key, n @ JsNumber(num)) if isPlaceHolder(n) =>
             val index = Integer.MAX_VALUE - num.toInt
@@ -55,15 +55,15 @@ class JsonInterpolation(sc: StringContext) {
             assert(inputObj.fields contains key)
             patternMatch(value, inputObj.fields(key), placeHolders, results)
         }
-      case x: JsArr =>
-        assert(input.isInstanceOf[JsArr])
-        assert(input.asInstanceOf[JsArr].elements.size >= x.elements.size)
-        val inputArr = input.asInstanceOf[JsArr]
+      case x: JsArray =>
+        assert(input.isInstanceOf[JsArray])
+        assert(input.asInstanceOf[JsArray].elements.size >= x.elements.size)
+        val inputArr = input.asInstanceOf[JsArray]
         x.elements.zipWithIndex.foreach {
           case (x: JsNumber, y: Int) if isPlaceHolder(x) =>
             val index = Integer.MAX_VALUE - x.value.toInt
             results(index) = inputArr.elements(y)
-          case (x: JsVal,y: Int)=>
+          case (x: JsValue,y: Int)=>
             patternMatch(x, inputArr.elements.apply(y), placeHolders, results)
         }
       case x: JsString =>

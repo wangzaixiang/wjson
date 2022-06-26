@@ -5,7 +5,7 @@ package wjson
  */
 enum JsPattern(bind: Option[String]):
 
-  def unapplySeq(js: JsVal): Option[List[Any]] = JsPattern.unapplySeq(this, js)
+  def unapplySeq(js: JsValue): Option[List[Any]] = JsPattern.unapplySeq(this, js)
 
   case JsNullPattern(bind: Option[String] = None) extends JsPattern(bind) // null literal
   case JsBoolPattern(value: Boolean, bind:Option[String] = None) extends JsPattern(bind)  // true or false literal
@@ -21,6 +21,6 @@ enum JsPattern(bind: Option[String]):
   case JsValuePattern(bind: Option[String] = None) extends JsPattern(bind) // id"pattern": match a specific JsVal
 
 object JsPattern:
-  def unapplySeq(pat: JsPattern, js: JsVal): Option[List[Any]] = ???
-  def test(pat: JsPattern, js: JsVal): (Boolean, Map[String, Any]) = ???
+  def unapplySeq(pat: JsPattern, js: JsValue): Option[List[Any]] = ???
+  def test(pat: JsPattern, js: JsValue): (Boolean, Map[String, Any]) = ???
   def parsePattern(string: String): JsPattern = ???
