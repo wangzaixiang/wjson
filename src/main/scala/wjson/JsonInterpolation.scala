@@ -8,11 +8,8 @@ import scala.collection.SortedMap
 
 class JsonInterpolation(sc: StringContext) {
 
-  case class Placeholder(index: Int) {
-    def asJsValue: JsString = JsString("\u0000_placeholder_" + index + "_\u0000")
-  }
-
   object Placeholder {
+    def apply(index: Int): JsValue = JsString("\u0000_placeholder_" + index + "_\u0000")
     def unapply(str: JsValue): Option[Int] = {
       str match
         case JsString(str) if str.startsWith("\u0000_placeholder_") && str.endsWith("_\u0000") =>
@@ -27,8 +24,8 @@ class JsonInterpolation(sc: StringContext) {
 
   def unapplySeq(input: JsValue): Option[Seq[JsValue]] = {
 
-    val placeHolders: Seq[JsString] = Seq.range(0, sc.parts.length-1)
-      .map(x => Placeholder(x).asJsValue )
+    val placeHolders: Seq[JsValue] = Seq.range(0, sc.parts.length-1)
+      .map(x => Placeholder(x) )
 
     val pi = ParserInput(sc, placeHolders)
     val pattern = new JsonParser(pi, true).parseJsValue()
