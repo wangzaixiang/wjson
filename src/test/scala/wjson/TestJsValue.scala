@@ -2,8 +2,6 @@ package wjson
 
 import org.scalatest.funsuite.AnyFunSuite
 
-import java.nio.DoubleBuffer
-
 class TestJsValue extends AnyFunSuite {
 
   test("Json Parser") {
