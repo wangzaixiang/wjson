@@ -47,7 +47,8 @@ object JsPatternParser {
          "age": uage@30,
          "like": string,
          address/city: "guangzhou",
-         "uid": mod"1024n+0..10"
+         "uid": mod"1024n+0..10",
+         _*
       }
       """
 

@@ -146,13 +146,15 @@ given [T: JsValueMapper]: Conversion[List[T], JsValue] with
 inline given [T](using deriving.Mirror.ProductOf[T]): JsValueMapper[T] =
   ${ JsValueMapperMacro.generate[T] }
 
-private inline def caseFieldGet[T: JsValueMapper](inline js: JsObject, inline name: String): T =
+def caseFieldGet[T: JsValueMapper](js: JsObject, name: String): T =
   js.fields.get(name) match
+    case Some(JsNull) => throw new Exception("Expected field " + name + " not exists in JSON")
     case Some(value) => summon[JsValueMapper[T]].fromJson(value)
     case None => throw new Exception("Expected field " + name + " not exists in JSON")
 
-private inline def caseFieldGet[T: JsValueMapper](inline js: JsObject, inline name: String, inline default:T): T =
+def caseFieldGet[T: JsValueMapper](js: JsObject, name: String, default:T): T =
   js.fields.get(name) match
+    case Some(JsNull) => default
     case Some(value) => summon[JsValueMapper[T]].fromJson(value)
     case None => default
 

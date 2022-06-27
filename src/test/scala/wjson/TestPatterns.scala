@@ -17,7 +17,7 @@ class TestPatterns extends AnyFunSuite {
         "b": ${b}@string,
         "c": ${c}@boolean
       }""" =>
-        println("a=$a, b=$b, c=$c")
+        println(s"a=$a, b=$b, c=$c")
     }
 
   }

@@ -83,4 +83,18 @@ class TestJsValue extends AnyFunSuite {
 
   }
 
+  test("Self Reference Case Class") {
+    case class User(name: String, age: Int, owner: User = null)
+
+    val user = User("John", 30, null)
+    val child = User("Mary", 10, user)
+
+    val js = child.toJson
+
+    assert( js == JsObject("name"->"Mary","age"->10,
+      "owner"->JsObject("name"->"John","age"->30)))
+    assert( js.to[User] == child)
+
+  }
+
 }
