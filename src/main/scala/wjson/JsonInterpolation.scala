@@ -13,7 +13,7 @@ class JsonInterpolation(sc: StringContext) {
 
   def unapplySeq(input: JsValue): Option[Seq[JsValue]] = {
 
-    val placeHolders = Seq.range(0, sc.parts.length-1).map(x => JsNumber(Integer.MAX_VALUE - x) )
+    val placeHolders: Seq[JsNumber] = Seq.range(0, sc.parts.length-1).map(x => JsNumber(Integer.MAX_VALUE - x) )
 
     val pi = ParserInput(sc, placeHolders)
     val pattern = new JsonParser(pi, true).parseJsValue()
