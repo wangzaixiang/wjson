@@ -30,6 +30,7 @@ object JsValueMapperMacro:
       val name = field.name
       val expr = field.tree.asInstanceOf[ValDef].tpt.tpe.asType match
         case '[t] =>
+          // TODO better way to get the '{this} expr
           val summonValue: Option[Expr[JsValueMapper[t]]] =
             if(TypeRepr.of[t].widen =:= TypeRepr.of[T].widen) Some(THIS.asInstanceOf[Expr[JsValueMapper[t]]])
             else Expr.summon[JsValueMapper[t]]

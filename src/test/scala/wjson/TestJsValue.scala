@@ -97,4 +97,20 @@ class TestJsValue extends AnyFunSuite {
 
   }
 
+  // failed, cross reference not support yet
+  /*
+  test("Cross Reference Case Class") {
+    case class Teacher(name: String, age: Int, student: Student = null)
+    case class Student(name: String, age: Int /*, teacher: Teacher*/)
+
+    val teacher = Teacher("John", 30, null)
+    val student = Student("Mary", 10 /*, teacher*/)
+
+    val js1 = teacher.toJson
+    val js2 = student.toJson
+
+    println(s"js1 = $js1 js2 = $js2")
+  }
+  */
+
 }
