@@ -36,6 +36,27 @@ trait JsValueMapper[T]:
   def fromJson(js: JsValue): T
   def toJson(t: T): JsValue
 
+object JsValueMapper:
+  inline def derived[T](using deriving.Mirror.ProductOf[T]): JsValueMapper[T] =
+    ${ JsValueMapperMacro.generateImpl[T] }
+
+/**
+ * given JsValueMapper for case class T
+ * import wjson.CaseValueMappers.given if you need to automate generate JsValueMapper for case class.
+ *
+ * Since this macro will create a anonymous mapper every time, It's not encouraged.
+ * Better usage:
+ * 1. make the case class derives JsValueMapper (intrusive style)
+ * 2. explicit declare a shared JsValueMapper[T] for each T, and imports it.
+ *
+ * or you can import wjson.CaseClassMappers.given
+ */
+object CaseClassMappers:
+  inline given[T](using deriving.Mirror.ProductOf[T]): JsValueMapper[T] =
+    ${JsValueMapperMacro.generateImpl[T]}
+
+
+
 given JsValueMapper[Boolean] with
   def fromJson(js: JsValue): Boolean = js match
     case JsBoolean(value) => value
@@ -140,11 +161,6 @@ given [T: JsValueMapper]: Conversion[T, JsValue] with
 given [T: JsValueMapper]: Conversion[List[T], JsValue] with
   def apply(x: List[T]): JsArray = JsArray( x.map(summon[JsValueMapper[T]].toJson):_* )
 
-/**
- * given JsValueMapper for case class T
- */
-inline given [T](using deriving.Mirror.ProductOf[T]): JsValueMapper[T] =
-  ${ JsValueMapperMacro.generate[T] }
 
 def caseFieldGet[T: JsValueMapper](js: JsObject, name: String): T =
   js.fields.get(name) match

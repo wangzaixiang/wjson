@@ -1,6 +1,7 @@
-package wjson
+package wjson_test
 
 import org.scalatest.funsuite.AnyFunSuite
+import wjson.{given, *}
 
 class TestJsValue extends AnyFunSuite {
 
@@ -73,27 +74,27 @@ class TestJsValue extends AnyFunSuite {
 
   test("case class mappers"){
 
-    case class User(name: String, age: Int, address: Address)
-    case class Address(street: String, city: String)
+    case class User1(name: String, age: Int, address: Address1) derives JsValueMapper
+    case class Address1(street: String, city: String) derives JsValueMapper
 
-    val user = User("John", 30, Address("Main St", "New York"))
+    val user = User1("John", 30, Address1("Main St", "New York"))
     assert( user.toJson == JsObject("name"->"John","age"->30,
       "address"->JsObject("street"->"Main St","city"->"New York")))
-    assert( json"{name:'John',age:30,address:{street:'Main St',city:'New York'}}".to[User] == user)
+    assert( json"{name:'John',age:30,address:{street:'Main St',city:'New York'}}".to[User1] == user)
 
   }
 
   test("Self Reference Case Class") {
-    case class User(name: String, age: Int, owner: User = null)
+    case class User2(name: String, age: Int, owner: User2 = null) derives JsValueMapper
 
-    val user = User("John", 30, null)
-    val child = User("Mary", 10, user)
+    val user = User2("John", 30, null)
+    val child = User2("Mary", 10, user)
 
     val js = child.toJson
 
     assert( js == JsObject("name"->"Mary","age"->10,
       "owner"->JsObject("name"->"John","age"->30)))
-    assert( js.to[User] == child)
+    assert( js.to[User2] == child)
 
   }
 

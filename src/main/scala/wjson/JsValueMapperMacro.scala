@@ -9,7 +9,10 @@ import scala.compiletime.{erasedValue, summonInline}
  */
 object JsValueMapperMacro:
 
-  def generate[T: Type](using Quotes): Expr[JsValueMapper[T]] =
+  inline def generate[T: deriving.Mirror.ProductOf]: JsValueMapper[T] =
+    ${ generateImpl[T] }
+
+  def generateImpl[T: Type](using Quotes): Expr[JsValueMapper[T]] =
     import quotes.reflect.*
 
     // for fields with default values, extract the default value

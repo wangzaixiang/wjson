@@ -1,6 +1,7 @@
-package wjson
+package wjson_test
 
 import org.scalatest.funsuite.AnyFunSuite
+import wjson.*
 
 class TestPatterns extends AnyFunSuite {
 

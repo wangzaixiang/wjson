@@ -18,8 +18,9 @@ libraryDependencies += "com.github.wangzaixiang" %% "wjson" % "0.1.0"
 # 使用
 
 在使用 wjson 库之前，简单引入一下：
+
 ```scala
-import wjson.*
+
 ```
 
 1. JSON 基本类型API
