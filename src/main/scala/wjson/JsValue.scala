@@ -1,6 +1,6 @@
 package wjson
 
-import scala.collection.{IterableOps, SortedMap, SortedSet}
+import scala.collection.{IterableOps, SortedMap, SortedSet, mutable}
 
 /**
  * Json Model ADT
@@ -31,6 +31,41 @@ object JsValue:
    */
   given [T: JsValueMapper]: Conversion[T, JsValue] with
     def apply(x: T): JsValue = summon[JsValueMapper[T]].toJson(x)
+
+  extension (value: JsValue)
+    def show(indent: Int = 2, margin: Int = 100): String =
+      val buffer = new StringBuilder
+
+      def show0(value: JsValue, indentString: String): Unit =
+        value match
+          case JsNull => buffer.append("null")
+          case JsBoolean(value) => buffer.append(value)
+          case JsNumber(value) => buffer.append(value)
+          case JsString(value) => buffer.append(escapedString(value))
+          case JsObject(fields) =>
+            buffer.append("{\n")
+            fields.foreach { case (name, value) =>
+              buffer.append(indentString + " " * indent)
+              buffer.append(escapedString(name))
+              buffer.append(":")
+              show0(value, indentString + " " * indent)
+              buffer.append(",\n")
+            }
+            buffer.append(indentString)
+            buffer.append("}")
+          case JsArray(elements) =>
+            buffer.append("[\n")
+            elements.foreach { elem =>
+              buffer.append( indentString + " " * indent)
+              show0(elem, indentString + " " * indent)
+              buffer.append(",\n")
+            }
+            buffer.append(indentString).append("]")
+
+      // TODO unicode processing
+      def escapedString(str: String): String = "\"" + str.replace("\"", "\\\"") + "\""
+      show0(value, "")
+      buffer.toString
 
   /**
    * support List,Seq,Vector,Set, SortedSet etc.

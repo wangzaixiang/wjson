@@ -20,6 +20,7 @@ class TestJsValue extends AnyFunSuite {
 
     val x: JsValue = List("a", "b", "c")
     assert(x == List("a", "b", "c").toJson)
+
   }
 
   test("Primitive Type Mappers") {

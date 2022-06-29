@@ -20,7 +20,7 @@ libraryDependencies += "com.github.wangzaixiang" %% "wjson" % "0.1.0"
 在使用 wjson 库之前，简单引入一下：
 
 ```scala
-
+import wjson.*
 ```
 
 1. JSON 基本类型API
@@ -30,8 +30,8 @@ libraryDependencies += "com.github.wangzaixiang" %% "wjson" % "0.1.0"
      case JsBoolean(value: Boolean)
      case JsNumber(value: Double)
      case JsString(value: String)
-     case JsArr(elements: List[JsVal])
-     case JsObj(fields: Map[String, JsVal])
+     case JsArray(elements: List[JsVal])
+     case JsObject(fields: Map[String, JsVal])
    ```
    > 使用 enum + ADT 对数据结构进行建模，是一种很简洁的实现方式。
 2. 解析JSON字符串、构造JsVal
@@ -58,7 +58,7 @@ libraryDependencies += "com.github.wangzaixiang" %% "wjson" % "0.1.0"
    case class Person(name: String, age: Int)
    val jsval = json"""{"name":"John","age":18}"""
    
-   val person = jsval.to[Person] // jsval 具有扩展方法 to[T] 可以反序列化为 T（必须是case class）
+   val person = jsval.convertTo[Person] // jsval 具有扩展方法 to[T] 可以反序列化为 T（必须是case class）
    val jsval2 = person.toJson    // case class 具有扩展方法 toJson 可以序列化为 JsVal
    
    ```
@@ -67,11 +67,11 @@ libraryDependencies += "com.github.wangzaixiang" %% "wjson" % "0.1.0"
    - 基本类型的序列化，包括 Byte、Short、Char、Int、Long、Float、Double、Boolean、String 的序列化
    - BigInt、BigDecimal
    - Option[T]: 其中 T 必须是可序列化的（递归游戏）
-   - List[T]、Seq[T]、Set[T]、Map[String, T], Array[T]: 其中 T 必须是可序列化的.（递归游戏）
+   - List[T]、Seq[T]、Set[T]、SortedSet[T]、Map[String, T], SortedMap[String, T]、Array[T]: 其中 T 必须是可序列化的.（递归游戏）
    - case class: 其中所有的字段必须是可序列化的（递归游戏）
 
-   只要符合上述的类型规则，那么就可以使用 wjson 的API： `jsVal.to[T]`、`(value:T).toJson`  来进行对象的序列化、反序列化，
-   而无需编写任何的代码。相比 spray-json 来说，wjson的API要简单很多，功能要强大很多（不再需要编写）。
+   只要符合上述的类型规则，那么就可以使用 wjson 的API： `jsVal.convertTo[T]`、`(value:T).toJson`  来进行对象的序列化、反序列化，
+   而无需编写任何的代码。相比 spray-json 来说，wjson的API要简单很多，功能要强大很多（不再需要编写Protocol, Reader, Writer）。
 
 4. json 插值能力
    ```scala
@@ -107,4 +107,5 @@ libraryDependencies += "com.github.wangzaixiang" %% "wjson" % "0.1.0"
    使用 json 的插值匹配功能，可以一次性匹配一个复杂的JSON 对象，并且按照结构提取出某些值。这可以在不进行JSON反序列化的情况下，快速的
    对JSON进行匹配、字段提取、数据验证工作。
 
-5. wjson 还计划提供一个更为强大的 JSON 模式匹配语言，这个目前尚且在设计之中，将在外下一个版本中提供。
+-[ ] wjson 还计划提供一个更为强大的 JSON 模式匹配语言，这个目前尚且在设计之中，将在外下一个版本中提供。
+-[X] JsValue.show() 方法，用于输出 JsValue 对象的字符串表示。
