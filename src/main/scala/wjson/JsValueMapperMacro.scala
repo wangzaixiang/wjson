@@ -2,7 +2,6 @@ package wjson
 
 import scala.quoted.*
 import scala.deriving.*
-import scala.compiletime.{erasedValue, summonInline}
 
 /**
  * Macro to generate a JsValueMapper for a given case class.
@@ -14,6 +13,7 @@ object JsValueMapperMacro:
 
   def generateImpl[T: Type](using Quotes): Expr[JsValueMapper[T]] =
     import quotes.reflect.*
+    import JsValueMapper.*
 
     // for fields with default values, extract the default value
     val defaultParams: Map[String, Expr[Any]] =

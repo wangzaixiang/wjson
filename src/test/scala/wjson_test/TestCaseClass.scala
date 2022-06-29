@@ -18,7 +18,7 @@ class TestCaseClass extends AnyFunSuite {
     assert( address.toJson == js )   // dont generate anonymous mapper here
     assert( address.toJson == js )   // dont generate anonymous mapper here
 
-    val address2 = js.to[Address1]   // dont generate anonymous mapper here
+    val address2 = js.convertTo[Address1]   // dont generate anonymous mapper here
     assert( address2 == address)
   }
 
@@ -32,21 +32,19 @@ class TestCaseClass extends AnyFunSuite {
     assert( address.toJson == js )  // dont generate anonymous mapper here
     assert( address.toJson == js )  // dont generate anonymous mapper here
 
-    val address2 = js.to[Address2]  // dont generate anonymous mapper here
+    val address2 = js.convertTo[Address2]  // dont generate anonymous mapper here
     assert( address2 == address)
   }
 
   test("import CaseClassMappers.given") {
     case class Address3(state: String, city: String)
 
-    import wjson.CaseClassMappers.given
-
     val address = Address3("guangdong", "guangzhou")
     val js = json"{state:'guangdong', city:'guangzhou'}"
     assert( address.toJson == js )  // generate anonymous mapper here 1
     assert( address.toJson == js )  // generate anonymous mapper here 2
 
-    val address2 = js.to[Address3]  // generate anonymous mapper here 3
+    val address2 = js.convertTo[Address3]  // generate anonymous mapper here 3
     assert( address2 == address)
   }
 
