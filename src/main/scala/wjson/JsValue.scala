@@ -1,6 +1,7 @@
 package wjson
 
 import scala.collection.{IterableOps, SortedMap, SortedSet, mutable}
+import scala.reflect.ClassTag
 
 /**
  * Json Model ADT
@@ -181,6 +182,13 @@ object JsValueMapper:
     def toJson(t: String): JsValue = JsString(t)
 
   // TODO is there a better way to do this? Seq/List/Vector/Set/SortedSet/Map/SortedMap
+  given [T:JsValueMapper :ClassTag]: JsValueMapper[Array[T]] with
+    def fromJson(js: JsValue): Array[T] = js match
+      case JsArray(value) => value.map(summon[JsValueMapper[T]].fromJson).toArray
+      case _ => throw new Exception(s"Expected JsArray but ${js.getClass}")
+    def toJson(t: Array[T]): JsValue = JsArray(t.map(summon[JsValueMapper[T]].toJson))
+
+
   given [T:JsValueMapper]: JsValueMapper[Seq[T]] with
     def fromJson(js: JsValue): Seq[T] = js match
         case JsArray(value) => value.map(summon[JsValueMapper[T]].fromJson)
