@@ -665,57 +665,50 @@ public class Program
   break;
 
 
-  case 30: /* field: opt_bind path  */
+  case 30: /* field: path ':' opt_bind jsval  */
   if (yyn == 30)
-    /* "Program.y":73  */
-                                      { yyval = new Field(((String)(yystack.valueAt (0))), new PatternWithName(((String)(yystack.valueAt (1))), new AnyVal("any")) ); };
-  break;
-
-
-  case 31: /* field: path ':' opt_bind jsval  */
-  if (yyn == 31)
-    /* "Program.y":74  */
-                                                { yyval = new Field(((String)(yystack.valueAt (3))), new PatternWithName(((String)(yystack.valueAt (1))), ((Pattern)(yystack.valueAt (0))))); };
-  break;
-
-
-  case 32: /* field: opt_bind Anys  */
-  if (yyn == 32)
     /* "Program.y":75  */
+                                            { yyval = new Field(((String)(yystack.valueAt (3))), new PatternWithName(((String)(yystack.valueAt (1))), ((Pattern)(yystack.valueAt (0))))); };
+  break;
+
+
+  case 31: /* field: opt_bind Anys  */
+  if (yyn == 31)
+    /* "Program.y":76  */
                                   { yyval = new Field("_*", new PatternWithName(((String)(yystack.valueAt (1))), new AnyVals())); };
   break;
 
 
-  case 33: /* path: ID  */
-  if (yyn == 33)
-    /* "Program.y":78  */
+  case 32: /* path: ID  */
+  if (yyn == 32)
+    /* "Program.y":79  */
                            { yyval = ((String)(yystack.valueAt (0))); };
   break;
 
 
-  case 34: /* path: LiteralString  */
-  if (yyn == 34)
-    /* "Program.y":79  */
+  case 33: /* path: LiteralString  */
+  if (yyn == 33)
+    /* "Program.y":80  */
                                       { yyval = ((String)(yystack.valueAt (0))); };
   break;
 
 
-  case 35: /* path: path '/' ID  */
-  if (yyn == 35)
-    /* "Program.y":80  */
+  case 34: /* path: path '/' ID  */
+  if (yyn == 34)
+    /* "Program.y":81  */
                                     { yyval = ((String)(yystack.valueAt (2))) + "/" + ((String)(yystack.valueAt (0))); };
   break;
 
 
-  case 36: /* path: path '/' LiteralString  */
-  if (yyn == 36)
-    /* "Program.y":81  */
+  case 35: /* path: path '/' LiteralString  */
+  if (yyn == 35)
+    /* "Program.y":82  */
                                                { yyval = ((String)(yystack.valueAt (2))) + "/" + ((String)(yystack.valueAt (0))); };
   break;
 
 
 
-/* "../src/main/java/wjson/parser/Program.java":719  */
+/* "../src/main/java/wjson/parser/Program.java":712  */
 
         default: break;
       }
@@ -1127,7 +1120,7 @@ public class Program
     return yyvalue == yytable_ninf_;
   }
 
-  private static final byte yypact_ninf_ = -21;
+  private static final byte yypact_ninf_ = -26;
   private static final byte yytable_ninf_ = -28;
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
@@ -1137,11 +1130,11 @@ public class Program
   {
     return new byte[]
     {
-       3,   -13,    15,   -21,    32,   -21,   -21,   -21,   -21,   -21,
-     -21,   -21,   -21,   -21,   -21,   -21,   -21,   -21,   -21,     7,
-      -1,     1,   -21,   -21,     8,    -6,    10,   -13,   -21,     4,
-      -2,     5,   -21,   -11,   -21,     3,   -21,   -21,   -21,     6,
-     -21,     2,     3,     9,   -21,   -21,    32,   -21,   -21,   -21
+       6,   -13,    11,   -26,    32,   -26,   -26,   -26,   -26,   -26,
+     -26,   -26,   -26,   -26,   -26,   -26,   -26,   -26,   -26,     7,
+       4,    -2,   -26,   -26,    -3,    -7,     8,   -13,   -26,     3,
+      -4,     9,   -26,   -11,   -26,     6,   -26,   -26,   -26,    -1,
+       6,     5,   -26,   -26,    32,   -26,   -26,   -26
     };
   }
 
@@ -1155,9 +1148,9 @@ public class Program
     {
        4,     0,     0,     2,     0,     5,     1,     6,     7,     8,
        9,    10,    11,    12,    13,    14,    15,    16,    17,     4,
-       4,     4,     3,    23,     0,    22,     0,    33,    34,     0,
-       0,    26,    28,     0,    18,     4,    19,    33,    32,    30,
-      20,     4,     4,     0,    24,    29,     0,    35,    36,    31
+       4,     4,     3,    23,     0,    22,     0,    32,    33,     0,
+       0,    26,    28,     0,    18,     4,    19,    31,    20,     4,
+       4,     0,    24,    29,     0,    34,    35,    30
     };
   }
 
@@ -1167,8 +1160,8 @@ public class Program
   {
     return new byte[]
     {
-     -21,   -21,     0,   -20,   -19,    12,   -21,   -21,   -21,   -12,
-      19
+     -26,   -26,     0,   -17,   -25,    10,   -26,   -26,   -26,   -12,
+     -26
     };
   }
 
@@ -1191,11 +1184,11 @@ public class Program
   {
     return new byte[]
     {
-       3,    29,     1,     5,    27,    27,     1,    37,    28,    28,
-       1,    28,    47,    42,    43,     6,    48,    35,    38,   -21,
-      40,    29,    46,   -25,   -27,   -21,    34,    49,    41,    45,
-      36,    43,    26,     0,     0,    44,     7,     8,     9,    10,
-      11,    12,    13,    14,    15,    16,    17,    18,    39,    19,
+       3,    27,    27,     5,    29,    28,    28,     1,    45,     1,
+       1,     6,    46,    40,    41,    34,    35,    37,    38,    47,
+     -25,   -27,    29,    44,   -21,   -21,     0,    43,    36,     0,
+      26,     0,    39,     0,     0,    42,     7,     8,     9,    10,
+      11,    12,    13,    14,    15,    16,    17,    18,     0,    19,
        0,    20,     0,    21
     };
   }
@@ -1205,11 +1198,11 @@ private static final byte[] yycheck_ = yycheck_init();
   {
     return new byte[]
     {
-       0,    21,     3,    16,     3,     3,     3,     3,     7,     7,
-       3,     7,     3,    24,    25,     0,     7,    23,    14,    20,
-      22,    41,    42,    22,    22,    18,    18,    46,    23,    41,
-      20,    25,    20,    -1,    -1,    35,     4,     5,     6,     7,
-       8,     9,    10,    11,    12,    13,    14,    15,    29,    17,
+       0,     3,     3,    16,    21,     7,     7,     3,     3,     3,
+       3,     0,     7,    24,    25,    18,    23,    14,    22,    44,
+      22,    22,    39,    40,    20,    18,    -1,    39,    20,    -1,
+      20,    -1,    23,    -1,    -1,    35,     4,     5,     6,     7,
+       8,     9,    10,    11,    12,    13,    14,    15,    -1,    17,
       -1,    19,    -1,    21
     };
   }
@@ -1224,8 +1217,8 @@ private static final byte[] yycheck_ = yycheck_init();
        0,     3,    27,    28,    29,    16,     0,     4,     5,     6,
        7,     8,     9,    10,    11,    12,    13,    14,    15,    17,
       19,    21,    30,    28,    31,    32,    31,     3,     7,    29,
-      33,    34,    35,    36,    18,    23,    20,     3,    14,    36,
-      22,    23,    24,    25,    28,    35,    29,     3,     7,    30
+      33,    34,    35,    36,    18,    23,    20,    14,    22,    23,
+      24,    25,    28,    35,    29,     3,     7,    30
     };
   }
 
@@ -1238,7 +1231,7 @@ private static final byte[] yycheck_ = yycheck_init();
        0,    26,    27,    28,    29,    29,    30,    30,    30,    30,
       30,    30,    30,    30,    30,    30,    30,    30,    30,    30,
       30,    31,    31,    32,    32,    33,    33,    33,    34,    34,
-      35,    35,    35,    36,    36,    36,    36
+      35,    35,    36,    36,    36,    36
     };
   }
 
@@ -1251,7 +1244,7 @@ private static final byte[] yycheck_ = yycheck_init();
        0,     2,     1,     2,     0,     2,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     3,     3,
        3,     0,     1,     1,     3,     0,     1,     2,     1,     3,
-       2,     4,     2,     1,     1,     3,     3
+       4,     2,     1,     1,     3,     3
     };
   }
 
@@ -1318,6 +1311,6 @@ private static final byte[] yycheck_ = yycheck_init();
 
   public PatternWithName root;
 
-/* "../src/main/java/wjson/parser/Program.java":1322  */
+/* "../src/main/java/wjson/parser/Program.java":1315  */
 
 }

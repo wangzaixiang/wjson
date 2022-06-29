@@ -70,8 +70,9 @@ fields		:	field { $$ = append( new HashMap<String, PatternWithName>(), $1.name, 
 		|	fields ',' field { $$ = append($1, $3.name, $3.pattern); }
 		;
 
-field		:	opt_bind path { $$ = new Field($2, new PatternWithName($1, new AnyVal("any")) ); }
-		|	path ':' opt_bind jsval { $$ = new Field($1, new PatternWithName($3, $4)); }
+// { "a": "hello", "b": id@_, }
+field		:	// opt_bind path { $$ = new Field($2, new PatternWithName($1, new AnyVal("any")) ); }
+		    path ':' opt_bind jsval { $$ = new Field($1, new PatternWithName($3, $4)); }
 		|   opt_bind Anys { $$ = new Field("_*", new PatternWithName($1, new AnyVals())); }
 		;	
 
