@@ -13,9 +13,6 @@ enum JsPattern:
   case StringPattern(value: String)   // string literal
   case ArrPattern(value: List[JsPattern.Variable])  // array literal
   case ObjPattern(value: Map[String, JsPattern.Variable])  // object literal
-  case BooleanType()  // ground type: boolean
-  case NumberType()   // ground type: number
-  case StringType()   // ground type: string
   case AnyVal(ground: JsPattern.GroundType)       // _: match any JsVal
   case AnyVals()      // _*: match any number of JsVals
   case TaggedString(tag:String, content:String)  // id"pattern": match a specific JsVal
