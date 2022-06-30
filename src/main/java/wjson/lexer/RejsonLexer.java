@@ -221,6 +221,9 @@ public class RejsonLexer implements Program.Lexer {
         else if("integer".equals(content)){
             return INTEGER;
         }
+        else if("boolean".equals(content)){
+            return BOOLEAN;
+        }
         else {
             last_val =  content;
             return ID;
