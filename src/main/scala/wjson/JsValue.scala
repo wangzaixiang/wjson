@@ -110,142 +110,142 @@ object JsValueMapper:
     ${JsValueMapperMacro.generateImpl[T]}
 
   given JsValueMapper[Boolean] with
-    def fromJson(js: JsValue): Boolean = js match
-      case JsBoolean(value) => value
+    inline def fromJson(js: JsValue): Boolean = js match
+      case x: JsBoolean => x.value
       case _ => throw new Exception(s"Expected JsBoolen but ${js.getClass}")
-    def toJson(t: Boolean): JsValue = if(t) JsValue.JsTrue else JsValue.JsFalse
+    inline def toJson(t: Boolean): JsValue = if(t) JsValue.JsTrue else JsValue.JsFalse
 
   given JsValueMapper[Byte] with
-    def fromJson(js: JsValue): Byte = js match
-      case JsNumber(value) => value.toByte
+    inline def fromJson(js: JsValue): Byte = js match
+      case x:JsNumber => x.value.toByte
       case _ => throw new Exception(s"Expected JsNumber but ${js.getClass}")
-    def toJson(t: Byte): JsValue = JsNumber(t)
+    inline def toJson(t: Byte): JsValue = JsNumber(t)
 
   given JsValueMapper[Short] with
-    def fromJson(js: JsValue): Short = js match
-      case JsNumber(value) => value.toShort
+    inline def fromJson(js: JsValue): Short = js match
+      case x:JsNumber => x.value.toShort
       case _ => throw new Exception(s"Expected JsNumber but ${js.getClass}")
-    def toJson(t: Short): JsValue = JsNumber(t)
+    inline def toJson(t: Short): JsValue = JsNumber(t)
 
   given JsValueMapper[Int] with
-    def fromJson(js: JsValue): Int = js match
-      case JsNumber(value) => value.toInt
+    inline def fromJson(js: JsValue): Int = js match
+      case x:JsNumber => x.value.toInt
       case _ => throw new Exception(s"Expected JsNumber but ${js.getClass}")
-    def toJson(t: Int): JsValue = JsNumber(t)
+    inline def toJson(t: Int): JsValue = JsNumber(t)
 
   given JsValueMapper[Long] with
-    def fromJson(js: JsValue): Long = js match
-      case JsNumber(value) => value.toLong
+    inline def fromJson(js: JsValue): Long = js match
+      case x:JsNumber => x.value.toLong
       case _ => throw new Exception(s"Expected JsNumber but ${js.getClass}")
-    def toJson(t: Long): JsValue = JsNumber(t)
+    inline def toJson(t: Long): JsValue = JsNumber(t)
 
   given JsValueMapper[Float] with
-    def fromJson(js: JsValue): Float = js match
-      case JsNumber(value) => value.toFloat
+    inline def fromJson(js: JsValue): Float = js match
+      case x:JsNumber => x.value.toFloat
       case _ => throw new Exception(s"Expected JsNumber but ${js.getClass}")
-    def toJson(t: Float): JsValue = JsNumber(t)
+    inline def toJson(t: Float): JsValue = JsNumber(t)
 
   given JsValueMapper[Double] with
-    def fromJson(js: JsValue): Double = js match
-      case JsNumber(value) => value
+    inline def fromJson(js: JsValue): Double = js match
+      case x:JsNumber => x.value
       case _ => throw new Exception(s"Expected JsNumber but ${js.getClass}")
-    def toJson(t: Double): JsValue = JsNumber(t)
+    inline def toJson(t: Double): JsValue = JsNumber(t)
 
   given JsValueMapper[BigDecimal] with
-    def fromJson(js: JsValue): BigDecimal = js match
-      case JsNumber(value) => BigDecimal(value)
+    inline def fromJson(js: JsValue): BigDecimal = js match
+      case x:JsNumber => BigDecimal(x.value)
       case _ => throw new Exception(s"Expected JsNumber but ${js.getClass}")
-    def toJson(t: BigDecimal): JsValue = JsNumber(t.doubleValue)
+    inline def toJson(t: BigDecimal): JsValue = JsNumber(t.doubleValue)
 
   given JsValueMapper[BigInt] with
-    def fromJson(js: JsValue): BigInt = js match
-      case JsNumber(value) => BigInt(value.toString)
+    inline def fromJson(js: JsValue): BigInt = js match
+      case x:JsNumber => BigInt(x.value.toString)
       case _ => throw new Exception(s"Expected JsNumber but ${js.getClass}")
-    def toJson(t:BigInt): JsValue = JsNumber(t.doubleValue)
+    inline def toJson(t:BigInt): JsValue = JsNumber(t.doubleValue)
 
   given jmBigDecimal: JsValueMapper[java.math.BigDecimal] with
-    def fromJson(js: JsValue): java.math.BigDecimal = js match
-      case JsNumber(value) => java.math.BigDecimal(value)
+    inline def fromJson(js: JsValue): java.math.BigDecimal = js match
+      case x: JsNumber => java.math.BigDecimal(x.value)
       case _ => throw new Exception(s"Expected JsNumber but ${js.getClass}")
-    def toJson(t: java.math.BigDecimal): JsValue = JsNumber(t.doubleValue)
+    inline def toJson(t: java.math.BigDecimal): JsValue = JsNumber(t.doubleValue)
 
   given JsValueMapper[java.math.BigInteger] with
-    def fromJson(js: JsValue): java.math.BigInteger = js match
-      case JsNumber(value) => java.math.BigInteger(value.toString)
+    inline def fromJson(js: JsValue): java.math.BigInteger = js match
+      case x:JsNumber => java.math.BigInteger(x.value.toString)
       case _ => throw new Exception(s"Expected JsNumber but ${js.getClass}")
-    def toJson(t:java.math.BigInteger): JsValue = JsNumber(t.doubleValue)
+    inline def toJson(t:java.math.BigInteger): JsValue = JsNumber(t.doubleValue)
 
   given JsValueMapper[String] with
-    def fromJson(js: JsValue): String = js match
-      case JsString(value) => value
+    inline def fromJson(js: JsValue): String = js match
+      case x:JsString => x.value
       case _ => throw new Exception(s"Expected JsString but ${js.getClass}")
-    def toJson(t: String): JsValue = JsString(t)
+    inline def toJson(t: String): JsValue = JsString(t)
 
   // TODO is there a better way to do this? Seq/List/Vector/Set/SortedSet/Map/SortedMap
   given [T:JsValueMapper :ClassTag]: JsValueMapper[Array[T]] with
-    def fromJson(js: JsValue): Array[T] = js match
-      case JsArray(value) => value.map(summon[JsValueMapper[T]].fromJson).toArray
+    inline def fromJson(js: JsValue): Array[T] = js match
+      case x:JsArray => x.elements.map(summon[JsValueMapper[T]].fromJson).toArray
       case _ => throw new Exception(s"Expected JsArray but ${js.getClass}")
-    def toJson(t: Array[T]): JsValue = JsArray(t.map(summon[JsValueMapper[T]].toJson))
+    inline def toJson(t: Array[T]): JsValue = JsArray(t.map(summon[JsValueMapper[T]].toJson))
 
 
   given [T:JsValueMapper]: JsValueMapper[Seq[T]] with
-    def fromJson(js: JsValue): Seq[T] = js match
-        case JsArray(value) => value.map(summon[JsValueMapper[T]].fromJson)
+    inline def fromJson(js: JsValue): Seq[T] = js match
+        case x:JsArray => x.elements.map(summon[JsValueMapper[T]].fromJson)
         case _ => throw new Exception(s"Expected JsArr but ${js.getClass}")
-    def toJson(t: Seq[T]): JsValue = JsArray(t.map(summon[JsValueMapper[T]].toJson) )
+    inline def toJson(t: Seq[T]): JsValue = JsArray(t.map(summon[JsValueMapper[T]].toJson) )
 
   given [T: JsValueMapper]: JsValueMapper[List[T]] with
-    def fromJson(js: JsValue): List[T] = js match
-      case JsArray(value) => value.map(summon[JsValueMapper[T]].fromJson).toList
+    inline def fromJson(js: JsValue): List[T] = js match
+      case x:JsArray => x.elements.map(summon[JsValueMapper[T]].fromJson).toList
       case _ => throw new Exception(s"Expected JsArr but ${js.getClass}")
-    def toJson(t: List[T]): JsValue = JsArray(t.map(summon[JsValueMapper[T]].toJson):_*)
+    inline def toJson(t: List[T]): JsValue = JsArray(t.map(summon[JsValueMapper[T]].toJson):_*)
 
   given [T: JsValueMapper]: JsValueMapper[Vector[T]] with
-    def fromJson(js: JsValue): Vector[T] = js match
-      case JsArray(value) => value.map(summon[JsValueMapper[T]].fromJson).toVector
+    inline def fromJson(js: JsValue): Vector[T] = js match
+      case x:JsArray => x.elements.map(summon[JsValueMapper[T]].fromJson).toVector
       case _ => throw new Exception(s"Expected JsArr but ${js.getClass}")
-    def toJson(t: Vector[T]): JsValue = JsArray(t.map(summon[JsValueMapper[T]].toJson):_*)
+    inline def toJson(t: Vector[T]): JsValue = JsArray(t.map(summon[JsValueMapper[T]].toJson):_*)
 
   given [T: JsValueMapper]: JsValueMapper[Set[T]] with
-    def fromJson(js: JsValue): Set[T] = js match
-      case JsArray(value) => value.map(summon[JsValueMapper[T]].fromJson).toSet
+    inline def fromJson(js: JsValue): Set[T] = js match
+      case x:JsArray => x.elements.map(summon[JsValueMapper[T]].fromJson).toSet
       case _ => throw new Exception(s"Expected JsArr but ${js.getClass}")
-    def toJson(t: Set[T]): JsValue = JsArray(t.map(summon[JsValueMapper[T]].toJson).toSeq:_*)
+    inline def toJson(t: Set[T]): JsValue = JsArray(t.map(summon[JsValueMapper[T]].toJson).toSeq:_*)
 
   given [T: JsValueMapper :Ordering]: JsValueMapper[SortedSet[T]] with
-    def fromJson(js: JsValue): SortedSet[T] = js match
-      case JsArray(value) => SortedSet( value.map(summon[JsValueMapper[T]].fromJson):_* )
+    inline def fromJson(js: JsValue): SortedSet[T] = js match
+      case x:JsArray => SortedSet( x.elements.map(summon[JsValueMapper[T]].fromJson):_* )
       case _ => throw new Exception(s"Expected JsArr but ${js.getClass}")
-    def toJson(t: SortedSet[T]): JsValue = JsArray(t.toList.map(summon[JsValueMapper[T]].toJson):_*)
+    inline def toJson(t: SortedSet[T]): JsValue = JsArray(t.toList.map(summon[JsValueMapper[T]].toJson):_*)
 
   given [T:JsValueMapper]: JsValueMapper[Map[String, T]] with
-    def fromJson(js: JsValue): Map[String, T] = js match
-      case JsObject(value) => value.map( x => (x._1, summon[JsValueMapper[T]].fromJson(x._2) ) ).toMap
+    inline def fromJson(js: JsValue): Map[String, T] = js match
+      case o:JsObject => o.fields.map( x => (x._1, summon[JsValueMapper[T]].fromJson(x._2) ) ).toMap
       case _ => throw new Exception(s"Expected JsObj but ${js.getClass}")
-    def toJson(t: Map[String, T]): JsValue = JsObject( t.map( x => (x._1, summon[JsValueMapper[T]].toJson(x._2)) ) )
+    inline def toJson(t: Map[String, T]): JsValue = JsObject( t.map( x => (x._1, summon[JsValueMapper[T]].toJson(x._2)) ) )
 
   given [T:JsValueMapper]: JsValueMapper[SortedMap[String, T]] with
-    def fromJson(js: JsValue): SortedMap[String, T] = js match
-      case JsObject(fields) => SortedMap( fields.map( x => (x._1, summon[JsValueMapper[T]].fromJson(x._2) ) ).toSeq:_* )
+    inline def fromJson(js: JsValue): SortedMap[String, T] = js match
+      case o:JsObject => SortedMap( o.fields.map( x => (x._1, summon[JsValueMapper[T]].fromJson(x._2) ) ).toSeq:_* )
       case _ => throw new Exception(s"Expected JsObj but ${js.getClass}")
-    def toJson(t: SortedMap[String, T]): JsValue = JsObject( t.toMap.map( x => (x._1, summon[JsValueMapper[T]].toJson(x._2)) ) )
+    inline def toJson(t: SortedMap[String, T]): JsValue = JsObject( t.toMap.map( x => (x._1, summon[JsValueMapper[T]].toJson(x._2)) ) )
 
   given [T: JsValueMapper]: JsValueMapper[Option[T]] with
-    def fromJson(js: JsValue): Option[T] = js match
+    inline def fromJson(js: JsValue): Option[T] = js match
       case JsNull => None
       case _ => Some(summon[JsValueMapper[T]].fromJson(js))
-    def toJson(t: Option[T]): JsValue = t match
-      case Some(x) => summon[JsValueMapper[T]].toJson(x)
+    inline def toJson(t: Option[T]): JsValue = t match
+      case x:Some[T]=> summon[JsValueMapper[T]].toJson(x.value)
       case None => JsNull
 
-  def caseFieldGet[T: JsValueMapper](js: JsObject, name: String): T =
+  inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String): T =
     js.fields.get(name) match
       case Some(JsNull) => throw new Exception("Expected field " + name + " not exists in JSON")
       case Some(value) => summon[JsValueMapper[T]].fromJson(value)
       case None => throw new Exception("Expected field " + name + " not exists in JSON")
 
-  def caseFieldGet[T: JsValueMapper](js: JsObject, name: String, default:T): T =
+  inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String, default:T): T =
     js.fields.get(name) match
       case Some(JsNull) => default
       case Some(value) => summon[JsValueMapper[T]].fromJson(value)
