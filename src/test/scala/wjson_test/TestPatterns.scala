@@ -7,6 +7,13 @@ import wjson.{given, *}
 
 class TestPatterns extends AnyFunSuite {
 
+  test("simple values") {
+    json"1" match {
+      case rejson"${i}@integer" => assert(i == 1)
+      case _ => assert(false)
+    }
+  }
+
   test("simple patterns") {
     val js =
       json"""{
