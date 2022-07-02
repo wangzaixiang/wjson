@@ -1,5 +1,7 @@
 package wjson_test
 
+import scala.language.implicitConversions
+
 import org.scalatest.funsuite.AnyFunSuite
 import wjson.{given, *}
 
@@ -21,11 +23,12 @@ class TestPatterns extends AnyFunSuite {
         "c": ${c}@_,
         "d": ${d}@"ddd"
         }""" =>
-        println(s"a=$a, b=$b, c=$c, d=$d")
+        // println(s"a=$a, b=$b, c=$c, d=$d")
         assert(a == 1)
         assert(b == "123")
-        assert(c.asInstanceOf[JsBoolean].value == true)
+        assert(c == JsBoolean(true) )
         assert(d == "ddd")
+      case _ => assert(false)
     }
 
   }
