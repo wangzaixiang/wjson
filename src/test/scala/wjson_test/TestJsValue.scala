@@ -1,5 +1,6 @@
 package wjson_test
 
+import scala.language.implicitConversions
 import org.scalatest.funsuite.AnyFunSuite
 import wjson.*
 
@@ -85,47 +86,5 @@ class TestJsValue extends AnyFunSuite {
     assert( none.toJson == JsNull)
     assert( JsNull.convertTo[Option[Int]] == None)
   }
-
-  test("case class mappers"){
-
-    case class User1(name: String, age: Int, address: Address1) derives JsValueMapper
-    case class Address1(street: String, city: String) derives JsValueMapper
-
-    val user = User1("John", 30, Address1("Main St", "New York"))
-    assert( user.toJson == JsObject("name"->"John","age"->30,
-      "address"->JsObject("street"->"Main St","city"->"New York")))
-    assert( json"{name:'John',age:30,address:{street:'Main St',city:'New York'}}".convertTo[User1] == user)
-
-  }
-
-  test("Self Reference Case Class") {
-    case class User2(name: String, age: Int, owner: User2 = null) derives JsValueMapper
-
-    val user = User2("John", 30, null)
-    val child = User2("Mary", 10, user)
-
-    val js = child.toJson
-
-    assert( js == JsObject("name"->"Mary","age"->10,
-      "owner"->JsObject("name"->"John","age"->30)))
-    assert( js.convertTo[User2] == child)
-
-  }
-
-  // failed, cross reference not support yet
-  /*
-  test("Cross Reference Case Class") {
-    case class Teacher(name: String, age: Int, student: Student = null)
-    case class Student(name: String, age: Int /*, teacher: Teacher*/)
-
-    val teacher = Teacher("John", 30, null)
-    val student = Student("Mary", 10 /*, teacher*/)
-
-    val js1 = teacher.toJson
-    val js2 = student.toJson
-
-    println(s"js1 = $js1 js2 = $js2")
-  }
-  */
 
 }

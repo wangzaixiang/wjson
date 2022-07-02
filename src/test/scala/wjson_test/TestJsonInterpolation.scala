@@ -1,5 +1,7 @@
 package wjson_test
 
+import scala.language.implicitConversions
+
 import org.scalatest.funsuite.AnyFunSuite
 import wjson.{given, *}
 

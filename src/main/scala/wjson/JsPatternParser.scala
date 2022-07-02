@@ -27,7 +27,7 @@ class JsPatternParser extends RegexParsers:
       `null` ^^ { x => JsPattern.NullPattern() }
       | boolean ^^ { x => JsPattern.BoolPattern(x.toBoolean) }
       | string ^^ { x => JsPattern.StringPattern(x) }
-      | integer ^^ { x => JsPattern.NumberPattern(x.toLong) }
+      | integer ^^ { x => JsPattern.NumberPattern(x.toDouble) }
       | float ^^ { x => JsPattern.NumberPattern(x.toDouble) }
       | type_string ^^ { x => JsPattern.AnyVal(GroundType.STRING) }
       | type_number ^^ {x => JsPattern.AnyVal(GroundType.NUMBER) }
