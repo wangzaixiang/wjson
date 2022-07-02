@@ -159,35 +159,41 @@ class TestPatterns extends AnyFunSuite {
   test("test nesting object matching") {
     val js =
       json"""{
-      "a": {"b": {c: "ccc", d: 123}}
+      "obj": {"foo": {"bar": 123, baz: "abc", far: true}, biz: {list: [1,2,3,4,5]}},
+      "obj2": {"foo2": {"bar2": 123, baz2: "abc"}},
+      "obj3": {objArr: [{a: 1, b: 2}, {a: 3, b: 4}]},
     }"""
     
     js match {
       case rejson"""
-         {
-          a: ${a}@{
-            b: {
-              c: ${c}@"ccc",
-              d: ${d}@123,
-            }
-          }
+        {
+          obj/foo: ${foo}@{far:boolean, ${other}@_*},
+          obj/foo/baz: ${baz}@"abc",
+          obj/biz: ${biz}@{list:[$first@1, ${rest}@_*], _*},
+          obj/biz/list: ${list}@[1,${snd}@integer,3],
+          obj: $obj@_,
+          obj2/foo2: ${foo2}@{bar2: 123, baz2: "abc"},
+          obj3: {
+            objArr: $array@[$f@{a:$aaa@1,b:$bb@integer}, $rest3@_*],
+          },
         }""" =>
-        assert(a == JsObject("b" -> JsObject("c" -> JsString("ccc"), "d" -> JsNumber(123))))
-        assert(c == "ccc")
-        assert(d == 123)
+        assert(foo == JsObject("bar" -> JsNumber(123), "far" -> true, "baz" -> JsString("abc")))
+        assert(other == Map("bar" -> JsNumber(123)))
+        assert(baz == "abc")
+        assert(obj == JsObject("foo" -> JsObject("bar" -> JsNumber(123), "far" -> true, "baz" -> JsString("abc")), "biz" -> JsObject("list" -> JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))))
+        assert(foo2 == JsObject("bar2" -> JsNumber(123), "baz2" -> JsString("abc")))
+        assert(biz == JsObject("list" -> JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5))))
+        assert(list == JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
+        assert(first == 1)
+        assert(snd == 2)
+        assert(rest == List(JsNumber(4), JsNumber(5)))
+        assert(array == JsArray(JsObject("a" -> JsNumber(1), "b" -> JsNumber(2)), JsObject("a" -> JsNumber(3), "b" -> JsNumber(4))))
+        assert(rest3 == List(JsObject("a" -> JsNumber(3), "b" -> JsNumber(4))))
+        assert(f == JsObject("a" -> JsNumber(1), "b" -> JsNumber(2)))
+        assert(aaa == 1)
+        assert(bb == 2)
       case _ => assert(false)
     }
-    
-//    js match {
-//      case rejson"""
-//         {
-//          a/b/c: ${c}@"ccc",
-//          a/b/d: ${d}@123,
-//        }""" =>
-//        assert(c == "ccc")
-//        assert(d == 123)
-//      case _ => assert(false)
-//    }
   }
   
   test("test anyVals in object") {

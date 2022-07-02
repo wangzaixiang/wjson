@@ -2,8 +2,9 @@ package wjson
 
 import wjson.*
 import wjson.JsPattern.Variable
-import wjson.JsPattern._
+import wjson.JsPattern.*
 
+import scala.annotation.tailrec
 import scala.jdk.CollectionConverters.*
 
 class RejsonInterpolation(sc: StringContext) {
@@ -71,7 +72,82 @@ class RejsonInterpolation(sc: StringContext) {
     case _ => value
   
   private def exactInlineKeys(unmerge: Map[String, Variable]): Map[String, Variable] = {
-    unmerge
+    
+    def getVariableName(names: Set[String], key: String): String = {
+      val varNames = names.filterNot(_ == null)
+      if varNames.isEmpty then null else
+        assert(varNames.size == 1, s"more than one variable name for: ${key}")
+        varNames.head
+    }
+    
+    def deepMerge(key: String, left: Option[Variable], right: Option[Variable]): Variable = {
+      (left, right) match
+        case (None, Some(r)) => r
+        case (Some(l), None) => l
+        case (Some(Variable(leftName, AnyVal(_))), Some(right@Variable(rightName, _))) =>
+          Variable(getVariableName(Set(leftName, rightName), key), right.pattern)
+        case (Some(left@Variable(leftName, _)), Some(Variable(rightName, AnyVal(_)))) =>
+          Variable(getVariableName(Set(leftName, rightName), key), left.pattern)
+        
+        case (Some(Variable(leftName, ObjPattern(leftMap))), Some(Variable(rightName, ObjPattern(rightMap)))) =>
+          val varName = getVariableName(Set(leftName, rightName), key)
+          val value: Map[String, Variable] = Map((null, Variable(null, AnyVals()))) ++ leftMap.foldLeft(rightMap) {
+            case (map, (k, v)) => map + (k -> deepMerge(k, map.get(k), Some(v)))
+          }
+          Variable(varName, ObjPattern(value))
+        
+        case (Some(Variable(leftName, ArrPattern(leftArr))), Some(Variable(rightName, ArrPattern(rightArr)))) =>
+          val varName = getVariableName(Set(leftName, rightName), key)
+          val (leftAnyVals, leftVariables) = leftArr.partition(_.pattern == AnyVals())
+          val (rightAnyVals, rightVariables) = rightArr.partition(_.pattern == AnyVals())
+          val value = leftVariables.zipAll(rightVariables, null, null).zipWithIndex.map {
+            case ((null, right), _) => right
+            case ((left, null), _) => left
+            case ((left@Variable(_, ObjPattern(_)), right@Variable(_, ObjPattern(_))), idx) =>
+              deepMerge(idx.toString, Some(left), Some(right))
+            case ((left@Variable(_, ArrPattern(_)), right@Variable(_, ArrPattern(_))), idx) =>
+              deepMerge(idx.toString, Some(left), Some(right))
+            case ((Variable(leftName, leftPtn), Variable(rightName, rightPtn)), _) =>
+              val varName = getVariableName(Set(leftName, rightName), key)
+              assert(leftPtn == rightPtn, "different patterns in array")
+              Variable(varName, leftPtn)
+          }
+          
+          val anyVals = (leftAnyVals.map(_.name) ::: rightAnyVals.map(_.name)).distinct.map(Variable(_, AnyVals()))
+          assert(anyVals.size <= 1, s"more than one variable name for: ${key}")
+          
+          Variable(varName, ArrPattern(value ::: anyVals))
+        case (Some(Variable(leftName, left)), Some(Variable(rightName, right))) =>
+          val varName = getVariableName(Set(leftName, rightName), key)
+          assert(left == right, s"more than one check pattern exist for: ${key}")
+          Variable(varName, left)
+        
+        case _ => throw new Exception("Cannot merge")
+    }
+    
+    def merge(toMerge: List[(String, Variable)]): Map[String, Variable] = {
+      val merged = collection.mutable.Map[String, Variable]()
+      toMerge.foreach { case (key, value) =>
+        merged.get(key) match
+          case Some(variable) => merged(key) = deepMerge(key, Some(variable), Some(value))
+          case _ => merged += key -> value
+      }
+      merged.toMap
+    }
+    
+    @tailrec
+    def unfoldPaths(paths: List[String], thisMap: (String, Variable)): (String, Variable) = {
+      paths match
+        case head :: tail => unfoldPaths(tail, (head -> Variable(null, ObjPattern(Map(thisMap._1 -> thisMap._2)))))
+        case _ => thisMap
+    }
+    
+    merge(unmerge.toList.map {
+      case tuple@(InlineKey(paths), value) => paths.reverse.toList match
+        case head :: tail => unfoldPaths(tail, (head, value))
+        case _ => tuple
+      case a@_ => a
+    })
   }
   
   private def objPatternMatch(value: Map[String, Variable], input: JsValue,
@@ -80,9 +156,9 @@ class RejsonInterpolation(sc: StringContext) {
     val inputObj = input.asInstanceOf[JsObject]
     
     val (_declared, others) = value.partition(_._2.pattern != AnyVals())
-  
+    
     val declared = exactInlineKeys(_declared)
-  
+    
     others.values.headOption match
       case Some(Variable(p, _)) =>
         val declaredKeys = declared.keys.toSet
@@ -95,12 +171,7 @@ class RejsonInterpolation(sc: StringContext) {
         assert(declared.keys.toSet == inputObj.fields.keys.toSet)
     
     declared.foreach {
-      case (key, Variable(Placeholder(index), ptn: ArrPattern)) =>
-        assert(inputObj.fields contains key)
-        results(index) = parseType(inputObj.fields(key), ptn)
-        patternMatch(Variable(null, ptn), inputObj.fields(key), results)
-      
-      case (key, Variable(Placeholder(index), ptn: ObjPattern)) =>
+      case (key, Variable(Placeholder(index), ptn: (ArrPattern | ObjPattern))) =>
         assert(inputObj.fields contains key)
         results(index) = parseType(inputObj.fields(key), ptn)
         patternMatch(Variable(null, ptn), inputObj.fields(key), results)
@@ -128,10 +199,17 @@ class RejsonInterpolation(sc: StringContext) {
     value.zipWithIndex.foreach {
       case (Variable(Placeholder(index), JsPattern.AnyVals()), idx) =>
         results(index) = inputArr.elements.takeRight(inputArr.elements.size - idx)
+      case (Variable(_, JsPattern.AnyVals()), _) =>
+      
+      case (x@Variable(Placeholder(index), ptn: (ArrPattern | ObjPattern)), y: Int) =>
+        results(index) = parseType(inputArr.elements(y), ptn)
+        patternMatch(x, inputArr.elements(y), results)
+      
       case (Variable(Placeholder(index), ptn), y: Int) =>
         results(index) = parseType(inputArr.elements(y), ptn)
+      
       case (x: Variable, y: Int) =>
-        patternMatch(x, inputArr.elements.apply(y), results)
+        patternMatch(x, inputArr.elements(y), results)
     }
   }
   
