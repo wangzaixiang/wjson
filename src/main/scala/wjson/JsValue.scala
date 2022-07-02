@@ -241,15 +241,16 @@ object JsValueMapper:
 
   inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String): T =
     js.fields.get(name) match
-      case Some(JsNull) => throw new Exception("Expected field " + name + " not exists in JSON")
-      case Some(value) => summon[JsValueMapper[T]].fromJson(value)
-      case None => throw new Exception("Expected field " + name + " not exists in JSON")
+      case x: Some[JsValue] if x.value ne JsNull => summon[JsValueMapper[T]].fromJson(x.value)
+      case _ => throw new Exception("Expected field " + name + " not exists in JSON")
 
   inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String, default:T): T =
     js.fields.get(name) match
-      case Some(JsNull) => default
-      case Some(value) => summon[JsValueMapper[T]].fromJson(value)
-      case None => default
+      case x: Some[JsValue] => if x.value eq JsNull then default else summon[JsValueMapper[T]].fromJson(x.value)
+      case _ => default
+//      case Some(JsNull) => default
+//      case Some(value) => summon[JsValueMapper[T]].fromJson(value)
+//      case None => default
 
 extension [T: JsValueMapper](obj: T)
   def toJson: JsValue = summon[JsValueMapper[T]].toJson(obj)
