@@ -285,10 +285,7 @@ extension [T: JsValueMapper](obj: T)
 extension (js: JsValue)
   def convertTo[T: JsValueMapper]: T = summon[JsValueMapper[T]].fromJson(js)
 
-private class rejson_sc(sc: StringContext):
-  def unapplySeq(js: JsValue): Option[Seq[Any]] = Some(Seq("hello", 20, JsString("abc"), 100))  // ???
-
 extension (sc: StringContext)
   def json = new JsonInterpolation(sc)
-  def rejson = rejson_sc(sc)
+  def rejson = new RejsonInterpolation(sc)
 
