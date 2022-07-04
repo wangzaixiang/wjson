@@ -33,6 +33,8 @@ class JsPatternParser extends RegexParsers:
       | type_number ^^ {x => JsPattern.AnyVal(GroundType.NUMBER) }
       | type_boolean ^^ {x => JsPattern.AnyVal(GroundType.BOOLEAN) }
       | type_integer ^^ {x => JsPattern.AnyVal(GroundType.INTEGER) }
+      | type_array ^^ {x => JsPattern.AnyVal(GroundType.ARRAY) }
+      | type_object ^^ {x => JsPattern.AnyVal(GroundType.OBJECT) }
       | any1 ^^ {x => JsPattern.AnyVal(GroundType.ANY) }
       | tagedString ^^ {
         case TagPattern(tag, content) => JsPattern.TaggedString(tag, content)
@@ -43,6 +45,8 @@ class JsPatternParser extends RegexParsers:
   def type_number: Parser[String] = "number"
   def type_boolean: Parser[String] = "boolean"
   def type_integer: Parser[String] = "integer"
+  def type_array: Parser[String] = "array"
+  def type_object: Parser[String] = "object"
   def any1: Parser[String] = "_"
   def anys: Parser[String] = "_*"
   def tagedString: Parser[String] = """[a-zA-Z][a-zA-Z0-9_]*"[^"]*"""".r

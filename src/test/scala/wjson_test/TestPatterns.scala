@@ -22,23 +22,29 @@ class TestPatterns extends AnyFunSuite {
       "b": "123",
       "c": true,
       "d": "ddd",
-      "e": null
+      "e": null,
+      "f": [1.2],
+      "g": {a: 1}
     }"""
 
     js match {
       case rejson"""{
         "a": ${a}@integer,
         "b": ${b}@string,
-        "c": ${c}@_,
+        "c": ${c}@boolean,
         "d": ${d}@"ddd",
-        "e": ${e}@null
+        "e": ${e}@null,
+        "f": ${f}@array,
+        "g": ${g}@object
         }""" =>
         // println(s"a=$a, b=$b, c=$c, d=$d")
         assert(a == 1)
         assert(b == "123")
-        assert(c == JsBoolean(true) )
+        assert(c == true )
         assert(d == "ddd")
         assert(e == null)
+        assert(f == List(JsNumber(1.2)))
+        assert(g == Map("a" -> JsNumber(1)))
       case _ => assert(false)
     }
   

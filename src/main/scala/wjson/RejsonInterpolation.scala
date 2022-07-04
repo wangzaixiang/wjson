@@ -4,6 +4,7 @@ import wjson.*
 import wjson.JsPattern.Variable
 import wjson.JsPattern.*
 import wjson.JsValue
+import wjson.JsValue.JsObject
 
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters.*
@@ -204,9 +205,14 @@ class RejsonInterpolation(sc: StringContext):
       assert(input.isInstanceOf[JsBoolean])
       setResult(results, name, input.asInstanceOf[JsBoolean].value)
 
-//    case Variable(name, JsPattern.AnyVal(GroundType.ARRAY)) =>
-//    case Variable(name, JsPattern.AnyVal(GroundType.OBJECT)) =>
-    
+    case Variable(name, JsPattern.AnyVal(GroundType.ARRAY)) =>
+      assert(input.isInstanceOf[JsArray])
+      setResult(results, name, input.asInstanceOf[JsArray].elements)
+      
+    case Variable(name, JsPattern.AnyVal(GroundType.OBJECT)) =>
+      assert(input.isInstanceOf[JsObject])
+      setResult(results, name, input.asInstanceOf[JsObject].fields)
+      
     case Variable(name, JsPattern.AnyVal(GroundType.ANY) | JsPattern.AnyVals()) =>
       setResult(results, name, input)
     
