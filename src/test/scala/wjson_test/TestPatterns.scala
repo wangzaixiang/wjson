@@ -209,8 +209,8 @@ class TestPatterns extends AnyFunSuite {
         {
           obj/foo: ${foo}@{far:boolean, ${other}@_*},
           obj/foo/baz: ${baz}@"abc",
-          obj/biz: ${biz}@{list:[$first@1, ${rest}@_*], _*},
-          obj/biz/list: ${list}@[_,${snd}@integer,3],
+          obj/biz: ${biz}@{list:[$first@1 ], _*},
+          obj/biz/list: ${list}@[_,${snd}@integer,3, 4, 5],
           obj: $obj@_,
           obj2/foo2: ${foo2}@{bar2: 123, baz2: "abc"},
           obj3: {
@@ -226,7 +226,7 @@ class TestPatterns extends AnyFunSuite {
         assert(list == JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
         assert(first == 1)
         assert(snd == 2)
-        assert(rest == JsArray(List(JsNumber(4), JsNumber(5))))
+//        assert(rest == JsArray(List(JsNumber(4), JsNumber(5))))
         assert(array == JsArray(JsObject("a" -> JsNumber(1), "b" -> JsNumber(2)), JsObject("a" -> JsNumber(3), "b" -> JsNumber(4))))
         assert(rest3 == JsArray(List(JsObject("a" -> JsNumber(3), "b" -> JsNumber(4)))))
         assert(f == JsObject("a" -> JsNumber(1), "b" -> JsNumber(2)))
@@ -270,7 +270,7 @@ class TestPatterns extends AnyFunSuite {
           a: ${a}@[1,2,3, ${other}@_*, 5],
         }""" =>
         assert(a == JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
-        assert(other == JsArray(JsNumber(4), JsNumber(5)))
+        assert(other == JsArray(JsNumber(4)))
       case _ => assert(false)
     }
     js match {
@@ -304,7 +304,7 @@ class TestPatterns extends AnyFunSuite {
           {
             a: a@_,
             obj/objArr: [{a:1,b:2}, _*],
-            obj: obj@{foo: foo@_, objArr: o@[_, aa@_*]},
+            obj: obj@{foo: foo@_, objArr: o@[_, _*]},
             other@_*,
           }""")).unapplyAsMap(js) match
       case Some(map) =>
