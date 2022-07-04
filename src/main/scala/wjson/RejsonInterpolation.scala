@@ -8,28 +8,26 @@ import wjson.JsValue.{JsArray, JsBoolean, JsNumber, JsObject}
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters.*
 
-class RejsonInterpolation(sc: StringContext) {
+/**
+ * rejson is a pattern language for JSON
+ */
+class RejsonInterpolation(sc: StringContext):
   
-  object Placeholder {
-    
-    def apply(index: Int): JsString = JsString("placeholder_" + index + "_")
-    
-    def unapply(str: String): Option[String] = {
+  object Placeholder:
+    def apply(index: Int): JsString = JsString("_placeholder_" + index + "_")
+    def unapply(str: String): Option[String] =
       str match
-        case str if str.startsWith("placeholder_") && str.endsWith("_") =>
-          Some(str.substring(12, str.length - 1))
+        case str if str.startsWith("_placeholder_") && str.endsWith("_") =>
+          Some(str.substring(13, str.length - 1))
         case _ => None
-    }
-  }
-  
-  object InlineKey {
-    def unapply(str: String): Option[Seq[String]] = {
+
+  object InlineKey:
+    def unapply(str: String): Option[Seq[String]] =
       str match
         case str if str.contains("/") =>
           Some(str.split("/").toSeq.filter(_.nonEmpty))
         case _ => None
-    }
-  }
+
   
   def unapplyAsMap(input: JsValue): Option[Map[String, Any]] = {
     
@@ -43,29 +41,26 @@ class RejsonInterpolation(sc: StringContext) {
     
     Seq.range(0, sc.parts.length - 1).foreach { x => results(x.toString) = null }
     
-    try {
+    try
       patternMatch(pattern, input, results)
       Some(results.toMap)
-    }
-    catch {
+    catch
       case ex: Throwable =>
         None
-    }
-  }
   
+
   def unapplySeq(input: JsValue): Option[Seq[Any]] =
     unapplyAsMap(input).map(_.toList.filter(_._1.toIntOption.isDefined).sortBy(_._1.toInt).map(_._2))
   
-  private def exactInlineKeys(unmerge: Map[String, Variable]): Map[String, Variable] = {
+  private def exactInlineKeys(unmerge: Map[String, Variable]): Map[String, Variable] =
     
-    def getVariableName(names: Set[String], key: String): String = {
+    def getVariableName(names: Set[String], key: String): String =
       val varNames = names.filterNot(_ == null)
       if varNames.isEmpty then null else
         assert(varNames.size == 1, s"more than one variable name for: ${key}")
         varNames.head
-    }
-    
-    def deepMerge(key: String, left: Option[Variable], right: Option[Variable]): Variable = {
+
+    def deepMerge(key: String, left: Option[Variable], right: Option[Variable]): Variable =
       (left, right) match
         case (None, Some(r)) => r
         case (Some(l), None) => l
@@ -105,9 +100,9 @@ class RejsonInterpolation(sc: StringContext) {
           Variable(varName, left)
         
         case _ => throw new Exception("Cannot merge")
-    }
+
     
-    def merge(toMerge: List[(String, Variable)]): Map[String, Variable] = {
+    def merge(toMerge: List[(String, Variable)]): Map[String, Variable] =
       val merged = collection.mutable.Map[String, Variable]()
       toMerge.foreach { case (key, value) =>
         merged.get(key) match
@@ -115,15 +110,14 @@ class RejsonInterpolation(sc: StringContext) {
           case _ => merged += key -> value
       }
       merged.toMap
-    }
+
     
     @tailrec
-    def unfoldPaths(paths: List[String], thisMap: (String, Variable)): (String, Variable) = {
+    def unfoldPaths(paths: List[String], thisMap: (String, Variable)): (String, Variable) =
       paths match
         case head :: tail =>
           unfoldPaths(tail, (head -> Variable(null, ObjPattern(Map((thisMap._1, thisMap._2), (null, Variable(null, AnyVals())))))))
         case _ => thisMap
-    }
     
     merge(unmerge.toList.map {
       case tuple@(InlineKey(paths), value) => paths.reverse.toList match
@@ -131,10 +125,10 @@ class RejsonInterpolation(sc: StringContext) {
         case _ => tuple
       case a@_ => a
     })
-  }
+
   
   private def objPatternMatch(value: Map[String, Variable], input: JsValue,
-                              results: collection.mutable.Map[String, Any]): Unit = {
+                              results: collection.mutable.Map[String, Any]): Unit =
     
     assert(input.isInstanceOf[JsObject])
     val inputObj = input.asInstanceOf[JsObject]
@@ -149,34 +143,31 @@ class RejsonInterpolation(sc: StringContext) {
       case (_, x@Variable(_, JsPattern.AnyVals())) =>
         val declaredKeys = _declared.keys.toSet
         patternMatch(x, JsObject(inputObj.fields.filterNot { case (k, _) => declaredKeys.contains(k) }), results)
-      
+
       case (key, _value) =>
         assert(inputObj.fields contains key)
         patternMatch(_value, inputObj.fields(key), results)
     }
-  }
   
   private def arrPatternMatch(value: List[Variable], input: JsValue,
-                              results: collection.mutable.Map[String, Any]): Unit = {
+                              results: collection.mutable.Map[String, Any]): Unit =
     assert(input.isInstanceOf[JsArray])
     val inputArr = input.asInstanceOf[JsArray]
     
-    if (value.exists(_.pattern == JsPattern.AnyVals())) {
+    if (value.exists(_.pattern == JsPattern.AnyVals())) then
       assert(input.asInstanceOf[JsArray].elements.size >= value.size - 1)
-    } else {
+    else
       assert(input.asInstanceOf[JsArray].elements.size == value.size)
-    }
-    
+
     value.zipWithIndex.foreach {
       case (x@Variable(_, JsPattern.AnyVals()), idx) =>
         patternMatch(x, JsArray(inputArr.elements.takeRight(inputArr.elements.size - idx)), results)
-      
+
       case (x: Variable, y: Int) =>
         assert(inputArr.elements.size > y)
         patternMatch(x, inputArr.elements(y), results)
     }
-  }
-  
+
   private def setResult[T](results: collection.mutable.Map[String, Any], name: String, value: T): Unit = {
     name match
       case null =>
@@ -231,4 +222,8 @@ class RejsonInterpolation(sc: StringContext) {
     case Variable(name, JsPattern.TaggedString(tag, content)) =>
       // todo
       assert(true)
-}
+    case Variable(_, JsPattern.AnyVals()) => // TODO
+
+    case Variable(_, JsPattern.NullPattern()) => // TODO
+    case Variable(_, JsPattern.AnyVal(GroundType.ARRAY)) => // TODO
+    case Variable(_, JsPattern.AnyVal(GroundType.OBJECT)) => // TODO

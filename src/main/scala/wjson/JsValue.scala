@@ -109,6 +109,36 @@ object JsValueMapper:
   inline given[T](using deriving.Mirror.ProductOf[T]): JsValueMapper[T] =
     ${JsValueMapperMacro.generateImpl[T]}
 
+  given JsValueMapper[JsBoolean] with
+    inline def fromJson(js: JsValue): JsBoolean = js match
+      case x: JsBoolean => x
+      case _ => throw new Exception(s"expect JsBoolean but ${js.getClass}")
+    inline def toJson(t: JsBoolean): JsValue = t
+
+  given JsValueMapper[JsString] with
+    inline def fromJson(js: JsValue): JsString = js match
+      case x: JsString => x
+      case _ => throw new Exception(s"expect JsString but ${js.getClass}")
+    inline def toJson(t: JsString): JsValue = t
+
+  given JsValueMapper[JsNumber] with
+    inline def fromJson(js: JsValue): JsNumber = js match
+      case x: JsNumber => x
+      case _ => throw new Exception(s"expect JsNumber but ${js.getClass}")
+    inline def toJson(t: JsNumber): JsValue = t
+
+  given JsValueMapper[JsObject] with
+    inline def fromJson(js: JsValue): JsObject = js match
+      case x: JsObject => x
+      case _ => throw new Exception(s"expect JsObject but ${js.getClass}")
+    inline def toJson(t: JsObject): JsValue = t
+
+  given JsValueMapper[JsArray] with
+    inline def fromJson(js: JsValue): JsArray = js match
+      case x: JsArray => x
+      case _ => throw new Exception(s"expect JsArray but ${js.getClass}")
+    inline def toJson(t: JsArray): JsValue = t
+
   given JsValueMapper[Boolean] with
     inline def fromJson(js: JsValue): Boolean = js match
       case x: JsBoolean => x.value
@@ -137,7 +167,7 @@ object JsValueMapper:
     inline def fromJson(js: JsValue): Long = js match
       case x:JsNumber => x.value.toLong
       case _ => throw new Exception(s"Expected JsNumber but ${js.getClass}")
-    inline def toJson(t: Long): JsValue = JsNumber(t)
+    inline def toJson(t: Long): JsValue = JsNumber(t.toDouble)
 
   given JsValueMapper[Float] with
     inline def fromJson(js: JsValue): Float = js match
@@ -186,7 +216,7 @@ object JsValueMapper:
     inline def fromJson(js: JsValue): Array[T] = js match
       case x:JsArray => x.elements.map(summon[JsValueMapper[T]].fromJson).toArray
       case _ => throw new Exception(s"Expected JsArray but ${js.getClass}")
-    inline def toJson(t: Array[T]): JsValue = JsArray(t.map(summon[JsValueMapper[T]].toJson))
+    inline def toJson(t: Array[T]): JsValue = JsArray(t.map(summon[JsValueMapper[T]].toJson).toSeq)
 
 
   given [T:JsValueMapper]: JsValueMapper[Seq[T]] with
@@ -241,15 +271,13 @@ object JsValueMapper:
 
   inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String): T =
     js.fields.get(name) match
-      case Some(JsNull) => throw new Exception("Expected field " + name + " not exists in JSON")
-      case Some(value) => summon[JsValueMapper[T]].fromJson(value)
-      case None => throw new Exception("Expected field " + name + " not exists in JSON")
+      case x: Some[JsValue] if x.value ne JsNull => summon[JsValueMapper[T]].fromJson(x.value)
+      case _ => throw new Exception("Expected field " + name + " not exists in JSON")
 
   inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String, default:T): T =
     js.fields.get(name) match
-      case Some(JsNull) => default
-      case Some(value) => summon[JsValueMapper[T]].fromJson(value)
-      case None => default
+      case x: Some[JsValue] => if x.value eq JsNull then default else summon[JsValueMapper[T]].fromJson(x.value)
+      case _ => default
 
 extension [T: JsValueMapper](obj: T)
   def toJson: JsValue = summon[JsValueMapper[T]].toJson(obj)

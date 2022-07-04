@@ -1,11 +1,20 @@
 package wjson_test
 
+import scala.language.implicitConversions
+
 import org.scalatest.funsuite.AnyFunSuite
 import wjson.JsValue.{JsArray, JsNumber, JsObject}
 import wjson.{*, given}
 
 class TestPatterns extends AnyFunSuite {
-  
+
+  test("simple values") {
+    json"1" match {
+      case rejson"${i}@integer" => assert(i == 1)
+      case _ => assert(false)
+    }
+  }
+
   test("simple patterns") {
     val js =
       json"""{
@@ -14,7 +23,7 @@ class TestPatterns extends AnyFunSuite {
       "c": true,
       "d": "ddd"
     }"""
-    
+
     js match {
       case rejson"""{
         "a": ${a}@integer,
@@ -22,11 +31,12 @@ class TestPatterns extends AnyFunSuite {
         "c": ${c}@_,
         "d": ${d}@"ddd"
         }""" =>
-        println(s"a=$a, b=$b, c=$c, d=$d")
+        // println(s"a=$a, b=$b, c=$c, d=$d")
         assert(a == 1)
         assert(b == "123")
-        assert(c.asInstanceOf[JsBoolean].value == true)
+        assert(c == JsBoolean(true) )
         assert(d == "ddd")
+      case _ => assert(false)
     }
   
     json"1" match {
@@ -48,10 +58,10 @@ class TestPatterns extends AnyFunSuite {
       case rejson"""$a@{a:1}""" =>
         assert(a == JsObject("a" -> JsNumber(1)))
       case _ => assert(false)
-    }
-    
   }
-  
+
+  }
+
   
   test("type matching") {
     val js =
@@ -61,7 +71,7 @@ class TestPatterns extends AnyFunSuite {
       "c": true,
       "d": 12.3
     }"""
-    
+
     js match {
       case rejson"""
          {
@@ -72,7 +82,7 @@ class TestPatterns extends AnyFunSuite {
         }""" =>
       case _ => assert(false)
     }
-    
+
     js match {
       case rejson"""
          {
@@ -87,9 +97,9 @@ class TestPatterns extends AnyFunSuite {
         assert(d == 12.3)
       case _ => assert(true)
     }
-    
+
   }
-  
+
   test("value matching") {
     val js =
       json"""{
@@ -99,7 +109,7 @@ class TestPatterns extends AnyFunSuite {
       "d": 12.3,
       "e": -12
     }"""
-    
+
     js match {
       case rejson"""
          {
@@ -111,7 +121,7 @@ class TestPatterns extends AnyFunSuite {
         }""" => assert(true)
       case _ => assert(false)
     }
-    
+
     js match {
       case rejson"""
          {
@@ -128,15 +138,15 @@ class TestPatterns extends AnyFunSuite {
         assert(e == -12)
       case _ => assert(false)
     }
-    
+
   }
-  
+
   test("array matching") {
     val js =
       json"""{
       "a": [1,2,3],
     }"""
-    
+
     js match {
       case rejson"""
          {
@@ -146,7 +156,7 @@ class TestPatterns extends AnyFunSuite {
       case _ =>
         assert(false, "should not match")
     }
-  
+
     js match {
       case rejson"""
          {
@@ -156,7 +166,7 @@ class TestPatterns extends AnyFunSuite {
       case _ =>
         assert(true, "should not match")
     }
-    
+
     js match {
       case rejson"""
          {
@@ -176,7 +186,7 @@ class TestPatterns extends AnyFunSuite {
       case _ => assert(false)
     }
   }
-  
+
   test("nested object matching") {
     val js =
       json"""{
@@ -184,7 +194,7 @@ class TestPatterns extends AnyFunSuite {
       "obj2": {"foo2": {"bar2": 123, baz2: "abc"}},
       "obj3": {objArr: [{a: 1, b: 2}, {a: 3, b: 4}]},
     }"""
-    
+
     js match {
       case rejson"""
         {
@@ -216,7 +226,7 @@ class TestPatterns extends AnyFunSuite {
       case _ => assert(false)
     }
   }
-  
+
   test("anyVals in object") {
     val js =
       json"""{
@@ -224,7 +234,7 @@ class TestPatterns extends AnyFunSuite {
       "b": 2,
       "c": true,
     }"""
-    
+
     js match {
       case rejson"""
          {
@@ -238,18 +248,18 @@ class TestPatterns extends AnyFunSuite {
       case _ => assert(false)
     }
   }
-  
+
   test("anyVals in array") {
     val js =
       json"""{
       "a": [1,2,3,4,5],
     }"""
-    
+
     js match {
       case rejson"""
          {
           a: ${a}@[1,2,3, ${other}@_*, 5],
-        }""" => 
+        }""" =>
         assert(a == JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
         assert(other == JsArray(JsNumber(4), JsNumber(5)))
       case _ => assert(false)

@@ -33,17 +33,21 @@ object JsValueMapperMacro:
       val name = field.name
       val expr = field.tree.asInstanceOf[ValDef].tpt.tpe.asType match
         case '[t] =>
-          // TODO better way to get the '{this} expr
-          val summonValue: Option[Expr[JsValueMapper[t]]] =
+          val summonValue: Option[Expr[JsValueMapper[t]]] = // better way to get this reference
             if(TypeRepr.of[t].widen =:= TypeRepr.of[T].widen) Some(THIS.asInstanceOf[Expr[JsValueMapper[t]]])
             else Expr.summon[JsValueMapper[t]]
+
+          val isOption = TypeRepr.of[t].widen <:< TypeRepr.of[Option[?]]
           summonValue match
             case Some(mapper) =>
               defaultParams.get(name) match
                 case Some(deff) =>
                   ' { caseFieldGet[t]($jso, ${Expr(name)}, ${deff.asInstanceOf[Expr[t]]})(using $mapper) }
-                case None =>
+                case None if isOption == false =>
                   ' { caseFieldGet[t]($jso, ${Expr(name)})(using $mapper) }
+                case None if isOption =>
+                  ' { caseFieldGet[t]($jso, ${Expr(name)}, None.asInstanceOf[t])(using $mapper) }
+                case _ => ???
             case None =>
               report.error(s"No JsValueMapper found, owner: ${TypeTree.of[T].show} field:$name type:${TypeTree.of[t].show}")
               '{ ??? }
