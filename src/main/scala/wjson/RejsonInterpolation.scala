@@ -3,7 +3,7 @@ package wjson
 import wjson.*
 import wjson.JsPattern.Variable
 import wjson.JsPattern.*
-import wjson.JsValue.{JsArray, JsBoolean, JsNumber, JsObject}
+import wjson.JsValue
 
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters.*
@@ -29,7 +29,7 @@ class RejsonInterpolation(sc: StringContext):
         case _ => None
 
   
-  def unapplyAsMap(input: JsValue): Option[Map[String, Any]] = {
+  def unapplyAsMap(input: JsValue): Option[Map[String, Any]] =
     
     val str = if sc.parts.size > 1 then
       sc.parts.head + sc.parts.tail.zipWithIndex.map { case (p, idx) => Placeholder(idx).value + p }.mkString
@@ -52,7 +52,7 @@ class RejsonInterpolation(sc: StringContext):
   def unapplySeq(input: JsValue): Option[Seq[Any]] =
     unapplyAsMap(input).map(_.toList.filter(_._1.toIntOption.isDefined).sortBy(_._1.toInt).map(_._2))
   
-  private def exactInlineKeys(unmerge: Map[String, Variable]): Map[String, Variable] =
+  def exactInlineKeys(unmerge: Map[String, Variable]): Map[String, Variable] =
     
     def getVariableName(names: Set[String], key: String): String =
       val varNames = names.filterNot(_ == null)
@@ -203,6 +203,9 @@ class RejsonInterpolation(sc: StringContext):
     case Variable(name, JsPattern.AnyVal(GroundType.BOOLEAN)) =>
       assert(input.isInstanceOf[JsBoolean])
       setResult(results, name, input.asInstanceOf[JsBoolean].value)
+
+//    case Variable(name, JsPattern.AnyVal(GroundType.ARRAY)) =>
+//    case Variable(name, JsPattern.AnyVal(GroundType.OBJECT)) =>
     
     case Variable(name, JsPattern.AnyVal(GroundType.ANY) | JsPattern.AnyVals()) =>
       setResult(results, name, input)
@@ -222,8 +225,8 @@ class RejsonInterpolation(sc: StringContext):
     case Variable(name, JsPattern.TaggedString(tag, content)) =>
       // todo
       assert(true)
-    case Variable(_, JsPattern.AnyVals()) => // TODO
 
-    case Variable(_, JsPattern.NullPattern()) => // TODO
-    case Variable(_, JsPattern.AnyVal(GroundType.ARRAY)) => // TODO
-    case Variable(_, JsPattern.AnyVal(GroundType.OBJECT)) => // TODO
+    case Variable(name, JsPattern.NullPattern()) =>
+      assert(input == JsNull)
+      setResult(results, name, null)
+      

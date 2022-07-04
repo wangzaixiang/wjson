@@ -21,7 +21,8 @@ class TestPatterns extends AnyFunSuite {
       "a": 1,
       "b": "123",
       "c": true,
-      "d": "ddd"
+      "d": "ddd",
+      "e": null
     }"""
 
     js match {
@@ -29,13 +30,15 @@ class TestPatterns extends AnyFunSuite {
         "a": ${a}@integer,
         "b": ${b}@string,
         "c": ${c}@_,
-        "d": ${d}@"ddd"
+        "d": ${d}@"ddd",
+        "e": ${e}@null
         }""" =>
         // println(s"a=$a, b=$b, c=$c, d=$d")
         assert(a == 1)
         assert(b == "123")
         assert(c == JsBoolean(true) )
         assert(d == "ddd")
+        assert(e == null)
       case _ => assert(false)
     }
   
