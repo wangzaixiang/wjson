@@ -1,8 +1,8 @@
 package wjson_test
 
 import org.scalatest.funsuite.AnyFunSuite
-import wjson.JsValue.{JsArray, JsNumber}
-import wjson.{given, *}
+import wjson.JsValue.{JsArray, JsNumber, JsObject}
+import wjson.{*, given}
 
 class TestPatterns extends AnyFunSuite {
   
@@ -28,11 +28,32 @@ class TestPatterns extends AnyFunSuite {
         assert(c.asInstanceOf[JsBoolean].value == true)
         assert(d == "ddd")
     }
+  
+    json"1" match {
+      case rejson"""$a@1""" =>
+        assert(a == 1)
+      case _ => assert(false)
+    }
+    json"true" match {
+      case rejson"""$a@_""" =>
+        assert(a == JsBoolean(true))
+      case _ => assert(false)
+    }
+    json"[1,2,3]" match {
+      case rejson"""$a@_*""" =>
+        assert(a == JsArray(JsNumber(1), JsNumber(2), JsNumber(3)))
+      case _ => assert(false)
+    }
+    json"{a: 1}" match {
+      case rejson"""$a@{a:1}""" =>
+        assert(a == JsObject("a" -> JsNumber(1)))
+      case _ => assert(false)
+    }
     
   }
   
   
-  test("test type matching") {
+  test("type matching") {
     val js =
       json"""{
       "a": 1,
@@ -69,7 +90,7 @@ class TestPatterns extends AnyFunSuite {
     
   }
   
-  test("test value matching") {
+  test("value matching") {
     val js =
       json"""{
       "a": 1,
@@ -110,7 +131,7 @@ class TestPatterns extends AnyFunSuite {
     
   }
   
-  test("test array matching") {
+  test("array matching") {
     val js =
       json"""{
       "a": [1,2,3],
@@ -156,7 +177,7 @@ class TestPatterns extends AnyFunSuite {
     }
   }
   
-  test("test nesting object matching") {
+  test("nested object matching") {
     val js =
       json"""{
       "obj": {"foo": {"bar": 123, baz: "abc", far: true}, biz: {list: [1,2,3,4,5]}},
@@ -170,7 +191,7 @@ class TestPatterns extends AnyFunSuite {
           obj/foo: ${foo}@{far:boolean, ${other}@_*},
           obj/foo/baz: ${baz}@"abc",
           obj/biz: ${biz}@{list:[$first@1, ${rest}@_*], _*},
-          obj/biz/list: ${list}@[1,${snd}@integer,3],
+          obj/biz/list: ${list}@[_,${snd}@integer,3],
           obj: $obj@_,
           obj2/foo2: ${foo2}@{bar2: 123, baz2: "abc"},
           obj3: {
@@ -178,7 +199,7 @@ class TestPatterns extends AnyFunSuite {
           },
         }""" =>
         assert(foo == JsObject("bar" -> JsNumber(123), "far" -> true, "baz" -> JsString("abc")))
-        assert(other == Map("bar" -> JsNumber(123)))
+        assert(other == JsObject(Map("bar" -> JsNumber(123))))
         assert(baz == "abc")
         assert(obj == JsObject("foo" -> JsObject("bar" -> JsNumber(123), "far" -> true, "baz" -> JsString("abc")), "biz" -> JsObject("list" -> JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))))
         assert(foo2 == JsObject("bar2" -> JsNumber(123), "baz2" -> JsString("abc")))
@@ -186,9 +207,9 @@ class TestPatterns extends AnyFunSuite {
         assert(list == JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
         assert(first == 1)
         assert(snd == 2)
-        assert(rest == List(JsNumber(4), JsNumber(5)))
+        assert(rest == JsArray(List(JsNumber(4), JsNumber(5))))
         assert(array == JsArray(JsObject("a" -> JsNumber(1), "b" -> JsNumber(2)), JsObject("a" -> JsNumber(3), "b" -> JsNumber(4))))
-        assert(rest3 == List(JsObject("a" -> JsNumber(3), "b" -> JsNumber(4))))
+        assert(rest3 == JsArray(List(JsObject("a" -> JsNumber(3), "b" -> JsNumber(4)))))
         assert(f == JsObject("a" -> JsNumber(1), "b" -> JsNumber(2)))
         assert(aaa == 1)
         assert(bb == 2)
@@ -196,7 +217,7 @@ class TestPatterns extends AnyFunSuite {
     }
   }
   
-  test("test anyVals in object") {
+  test("anyVals in object") {
     val js =
       json"""{
       "a": "1",
@@ -213,24 +234,24 @@ class TestPatterns extends AnyFunSuite {
         }""" =>
         assert(a == "1")
         assert(b == 2)
-        assert(other == Map("c" -> JsBoolean(true)))
+        assert(other == JsObject(Map("c" -> JsBoolean(true))))
       case _ => assert(false)
     }
   }
   
-  test("test anyVals in array") {
+  test("anyVals in array") {
     val js =
       json"""{
-      "a": [1,2,3]
+      "a": [1,2,3,4,5],
     }"""
     
     js match {
       case rejson"""
          {
-          a: ${a}@[1,2,3, ${other}@_*],
+          a: ${a}@[1,2,3, ${other}@_*, 5],
         }""" => 
-        assert(a == JsArray(JsNumber(1), JsNumber(2), JsNumber(3)))
-        assert(other == List())
+        assert(a == JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
+        assert(other == JsArray(JsNumber(4), JsNumber(5)))
       case _ => assert(false)
     }
     js match {
@@ -238,9 +259,39 @@ class TestPatterns extends AnyFunSuite {
          {
           a: ${a}@[1,2,${other}@_*],
         }""" =>
-        assert(a == JsArray(JsNumber(1), JsNumber(2), JsNumber(3)))
-        assert(other == List(JsNumber(3)))
+        assert(a == JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
+        assert(other == JsArray(JsNumber(3), JsNumber(4), JsNumber(5)))
       case _ => assert(false)
     }
+  }
+  
+  test("unapply to map") {
+    val js =
+      json"""{
+      "a": 1,
+      "obj": {
+          "foo": {
+            "bar": [1,2,3], baz: "abc", far: true
+           },
+           objArr: [{a: 1, b: 2}, {a: 3, b: 4}]
+      },
+      b:234
+      
+    }"""
+    
+    new RejsonInterpolation(
+      StringContext.apply(
+        """
+          {
+            a: a@_,
+            obj/objArr: [{a:1,b:2}, _*],
+            obj: obj@{foo: foo@_, objArr: o@[_, aa@_*]},
+            other@_*,
+          }""")).unapplyAsMap(js) match
+      case Some(map) =>
+        assert(map("a") == JsNumber(1))
+        assert(map("obj") == JsObject("foo" -> JsObject("bar" -> JsArray(JsNumber(1), JsNumber(2), JsNumber(3)), "baz" -> JsString("abc"), "far" -> JsBoolean(true)), "objArr" -> JsArray(JsObject("a" -> JsNumber(1), "b" -> JsNumber(2)), JsObject("a" -> JsNumber(3), "b" -> JsNumber(4)))))
+        assert(map("other") == JsObject("b" -> JsNumber(234)))
+      case _ => assert(false)
   }
 }
