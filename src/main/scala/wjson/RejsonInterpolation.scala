@@ -37,8 +37,8 @@ class RejsonInterpolation(sc: StringContext):
     if(m1) Some(results.toMap) else None
 
   def unapplySeq(input: JsValue): Option[Seq[Any]] =
-    val variables = unapplyAsMap(input)
-    variables.map( map => Seq.range(0, sc.parts.length-1).map( i => map(Placeholder(i)) ) )
+    unapplyAsMap(input)
+      .map( results => Seq.range(0, sc.parts.length-1).map( i => results(Placeholder(i)) ) )
 
   private def arrPatternMatch(arrPattern: ArrPattern, input: JsValue, results: MutableMap[String, Any]): Boolean =
     input match
