@@ -197,6 +197,7 @@ class TestPatterns extends AnyFunSuite {
   }
 
   test("nested object matching") {
+    import wjson.given
     val js =
       json"""{
       "obj": {"foo": {"bar": 123, baz: "abc", far: true}, biz: {list: [1,2,3,4,5]}},
@@ -218,7 +219,7 @@ class TestPatterns extends AnyFunSuite {
           },
         }""" =>
         assert(foo == JsObject("bar" -> JsNumber(123), "far" -> true, "baz" -> JsString("abc")))
-        assert(other == JsObject(Map("bar" -> JsNumber(123))))
+        assert(other == JsObject("bar" -> 123, "baz" -> "abc"))
         assert(baz == "abc")
         assert(obj == JsObject("foo" -> JsObject("bar" -> JsNumber(123), "far" -> true, "baz" -> JsString("abc")), "biz" -> JsObject("list" -> JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))))
         assert(foo2 == JsObject("bar2" -> JsNumber(123), "baz2" -> JsString("abc")))

@@ -62,8 +62,8 @@ class JsPatternParser extends RegexParsers:
   }
 
   def `object`: Parser[JsPattern.ObjPattern] = "{" ~> repsep(field, ",") <~ opt(",") ~ "}" ^^ {
-    case Nil => JsPattern.ObjPattern(Map.empty)
-    case xs => JsPattern.ObjPattern(xs.toMap)
+    case Nil => JsPattern.ObjPattern(Nil)
+    case xs => JsPattern.ObjPattern(xs)
   }
   def field: Parser[(String,Variable)] =
     (path ~ ":" ~ bind_jsval) ^^ { case p ~ _ ~ v => (p, v) } |

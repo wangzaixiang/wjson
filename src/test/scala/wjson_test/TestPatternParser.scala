@@ -13,9 +13,9 @@ class TestPatternParser extends AnyFunSuite {
     val result = JsPatternParser.parseRejson(program)
 
     assert(result  == Variable(null, ObjPattern(
-            Map("name" -> Variable(null, StringPattern("wangzx")),
-                "age" -> Variable(null, NumberPattern(18)))
-      )))
+            "name" -> Variable(null, StringPattern("wangzx")),
+            "age" -> Variable(null, NumberPattern(18)))
+    ))
 
   }
 
@@ -26,9 +26,9 @@ class TestPatternParser extends AnyFunSuite {
     val result = JsPatternParser.parseRejson(program)
 
     assert(result  == Variable(null, ObjPattern(
-      Map("name" -> Variable(null, StringPattern("wangzx")),
-        "age" -> Variable("age", NumberPattern(18)))
-    )))
+      "name" -> Variable(null, StringPattern("wangzx")),
+      "age" -> Variable("age", NumberPattern(18)))
+    ))
 
   }
 
@@ -59,7 +59,7 @@ class TestPatternParser extends AnyFunSuite {
     val result = JsPatternParser.parseRejson(program)
 
     assert(result  == Variable(null, ObjPattern(
-      Map("name1" -> Variable(null, StringPattern("wangzx")),
+        "name1" -> Variable(null, StringPattern("wangzx")),
         "name2" -> Variable(null, StringPattern("wangzx")),
         "name3" -> Variable(null, StringPattern("wangzx")),
         "name4" -> Variable(null, NullPattern()),
@@ -83,11 +83,11 @@ class TestPatternParser extends AnyFunSuite {
             Variable("c", NumberPattern(3))
           ))),
         "obj" -> Variable("o", ObjPattern(
-          Map("name" -> Variable(null, StringPattern("wangzx")),
-            "age" -> Variable("age", NumberPattern(18)))
-        )),
-        (null:String) -> Variable("anys", AnyVals())))
-    ))
+          "name" -> Variable(null, StringPattern("wangzx")),
+          "age" -> Variable("age", NumberPattern(18)))
+        ),
+        (null: String) -> Variable("anys", AnyVals())
+      ) ))
 
   }
 
