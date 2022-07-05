@@ -331,18 +331,22 @@ class TestPatterns extends AnyFunSuite {
            }
            """ =>
         assert(u == json"[{name:'John', age:10, sex:'male'},{name:'steven', age:12, sex:'male'}]")
+      case _ => assert(false)
 
     js match
       case rejson"""{users[{name:'Rose'}]: [ ${u1}@_, ${u2}@_ ] }""" =>
         assert(u1 == json"{age:21, name:'Rose', sex: 'female'}")
         assert(u2 == json"{age:11, name:'Rose', sex: 'female'}")
+      case _ => assert(false)
 
     js match
       case rejson"""{users[{name:'Rose'}][0]:  ${u1}@_ }""" =>
         assert(u1 == json"{age:21, name:'Rose', sex: 'female'}")
+      case _ => assert(false)
 
     js match
       case rejson""" { users[3]/name: 'steven' }  """ => assert(true)
+      case _ => assert(false)
   }
 
 
