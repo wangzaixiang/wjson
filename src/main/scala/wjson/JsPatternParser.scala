@@ -68,13 +68,20 @@ class JsPatternParser extends RegexParsers:
     case Nil => JsPattern.ObjPattern(Nil)
     case xs => JsPattern.ObjPattern(xs)
   }
-  def field: Parser[(String,Variable)] =
+  def field: Parser[(JsPattern.Path,Variable)] =
     (path ~ ":" ~ bind_jsval) ^^ { case p ~ _ ~ v => (p, v) } |
     (opt(binding) ~ anys) ^^ { case binding ~ _ => (null, Variable(binding.getOrElse(null), AnyVals())) }
-  def path: Parser[String] = string | ident ~ rep("/" ~> ident) ^^ {
-    case id ~ Nil => id;
-    case id ~ xs => id + "/" + xs.mkString("/")
-  }
+
+  def path: Parser[JsPattern.Path] = string ^^ { x => Path( Seq(PathElement.Simple(x)) ) } |
+    ident ~ rep(path_next)  ^^ {
+      case id ~ path => Path( Seq( PathElement.Simple(id) ) ++ path )
+    }
+  def path_next: Parser[PathElement] = '/' ~> ident ^^ {x => PathElement.Simple(x) } |
+    '[' ~> jsval <~ ']' ^^ {
+      case NumberPattern(value) if value == value.toInt =>
+        PathElement.Index(value.toInt)
+      case x@_ =>  PathElement.ArrayFilter(x)
+    }
 
 
 object JsPatternParser {

@@ -33,6 +33,7 @@ class TestPatternParser extends AnyFunSuite {
   }
 
   test("a complete program") {
+    import wjson.JsPattern.*
 
     val program =
     """

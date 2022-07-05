@@ -14,7 +14,7 @@ class TestTagStringPatterns extends AnyFunSuite {
     }""" match
       case rejson"""{
         num: ${a}@mvel'it % 2 == 0',
-        str: ${b}@mvel'it.length == 6',
+        str: ${b}@mvel'it.startsWith("12")',
         addr: mvel'it.state == "gd"',
         scores: mvel'it[2] == 3'
        } """ =>

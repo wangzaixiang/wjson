@@ -314,4 +314,36 @@ class TestPatterns extends AnyFunSuite {
         assert(map("other") == JsObject("b" -> JsNumber(234)))
       case _ => assert(false)
   }
+
+  test("array filters"){
+    val js = json"""
+      { users: [
+          { name: 'John', age: 10, sex: 'male' },
+          { name: 'Rose', age: 21, sex: 'female' },
+          { name: 'Rose', age: 11, sex: 'female' },
+          { name: 'steven', age:12, sex: 'male' }
+        ]
+      }
+    """
+    js match
+      case rejson"""
+           { users[{sex:'male'}] : ${u: JsValue}@_,
+           }
+           """ =>
+        assert(u == json"[{name:'John', age:10, sex:'male'},{name:'steven', age:12, sex:'male'}]")
+
+    js match
+      case rejson"""{users[{name:'Rose'}]: [ ${u1}@_, ${u2}@_ ] }""" =>
+        assert(u1 == json"{age:21, name:'Rose', sex: 'female'}")
+        assert(u2 == json"{age:11, name:'Rose', sex: 'female'}")
+
+    js match
+      case rejson"""{users[{name:'Rose'}][0]:  ${u1}@_ }""" =>
+        assert(u1 == json"{age:21, name:'Rose', sex: 'female'}")
+
+    js match
+      case rejson""" { users[3]/name: 'steven' }  """ => assert(true)
+  }
+
+
 }
