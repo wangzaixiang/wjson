@@ -1,10 +1,12 @@
 package wjson
 
+import org.mvel2.MVEL
 import wjson.*
-import JsPattern.*
+import wjson.JsPattern.*
 
+import java.lang
 import scala.annotation.tailrec
-import scala.collection.mutable.{Map => MutableMap}
+import scala.collection.mutable.Map as MutableMap
 import scala.jdk.CollectionConverters.*
 
 /**
@@ -98,6 +100,23 @@ class RejsonInterpolation(sc: StringContext):
             }
       case _ => false
 
+  private def asPojo(value: JsValue): AnyRef = value match
+    case JsNull => null
+    case JsBoolean(v) => new java.lang.Boolean(v)
+    case JsNumber(v) => new lang.Double(v)
+    case JsString(v) => v
+    case JsArray(v) => v.map(asPojo).toArray
+    case JsObject(v) => v.map(x => (x._1, asPojo((x._2)))).asJava
+
+  private def tagStringMatch(tag: String, content: String, value: JsValue, results: MutableMap[String, Any]): Boolean =
+    val context = Map("it"->asPojo(value), "js" -> value).asJava
+    if tag == "mvel" then
+      MVEL.eval(content, context) == true
+    else if tag == "r" && value.isInstanceOf[JsString] then
+      java.util.regex.Pattern.compile(content).matcher(value.asInstanceOf[JsString].value).matches()
+    else
+      false
+
   extension (bool: Boolean)
     def ifTrue( result: =>Any ): Option[Any] = if(bool) Some(result) else None
 
@@ -121,7 +140,7 @@ class RejsonInterpolation(sc: StringContext):
       case AnyVal(GroundType.ARRAY) => input.isInstanceOf[JsArray] ifTrue input.asInstanceOf[JsArray].elements
       case AnyVal(GroundType.ANY) => true ifTrue input
       case AnyVals() => throw new RuntimeException("_* not supported to using here")
-      case TaggedString(tag:String, content:String) => ??? // TODO
+      case TaggedString(tag:String, content:String) => tagStringMatch(tag, content, input, results) ifTrue input // TODO
 
     value match
       case Some(v) if variable.name != null =>
