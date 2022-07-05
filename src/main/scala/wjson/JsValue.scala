@@ -109,6 +109,10 @@ object JsValueMapper:
   inline given[T](using deriving.Mirror.ProductOf[T]): JsValueMapper[T] =
     ${JsValueMapperMacro.generateImpl[T]}
 
+  given JsValueMapper[JsValue] with
+    inline def fromJson(js: JsValue): JsValue = js
+    inline def toJson(t: JsValue): JsValue = t
+  
   given JsValueMapper[JsBoolean] with
     inline def fromJson(js: JsValue): JsBoolean = js match
       case x: JsBoolean => x
