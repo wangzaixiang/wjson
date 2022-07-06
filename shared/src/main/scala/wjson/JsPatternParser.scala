@@ -77,6 +77,7 @@ class JsPatternParser extends RegexParsers:
       case id ~ path => Path( Seq( PathElement.Simple(id) ) ++ path )
     }
   def path_next: Parser[PathElement] = '/' ~> ident ^^ {x => PathElement.Simple(x) } |
+    "/*" ^^ { x => PathElement.ArrayFilter( JsPattern.AnyVal(GroundType.ANY) ) } |
     '[' ~> jsval <~ ']' ^^ {
       case NumberPattern(value) if value == value.toInt =>
         PathElement.Index(value.toInt)

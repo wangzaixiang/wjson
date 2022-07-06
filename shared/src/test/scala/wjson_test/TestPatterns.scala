@@ -298,16 +298,14 @@ class TestPatterns extends AnyFunSuite {
       b:234
       
     }"""
-    
-    new RejsonInterpolation(
-      StringContext.apply(
-        """
+
+    new RejsonMatcher( """
           {
             a: a@_,
             obj/objArr: [{a:1,b:2}, _*],
             obj: obj@{foo: foo@_, objArr: o@[_, _*]},
             other@_*,
-          }""")).unapplyAsMap(js) match
+          }""").unapplyAsMap(js) match
       case Some(map) =>
         assert(map("a") == JsNumber(1))
         assert(map("obj") == JsObject("foo" -> JsObject("bar" -> JsArray(JsNumber(1), JsNumber(2), JsNumber(3)), "baz" -> JsString("abc"), "far" -> JsBoolean(true)), "objArr" -> JsArray(JsObject("a" -> JsNumber(1), "b" -> JsNumber(2)), JsObject("a" -> JsNumber(3), "b" -> JsNumber(4)))))
@@ -347,6 +345,68 @@ class TestPatterns extends AnyFunSuite {
     js match
       case rejson""" { users[3]/name: 'steven' }  """ => assert(true)
       case _ => assert(false)
+
+    js match
+      case rejson""" { users/*/name: ['John', 'Rose', 'Rose', 'steven'] } """ =>
+        assert(true)
+  }
+
+  test("github commits") {
+    val info =
+      """
+      {
+    "sha": "650e56cd380c311909cd50408bbb4884f1f5d21e",
+    "node_id": "C_kwDOHj94ltoAKDY1MGU1NmNkMzgwYzMxMTkwOWNkNTA0MDhiYmI0ODg0ZjFmNWQyMWU",
+    "commit": {
+      "author": {
+        "name": "wangzaixiang",
+        "email": "949631531@qq.com",
+        "date": "2022-07-05T14:23:09Z"
+      },
+      "committer": {
+        "name": "wangzaixiang",
+        "email": "949631531@qq.com",
+        "date": "2022-07-05T14:23:09Z"
+      },
+      "message": "add taged string pattern support\nadd array index/filter support",
+      "tree": {
+        "sha": "89fbbf82e3c5ffd0e1a7978dd7778195a004df2c",
+        "url": "https://api.github.com/repos/wangzaixiang/wjson/git/trees/89fbbf82e3c5ffd0e1a7978dd7778195a004df2c"
+      },
+      "url": "https://api.github.com/repos/wangzaixiang/wjson/git/commits/650e56cd380c311909cd50408bbb4884f1f5d21e",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null
+      }
+    },
+    "url": "https://api.github.com/repos/wangzaixiang/wjson/commits/650e56cd380c311909cd50408bbb4884f1f5d21e",
+    "html_url": "https://github.com/wangzaixiang/wjson/commit/650e56cd380c311909cd50408bbb4884f1f5d21e",
+    "comments_url": "https://api.github.com/repos/wangzaixiang/wjson/commits/650e56cd380c311909cd50408bbb4884f1f5d21e/comments",
+    "parents": [
+      {
+        "sha": "d90609ac4e7254eac5138453e2e07591a11bb55e",
+        "url": "https://api.github.com/repos/wangzaixiang/wjson/commits/d90609ac4e7254eac5138453e2e07591a11bb55e",
+        "html_url": "https://github.com/wangzaixiang/wjson/commit/d90609ac4e7254eac5138453e2e07591a11bb55e"
+      }
+    ]
+}
+      """
+
+    info.parseJson match
+      case rejson"""
+        {
+          sha: $sha@_,
+          commit: { author: { name: $commit_name@_ } },
+          url: $url@_,
+          parents/*/sha: $parents@_
+        }
+      """ =>
+        println(s"sha = $sha, commit_name = $commit_name, url = $url, parents=$parents")
+        assert(true)
+
   }
 
 

@@ -5,12 +5,18 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / scalaVersion := "3.1.3"
 
 lazy val root = (project in file("."))
+  .aggregate(wjson.js, wjson.jvm)
+  .settings(
+    publish := {},
+    publishLocal := {}
+  )
+
+lazy val wjson = crossProject(JSPlatform, JVMPlatform).in(file("."))
   .settings(
     name := "wjson",
     organization := "com.github.wangzaixiang",
-    libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.1",
-    libraryDependencies += "org.mvel" % "mvel2" % "2.4.14.Final",
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.12" % "test",
+    libraryDependencies += "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.1.1",
 
     publishMavenStyle := true,
 
@@ -48,5 +54,13 @@ lazy val root = (project in file("."))
           <url>github.com/wangzaixiang/wjson</url>
           <tag>v0.1.0</tag>
         </scm>
-    )
+      )
+
+  )
+  .jvmSettings(
+    libraryDependencies += "org.mvel" % "mvel2" % "2.4.14.Final",
+  )
+  // .jvmConfigure( _.enablePlugins(GraalVMNativeImagePlugin) )
+  .jsSettings(
+    scalaJSUseMainModuleInitializer := true,
   )

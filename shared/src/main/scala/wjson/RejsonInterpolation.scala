@@ -1,44 +1,49 @@
 package wjson
 
-import org.mvel2.MVEL
+//import org.mvel2.MVEL
 import wjson.*
 import wjson.JsPattern.*
 import wjson.JsValue.{JsArray, JsNull, JsObject}
+import wjson.RejsonMatcher.Placeholder
 
-import java.lang
 import scala.annotation.tailrec
 import scala.collection.mutable.Map as MutableMap
 import scala.jdk.CollectionConverters.*
 
-/**
- * rejson is a pattern language for JSON
- */
 class RejsonInterpolation(sc: StringContext):
-  
-  object Placeholder:
-    def apply(index: Int): String = "_placeholder_" + index + "_"
-    def unapply(str: String): Option[Int] =
-      str match
-        case str if str.startsWith("_placeholder_") && str.endsWith("_") =>
-          Some(str.substring(13, str.length - 1).toInt)
-        case _ => None
 
-  def unapplyAsMap(input: JsValue): Option[Map[String, Any]] =
-    
+  def unapplySeq(input: JsValue): Option[Seq[Any]] =
+
     val str = if sc.parts.size > 1 then
       sc.parts.head + sc.parts.tail.zipWithIndex.map { case (p, idx) => Placeholder(idx) + p }.mkString
     else sc.parts.head
 
     val pattern = JsPatternParser.parseRejson(str)
 
+    new RejsonMatcher(pattern).unapplyAsMap(input)
+      .map( results => Seq.range(0, sc.parts.length-1).map( i => results(Placeholder(i)) ) )
+
+object RejsonMatcher:
+
+  object Placeholder:
+    def apply(index: Int): String = "_placeholder_" + index + "_"
+    def unapply(str: String): Option[Int] = str match
+      case str if str.startsWith("_placeholder_") && str.endsWith("_") =>
+        Some(str.substring(13, str.length - 1).toInt)
+      case _ => None
+
+/**
+ * rejson is a pattern language for JSON
+ */
+case class RejsonMatcher(pattern: JsPattern.Variable):
+
+  def this(program: String) = this( JsPatternParser.parseRejson(program) )
+  
+  def unapplyAsMap(input: JsValue): Option[Map[String, Any]] =
     val results = MutableMap[String, Any]()
     
     val m1 = patternMatch(pattern, input, results)
     if(m1) Some(results.toMap) else None
-
-  def unapplySeq(input: JsValue): Option[Seq[Any]] =
-    unapplyAsMap(input)
-      .map( results => Seq.range(0, sc.parts.length-1).map( i => results(Placeholder(i)) ) )
 
   // does input match arrPattern?
   private def arrPatternMatch(arrPattern: ArrPattern, input: JsValue, results: MutableMap[String, Any]): Boolean =
@@ -137,16 +142,16 @@ class RejsonInterpolation(sc: StringContext):
   private def asPojo(value: JsValue): AnyRef = value match
     case JsNull => null
     case JsBoolean(v) => new java.lang.Boolean(v)
-    case JsNumber(v) => new lang.Double(v)
+    case JsNumber(v) => new java.lang.Double(v)
     case JsString(v) => v
     case JsArray(v) => v.map(asPojo).toArray
     case JsObject(v) => v.map(x => (x._1, asPojo((x._2)))).asJava
 
   // TODO enable extension tags in a better API
   private def tagStringMatch(tag: String, content: String, value: JsValue, results: MutableMap[String, Any]): Boolean =
-    val context = Map("it"->asPojo(value), "js" -> value).asJava
-    if tag == "mvel" then
-      MVEL.eval(content, context) == true
+    val context = Map("it"->asPojo(value), "js" -> value)
+    if tag == "eval" then
+      Eval.eval(content, context) == true
     else if tag == "r" && value.isInstanceOf[JsString] then
       java.util.regex.Pattern.compile(content).matcher(value.asInstanceOf[JsString].value).matches()
     else

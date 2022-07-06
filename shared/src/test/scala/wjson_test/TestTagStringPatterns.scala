@@ -5,7 +5,7 @@ import wjson.*
 
 class TestTagStringPatterns extends AnyFunSuite {
 
-  test("mvel expressions"){
+  test("eval expressions"){
 
     json"""{
           str: "123456", num: 10,
@@ -13,10 +13,10 @@ class TestTagStringPatterns extends AnyFunSuite {
           scores: [ 1,2,3,4,5 ]
     }""" match
       case rejson"""{
-        num: ${a}@mvel'it % 2 == 0',
-        str: ${b}@mvel'it.startsWith("12")',
-        addr: mvel'it.state == "gd"',
-        scores: mvel'it[2] == 3'
+        num: ${a}@eval'it % 2 == 0',
+        str: ${b}@eval'it.startsWith("12")',
+        addr: eval'it.state == "gd"',
+        scores: eval'it[2] == 3'
        } """ =>
         assert(a == JsNumber(10))
         assert(b == JsString("123456"))
