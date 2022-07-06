@@ -1,10 +1,10 @@
 package wjson_test
 
 import scala.language.implicitConversions
-
 import wjson.{JsValueMapper, JsValueMapperMacro}
 import org.scalatest.funsuite.AnyFunSuite
-import wjson.{given, *}
+import wjson.JsValue.JsObject
+import wjson.{*, given}
 
 class TestCaseClass extends AnyFunSuite {
 
@@ -54,6 +54,14 @@ class TestCaseClass extends AnyFunSuite {
 
     assert(user.toJson == json"{name:'John', age:20, address:{state: 'gd', city:'guangzhou'} }")
     assert( user.toJson.convertTo[User3] == user)
+  }
+
+  test("Map[String, JsValue] fields") {
+    case class User3(name: String, age:Int, address: JsObject, features: Map[String, JsValue])  derives JsValueMapper
+
+    val jsonStr = json"{name:'John', age:20, address:{state: 'gd', city:'guangzhou'}, features:{love:'read a book'}}"
+    assert( jsonStr.convertTo[User3] ==
+      User3("John", 20, json"{state:'gd', city:'guangzhou'}".asInstanceOf[JsObject], Map("love"->"read a book")) )
   }
 
   test("collections") {
