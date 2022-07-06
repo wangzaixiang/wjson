@@ -21,7 +21,8 @@ class JsPatternParser extends RegexParsers:
     case Some(b) ~ v => Variable(b, v)
   }
 
-  val TagPattern = """([a-zA-Z][a-zA-Z0-9_]*)"([^"]*)"""".r
+  val TagPattern1 = """([a-zA-Z][a-zA-Z0-9_]*)"([^"]*)"""".r
+  val TagPattern2 = """([a-zA-Z][a-zA-Z0-9_]*)'([^']*)'""".r
 
   def jsval: Parser[JsPattern] = (
       `null` ^^ { x => JsPattern.NullPattern() }
@@ -36,9 +37,7 @@ class JsPatternParser extends RegexParsers:
       | type_array ^^ {x => JsPattern.AnyVal(GroundType.ARRAY) }
       | type_object ^^ {x => JsPattern.AnyVal(GroundType.OBJECT) }
       | any1 ^^ {x => JsPattern.AnyVal(GroundType.ANY) }
-      | tagedString ^^ {
-        case TagPattern(tag, content) => JsPattern.TaggedString(tag, content)
-      }
+      | tagedString ^^ { x => JsPattern.TaggedString(x._1, x._2) }
       | array  | `object` )
   def binding: Parser[String] = ident ~ "@" ^^ { case id ~ _ => id }
   def type_string: Parser[String] = "string"
@@ -49,7 +48,11 @@ class JsPatternParser extends RegexParsers:
   def type_object: Parser[String] = "object"
   def any1: Parser[String] = "_"
   def anys: Parser[String] = "_*"
-  def tagedString: Parser[String] = """[a-zA-Z][a-zA-Z0-9_]*"[^"]*"""".r
+  def tagedString: Parser[(String, String)] = """[a-zA-Z][a-zA-Z0-9_]*"[^"]*"""".r ^^ {
+      case TagPattern1(tag, content) => (tag, content)
+    }  | """[a-zA-Z][a-zA-Z0-9_]*'[^']*'""".r ^^ {
+      case TagPattern2(tag, content) => (tag, content)
+    }
 
   def array_item: Parser[Variable] = opt(binding) ~ anys ^^ {
     case None ~ _ => Variable(null, AnyVals())
@@ -65,13 +68,20 @@ class JsPatternParser extends RegexParsers:
     case Nil => JsPattern.ObjPattern(Nil)
     case xs => JsPattern.ObjPattern(xs)
   }
-  def field: Parser[(String,Variable)] =
+  def field: Parser[(JsPattern.Path,Variable)] =
     (path ~ ":" ~ bind_jsval) ^^ { case p ~ _ ~ v => (p, v) } |
     (opt(binding) ~ anys) ^^ { case binding ~ _ => (null, Variable(binding.getOrElse(null), AnyVals())) }
-  def path: Parser[String] = string | ident ~ rep("/" ~> ident) ^^ {
-    case id ~ Nil => id;
-    case id ~ xs => id + "/" + xs.mkString("/")
-  }
+
+  def path: Parser[JsPattern.Path] = string ^^ { x => Path( Seq(PathElement.Simple(x)) ) } |
+    ident ~ rep(path_next)  ^^ {
+      case id ~ path => Path( Seq( PathElement.Simple(id) ) ++ path )
+    }
+  def path_next: Parser[PathElement] = '/' ~> ident ^^ {x => PathElement.Simple(x) } |
+    '[' ~> jsval <~ ']' ^^ {
+      case NumberPattern(value) if value == value.toInt =>
+        PathElement.Index(value.toInt)
+      case x@_ =>  PathElement.ArrayFilter(x)
+    }
 
 
 object JsPatternParser {

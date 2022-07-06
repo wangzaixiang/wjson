@@ -1,10 +1,13 @@
 package wjson
 
+import org.mvel2.MVEL
 import wjson.*
-import JsPattern.*
+import wjson.JsPattern.*
+import wjson.JsValue.{JsArray, JsNull, JsObject}
 
+import java.lang
 import scala.annotation.tailrec
-import scala.collection.mutable.{Map => MutableMap}
+import scala.collection.mutable.Map as MutableMap
 import scala.jdk.CollectionConverters.*
 
 /**
@@ -19,9 +22,6 @@ class RejsonInterpolation(sc: StringContext):
         case str if str.startsWith("_placeholder_") && str.endsWith("_") =>
           Some(str.substring(13, str.length - 1).toInt)
         case _ => None
-
-  private def asPathes(path: String): Seq[String] =
-    path.split('/').filter(_.nonEmpty).toSeq
 
   def unapplyAsMap(input: JsValue): Option[Map[String, Any]] =
     
@@ -40,6 +40,7 @@ class RejsonInterpolation(sc: StringContext):
     unapplyAsMap(input)
       .map( results => Seq.range(0, sc.parts.length-1).map( i => results(Placeholder(i)) ) )
 
+  // does input match arrPattern?
   private def arrPatternMatch(arrPattern: ArrPattern, input: JsValue, results: MutableMap[String, Any]): Boolean =
     input match
       case jsa: JsArray =>
@@ -70,14 +71,41 @@ class RejsonInterpolation(sc: StringContext):
               patternMatch(variable, input, results)
             }
       case _ => false
+
   @tailrec
-  private def getElementByPath(jsv: JsValue, path: Seq[String]): JsValue =
-    path.toList match
-      case head :: tail =>
-        assert( jsv.isInstanceOf[JsObject] )
-        getElementByPath(jsv.asInstanceOf[JsObject].fields(head), tail)
+  private def getElementByPath(jsv: JsValue, path: Path): JsValue | Seq[JsValue] =
+    path.value match
+      case PathElement.Index(index) :: tail =>
+        jsv match
+          case array: JsArray if array.elements.size > index =>
+            getElementByPath( array.elements(index), Path(tail) )
+          case _ =>  JsNull
+      case PathElement.Simple(simple) :: tail =>
+        jsv match
+          case jso: JsObject =>
+            getElementByPath(jso.fields(simple), Path(tail))
+          case _ => JsNull
+      case PathElement.ArrayFilter(pattern) :: tail =>
+        jsv match
+          case array: JsArray =>
+            val filtered = array.elements.filter( elem => patternMatch(Variable(null, pattern), elem, MutableMap()) )
+            getElementByPath(filtered, Path(tail))
+          case _ => JsNull
       case Nil => jsv
 
+  private def getElementByPath(arr: Seq[JsValue], path: Path): JsValue | Seq[JsValue] =
+    path.value match
+      case PathElement.Index(index) :: tail =>  // JsValue
+        if(arr.size > index) then getElementByPath(arr(index), Path(tail))
+        else JsNull
+      case _ =>  // Seq[JsValue]
+        arr.flatMap { elem =>
+          getElementByPath(elem, path) match
+            case x: JsValue => Seq(x)
+            case x: Seq[JsValue]@unchecked => x
+     }
+
+  // does input match the objPattern?
   private def objPatternMatch(objPattern: ObjPattern, input: JsValue, results: MutableMap[String, Any]): Boolean =
     input match
       case jso: JsObject =>
@@ -85,18 +113,44 @@ class RejsonInterpolation(sc: StringContext):
           if has_anys then
             val anys: Variable = objPattern.value.filter(_._2.pattern == AnyVals()).apply(0)._2
             val not_anys = objPattern.value.filter(_._2.pattern != AnyVals())
-            val not_anys_keys = not_anys.map(_._1)
+            val not_anys_keys = not_anys.map { case (path, pattern) =>  // declared fields
+              path.value(0).asInstanceOf[PathElement.Simple].value
+            }.toSet //(_._1.value(0).value)
             val matches = not_anys.forall { case (key, variable: Variable) =>
-              patternMatch(variable, getElementByPath(jso, asPathes(key)), results)
+              getElementByPath(jso, key) match
+                case x: JsValue => patternMatch(variable, x, results)
+                case x: Seq[JsValue]@unchecked => patternMatch(variable, JsArray(x), results)
             }
             if matches && anys.name != null then // bound anys
                results(anys.name) = JsObject(jso.fields.filterNot( x => not_anys_keys.contains(x._1) ))
             matches
           else
-            objPattern.value.forall {
-              case (key, variable) => patternMatch(variable, getElementByPath(jso, asPathes(key)), results)
+            objPattern.value.forall { case (key, variable) =>
+              val elem = getElementByPath(jso, key)
+              elem match
+                case x: JsValue => patternMatch(variable, x, results)
+                case x: Seq[JsValue]@unchecked => patternMatch(variable, JsArray(x), results)
             }
       case _ => false
+
+  // pojo values used in MVEL expression
+  private def asPojo(value: JsValue): AnyRef = value match
+    case JsNull => null
+    case JsBoolean(v) => new java.lang.Boolean(v)
+    case JsNumber(v) => new lang.Double(v)
+    case JsString(v) => v
+    case JsArray(v) => v.map(asPojo).toArray
+    case JsObject(v) => v.map(x => (x._1, asPojo((x._2)))).asJava
+
+  // TODO enable extension tags in a better API
+  private def tagStringMatch(tag: String, content: String, value: JsValue, results: MutableMap[String, Any]): Boolean =
+    val context = Map("it"->asPojo(value), "js" -> value).asJava
+    if tag == "mvel" then
+      MVEL.eval(content, context) == true
+    else if tag == "r" && value.isInstanceOf[JsString] then
+      java.util.regex.Pattern.compile(content).matcher(value.asInstanceOf[JsString].value).matches()
+    else
+      false
 
   extension (bool: Boolean)
     def ifTrue( result: =>Any ): Option[Any] = if(bool) Some(result) else None
@@ -112,7 +166,7 @@ class RejsonInterpolation(sc: StringContext):
       case NumberPattern(value: Double) => (input == JsNumber(value)) ifTrue  input.asInstanceOf[JsNumber].value
       case StringPattern(value: String) => (input == JsString(value)) ifTrue input.asInstanceOf[JsString].value
       case a@ArrPattern(value: Seq[JsPattern.Variable]) =>  arrPatternMatch(a, input, results) ifTrue  input
-      case o@ObjPattern(value: Seq[(String, JsPattern.Variable)]) =>  objPatternMatch(o, input, results) ifTrue input
+      case o@ObjPattern(value: Seq[(JsPattern.Path, JsPattern.Variable)]) =>  objPatternMatch(o, input, results) ifTrue input
       case AnyVal(GroundType.NUMBER) => input.isInstanceOf[JsNumber] ifTrue input.asInstanceOf[JsNumber].value
       case AnyVal(GroundType.INTEGER) => input.isInstanceOf[JsNumber] ifTrue input.asInstanceOf[JsNumber].value.toInt
       case AnyVal(GroundType.STRING) => input.isInstanceOf[JsString] ifTrue input.asInstanceOf[JsString].value
@@ -121,7 +175,7 @@ class RejsonInterpolation(sc: StringContext):
       case AnyVal(GroundType.ARRAY) => input.isInstanceOf[JsArray] ifTrue input.asInstanceOf[JsArray].elements
       case AnyVal(GroundType.ANY) => true ifTrue input
       case AnyVals() => throw new RuntimeException("_* not supported to using here")
-      case TaggedString(tag:String, content:String) => ??? // TODO
+      case TaggedString(tag:String, content:String) => tagStringMatch(tag, content, input, results) ifTrue input // TODO
 
     value match
       case Some(v) if variable.name != null =>

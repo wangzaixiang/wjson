@@ -9,6 +9,7 @@ lazy val root = (project in file("."))
     name := "wjson",
     organization := "com.github.wangzaixiang",
     libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.1",
+    libraryDependencies += "org.mvel" % "mvel2" % "2.4.14.Final",
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.12" % "test",
 
     publishMavenStyle := true,

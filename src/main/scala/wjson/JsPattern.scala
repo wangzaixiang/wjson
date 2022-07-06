@@ -12,7 +12,7 @@ enum JsPattern:
   case NumberPattern(value: Double)   // number literal
   case StringPattern(value: String)   // string literal
   case ArrPattern(value: Seq[JsPattern.Variable])  // array literal
-  case ObjPattern(value: Seq[(String, JsPattern.Variable)])  // object literal
+  case ObjPattern(value: Seq[(JsPattern.Path, JsPattern.Variable)])  // object literal
   case AnyVal(ground: JsPattern.GroundType)       // _: match any JsVal
   case AnyVals()      // _*: match any number of JsVals
   case TaggedString(tag:String, content:String)  // id"pattern": match a specific JsVal
@@ -26,10 +26,30 @@ object JsPattern:
     case ARRAY
     case OBJECT
     case ANY
+
+  enum PathElement:
+    case Simple(value: String)  // /name
+    case ArrayFilter(filter: JsPattern) // [ pattern ]
+    case Index(value: Int) // [0]
+
+  case class Path(value: Seq[PathElement])
+
   case class Variable(name: String, pattern: JsPattern)
 
-  def ObjPattern(fields: (String, Variable)*): ObjPattern = new ObjPattern(fields)
+  def ObjPattern(fields: (String, Variable)*): ObjPattern =
+    new ObjPattern(fields.map{ p =>
+      if(p._1 == null) (null: Path) -> p._2
+      else Path(p._1) -> p._2
+    })
 
   def unapplySeq(pat: JsPattern, js: JsValue): Option[List[Any]] = ???
   def test(pat: JsPattern, js: JsValue): (Boolean, Map[String, Any]) = ???
   def parsePattern(string: String): JsPattern = ???
+
+  def simplePath(path: String) = Path(Seq(PathElement.Simple(path)))
+  def Path(path: String): Path =
+    val parser = new JsPatternParser
+    parser.parse( parser.path, path ) match
+      case parser.Success(result, _) => result
+      case x@parser.Failure(msg, next) => throw new Exception(s"invalid path $path : $msg")
+      case x@parser.Error(msg, next) => throw new Exception(s"invalid path $path : $msg")
