@@ -2,7 +2,7 @@ package wjson_test
 
 import scala.language.implicitConversions
 import org.scalatest.funsuite.AnyFunSuite
-import wjson.*
+import wjson.{given, *}
 
 import scala.collection.SortedSet
 
@@ -86,5 +86,20 @@ class TestJsValue extends AnyFunSuite {
     assert( none.toJson == JsNull)
     assert( JsNull.convertTo[Option[Int]] == None)
   }
+
+
+  test("JsValue show test") {
+    case class User2(name: String, age: Int, owner: User2 = null) derives JsValueMapper
+
+    val user = User2("John\t\r\n\"abc\"", 30, null)
+    val child = User2("中国人", 10, user)
+
+    println("child = " + child.toJson.show())
+//    val str = child.toJson.show()
+
+    assert(child.toJson.show().parseJson().convertTo[User2] == child)
+
+  }
+
 
 }

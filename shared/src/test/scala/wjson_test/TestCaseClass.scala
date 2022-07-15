@@ -124,14 +124,4 @@ class TestCaseClass extends AnyFunSuite {
 
   }
 
-  test("JsValue show test") {
-    case class User2(name: String, age: Int, owner: User2 = null) derives JsValueMapper
-
-    val user = User2("John", 30, null)
-    val child = User2("Mary", 10, user)
-
-    assert(child.toJson.show().parseJson.convertTo[User2] == child)
-
-  }
-
 }

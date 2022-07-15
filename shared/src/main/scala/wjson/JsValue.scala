@@ -69,8 +69,24 @@ object JsValue:
             }
             buffer.append(indentString).append("]")
 
-      // TODO unicode processing
-      def escapedString(str: String): String = "\"" + str.replace("\"", "\\\"") + "\""
+      def escapedString(str: String): String =
+        val sb = new StringBuilder()
+        sb.append('"')
+        str.foreach { c =>
+          c match
+            case '\\' => sb.append("\\\\")
+            case '"' => sb.append("\\\"")
+            case '\b' => sb.append("\\b")
+            case '\f' => sb.append("\\f")
+            case '\n' => sb.append("\\n")
+            case '\r' => sb.append("\\r")
+            case '\t' => sb.append("\\t")
+            // case x if x > 0x100 => sb.append("\\u%04x".format(x.toInt))
+            case _ => sb.append(c)
+        }
+        sb.append('"')
+        sb.toString()
+
       show0(value, "")
       buffer.toString
 
@@ -83,7 +99,10 @@ object JsValue:
 export JsValue.{JsNull, JsBoolean, JsNumber, JsString, JsArray, JsObject}
 
 extension (str:String)
-  def parseJson: JsValue = JsValue.parse(str)
+  def parseJson(`extension`: Boolean = false): JsValue = 
+    if(`extension`) new JsonParser(ParserInput(str), true).parseJsValue()
+    else JsValue.parse(str)
+
 
 /**
  * type class for JsValue Mapping
