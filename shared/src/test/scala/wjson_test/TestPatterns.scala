@@ -395,7 +395,7 @@ class TestPatterns extends AnyFunSuite {
 }
       """
 
-    info.parseJson match
+    info.parseJson() match
       case rejson"""
         {
           sha: $sha@_,
