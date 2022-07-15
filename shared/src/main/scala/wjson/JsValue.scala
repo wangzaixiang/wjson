@@ -52,6 +52,9 @@ object JsValue:
               show0(value, indentString + " " * indent)
               buffer.append(",\n")
             }
+            if(buffer.endsWith(",\n")){
+              buffer.delete(buffer.length() - 2, buffer.length()-1)
+            }
             buffer.append(indentString)
             buffer.append("}")
           case JsArray(elements) =>
@@ -60,6 +63,9 @@ object JsValue:
               buffer.append( indentString + " " * indent)
               show0(elem, indentString + " " * indent)
               buffer.append(",\n")
+            }
+            if(buffer.endsWith(",\n")){
+              buffer.delete(buffer.length() - 2, buffer.length()-1)
             }
             buffer.append(indentString).append("]")
 
