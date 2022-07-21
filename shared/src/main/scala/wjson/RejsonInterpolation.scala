@@ -142,7 +142,8 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
   private def asPojo(value: JsValue): AnyRef = value match
     case JsNull => null
     case JsBoolean(v) => new java.lang.Boolean(v)
-    case JsNumber(v) => new java.lang.Double(v)
+    case JsNumber(v: Double) => new java.lang.Double(v)
+    case JsNumber(v: Long) => new java.lang.Long(v)
     case JsString(v) => v
     case JsArray(v) => v.map(asPojo).toArray
     case JsObject(v) => v.map(x => (x._1, asPojo((x._2)))).asJava
@@ -173,7 +174,10 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
       case a@ArrPattern(value: Seq[JsPattern.Variable]) =>  arrPatternMatch(a, input, results) ifTrue  input
       case o@ObjPattern(value: Seq[(JsPattern.Path, JsPattern.Variable)]) =>  objPatternMatch(o, input, results) ifTrue input
       case AnyVal(GroundType.NUMBER) => input.isInstanceOf[JsNumber] ifTrue input.asInstanceOf[JsNumber].value
-      case AnyVal(GroundType.INTEGER) => input.isInstanceOf[JsNumber] ifTrue input.asInstanceOf[JsNumber].value.toInt
+      case AnyVal(GroundType.INTEGER) =>
+        input match
+          case JsNumber(x:Long) => Some(x)
+          case _ => None
       case AnyVal(GroundType.STRING) => input.isInstanceOf[JsString] ifTrue input.asInstanceOf[JsString].value
       case AnyVal(GroundType.BOOLEAN) => input.isInstanceOf[JsBoolean] ifTrue input.asInstanceOf[JsBoolean].value
       case AnyVal(GroundType.OBJECT) => input.isInstanceOf[JsObject] ifTrue input.asInstanceOf[JsObject].fields

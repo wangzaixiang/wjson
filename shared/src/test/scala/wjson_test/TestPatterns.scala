@@ -15,11 +15,25 @@ class TestPatterns extends AnyFunSuite {
     }
   }
 
+  test("numbers"){
+    json"10" match
+      case JsNumber(x: Double) => assert(false)
+      case JsNumber(x: Long) => assert(true)
+      case _ => assert(false)
+
+    json"10.0" match
+      case JsNumber(x: Long) => assert(false)
+      case JsNumber(x: Double) => assert(true)
+      case _ => assert(false)
+  }
+
   test("simple patterns") {
     val js =
       json"""{
       "a": 1,
       "b": "123",
+      "b1": 100,
+      "b2": 100.0,
       "c": true,
       "d": "ddd",
       "e": null,
@@ -31,6 +45,8 @@ class TestPatterns extends AnyFunSuite {
       case rejson"""{
         "a": ${a}@integer,
         "b": ${b}@string,
+        "b1": ${b1}@integer,
+        "b2": ${b2}@number,
         "c": ${c}@boolean,
         "d": ${d}@"ddd",
         "e": ${e}@null,
@@ -40,6 +56,8 @@ class TestPatterns extends AnyFunSuite {
         // println(s"a=$a, b=$b, c=$c, d=$d")
         assert(a == 1)
         assert(b == "123")
+        assert(b1 == new java.lang.Long(100L))
+        assert(b2 == new java.lang.Double("100.0"))
         assert(c == true )
         assert(d == "ddd")
         assert(e == null)
@@ -349,6 +367,7 @@ class TestPatterns extends AnyFunSuite {
     js match
       case rejson""" { users/*/name: ['John', 'Rose', 'Rose', 'steven'] } """ =>
         assert(true)
+      case _ => assert(false)
   }
 
   test("github commits") {
@@ -395,7 +414,7 @@ class TestPatterns extends AnyFunSuite {
 }
       """
 
-    info.parseJson match
+    info.parseJson(true) match
       case rejson"""
         {
           sha: $sha@_,
@@ -406,6 +425,7 @@ class TestPatterns extends AnyFunSuite {
       """ =>
         println(s"sha = $sha, commit_name = $commit_name, url = $url, parents=$parents")
         assert(true)
+      case _ => assert(false)
 
   }
 

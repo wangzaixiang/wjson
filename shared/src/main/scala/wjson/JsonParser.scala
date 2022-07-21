@@ -140,7 +140,10 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
     `exp`()
     jsValue =
       if (startChar == '0' && input.cursor - start == 1) JsValue.JsZero
-      else JsNumber(new String(input.sliceCharArray(start, input.cursor)).toDouble)
+      else
+        val num = new String(input.sliceCharArray(start, input.cursor))
+        if(num.indexOf('.') == -1) JsNumber(num.toLong)
+        else JsNumber(num.toDouble)
     ws()
   }
 
