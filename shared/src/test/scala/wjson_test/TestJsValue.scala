@@ -2,8 +2,7 @@ package wjson_test
 
 import scala.language.implicitConversions
 import org.scalatest.funsuite.AnyFunSuite
-import wjson.JsValue.JsNumber
-import wjson.{*, given}
+import wjson.{given, *}
 
 import scala.collection.SortedSet
 
@@ -11,7 +10,7 @@ class TestJsValue extends AnyFunSuite {
 
   test("Json Parser") {
     val jsonStr = """{"name":"John","age":30,"cars":["Ford","BMW","Fiat"],"city":"New York"}"""
-    val jsval = jsonStr.parseJson(true)
+    val jsval = jsonStr.parseJson()
 
     assert(jsval == JsObject(
       "name" -> "John",
@@ -28,7 +27,6 @@ class TestJsValue extends AnyFunSuite {
   test("Primitive Type Mappers") {
 
     assert( JsBoolean(true).convertTo[Boolean] == true)
-    //assert( JsNumber(10L).convertTo[Boolean] == true)
     assert( JsBoolean(false).convertTo[Boolean] == false)
     assert( true.toJson == JsBoolean(true))
     assert( false.toJson == JsBoolean(false))

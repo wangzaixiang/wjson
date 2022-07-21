@@ -414,7 +414,7 @@ class TestPatterns extends AnyFunSuite {
 }
       """
 
-    info.parseJson(true) match
+    info.parseJson() match
       case rejson"""
         {
           sha: $sha@_,
@@ -425,7 +425,6 @@ class TestPatterns extends AnyFunSuite {
       """ =>
         println(s"sha = $sha, commit_name = $commit_name, url = $url, parents=$parents")
         assert(true)
-      case _ => assert(false)
 
   }
 
