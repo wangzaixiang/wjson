@@ -425,6 +425,8 @@ class TestPatterns extends AnyFunSuite {
       """ =>
         println(s"sha = $sha, commit_name = $commit_name, url = $url, parents=$parents")
         assert(true)
+      case _ =>
+        assert(false)
 
   }
 
