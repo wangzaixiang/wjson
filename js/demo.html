@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="target/scala-3.1.3/wjson-opt/main.js"></script>
+    <script>
+        function match_test(){
+            var json = document.getElementById("input").value;
+            var pattern = document.getElementById("pattern").value;
+            var result = wjson.rejsonMatch(json, pattern);
+            document.getElementById("result").innerHTML = JSON.stringify(result);
+        }
+    </script>
+</head>
+<body>
+
+<textarea rows="20" cols="100" id="input">
+      {
+    "sha": "650e56cd380c311909cd50408bbb4884f1f5d21e",
+    "node_id": "C_kwDOHj94ltoAKDY1MGU1NmNkMzgwYzMxMTkwOWNkNTA0MDhiYmI0ODg0ZjFmNWQyMWU",
+    "commit": {
+      "author": {
+        "name": "wangzaixiang",
+        "email": "949631531@qq.com",
+        "date": "2022-07-05T14:23:09Z"
+      },
+      "committer": {
+        "name": "wangzaixiang",
+        "email": "949631531@qq.com",
+        "date": "2022-07-05T14:23:09Z"
+      },
+      "message": "add taged string pattern support\nadd array index/filter support",
+      "tree": {
+        "sha": "89fbbf82e3c5ffd0e1a7978dd7778195a004df2c",
+        "url": "https://api.github.com/repos/wangzaixiang/wjson/git/trees/89fbbf82e3c5ffd0e1a7978dd7778195a004df2c"
+      },
+      "url": "https://api.github.com/repos/wangzaixiang/wjson/git/commits/650e56cd380c311909cd50408bbb4884f1f5d21e",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null
+      }
+    },
+    "url": "https://api.github.com/repos/wangzaixiang/wjson/commits/650e56cd380c311909cd50408bbb4884f1f5d21e",
+    "html_url": "https://github.com/wangzaixiang/wjson/commit/650e56cd380c311909cd50408bbb4884f1f5d21e",
+    "comments_url": "https://api.github.com/repos/wangzaixiang/wjson/commits/650e56cd380c311909cd50408bbb4884f1f5d21e/comments",
+    "parents": [
+      {
+        "sha": "d90609ac4e7254eac5138453e2e07591a11bb55e",
+        "url": "https://api.github.com/repos/wangzaixiang/wjson/commits/d90609ac4e7254eac5138453e2e07591a11bb55e",
+        "html_url": "https://github.com/wangzaixiang/wjson/commit/d90609ac4e7254eac5138453e2e07591a11bb55e"
+      }
+    ]
+}
+</textarea>
+<textarea rows="20" cols="100" id="pattern" >
+       {
+          sha: sha@_,
+          commit/author/name: commit_name@_,
+          url: url@_,
+          parents/*/sha: parents@_
+        }
+</textarea>
+<p>
+  <button onclick="match_test();">test</button>
+</p>
+
+<div id="result"></div>
+
+</body>
+</html>
