@@ -361,6 +361,10 @@ class TestPatterns extends AnyFunSuite {
       case _ => assert(false)
 
     js match
+      case rejson"""{users[{name:'steven'}]/age:  12 }""" => assert(true)
+      case _ => assert(false)
+
+    js match
       case rejson""" { users[3]/name: 'steven' }  """ => assert(true)
       case _ => assert(false)
 
