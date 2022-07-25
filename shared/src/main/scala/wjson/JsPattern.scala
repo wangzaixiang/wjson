@@ -32,7 +32,7 @@ object JsPattern:
     case ArrayFilter(filter: JsPattern) // [ pattern ]
     case Index(value: Int) // [0]
 
-  case class Path(value: Seq[PathElement])
+  case class Path(value: List[PathElement])
 
   case class Variable(name: String, pattern: JsPattern)
 
@@ -46,7 +46,7 @@ object JsPattern:
   def test(pat: JsPattern, js: JsValue): (Boolean, Map[String, Any]) = ???
   def parsePattern(string: String): JsPattern = ???
 
-  def simplePath(path: String) = Path(Seq(PathElement.Simple(path)))
+  def simplePath(path: String) = Path(List(PathElement.Simple(path)))
   def Path(path: String): Path =
     val parser = new JsPatternParser
     parser.parse( parser.path, path ) match

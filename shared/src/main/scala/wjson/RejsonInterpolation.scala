@@ -100,15 +100,17 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
 
   private def getElementByPath(arr: Seq[JsValue], path: Path): JsValue | Seq[JsValue] =
     path.value match
-      case PathElement.Index(index) :: tail =>  // JsValue
+      case PathElement.Index(index) :: tail =>  // arr -> elem
         if(arr.size > index) then getElementByPath(arr(index), Path(tail))
         else JsNull
-      case _ =>  // Seq[JsValue]
-        arr.flatMap { elem =>
-          getElementByPath(elem, path) match
+      case head :: tail =>
+        val part0 = arr.flatMap { elem =>
+          getElementByPath(elem, Path(List(head))) match
             case x: JsValue => Seq(x)
             case x: Seq[JsValue]@unchecked => x
-     }
+        }
+        getElementByPath(part0, Path(tail))
+      case Nil => arr
 
   // does input match the objPattern?
   private def objPatternMatch(objPattern: ObjPattern, input: JsValue, results: MutableMap[String, Any]): Boolean =

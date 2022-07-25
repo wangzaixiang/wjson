@@ -72,9 +72,9 @@ class JsPatternParser extends RegexParsers:
     (path ~ ":" ~ bind_jsval) ^^ { case p ~ _ ~ v => (p, v) } |
     (opt(binding) ~ anys) ^^ { case binding ~ _ => (null, Variable(binding.getOrElse(null), AnyVals())) }
 
-  def path: Parser[JsPattern.Path] = string ^^ { x => Path( Seq(PathElement.Simple(x)) ) } |
+  def path: Parser[JsPattern.Path] = string ^^ { x => Path( List(PathElement.Simple(x)) ) } |
     ident ~ rep(path_next)  ^^ {
-      case id ~ path => Path( Seq( PathElement.Simple(id) ) ++ path )
+      case id ~ path => Path( List( PathElement.Simple(id) ) ++ path )
     }
   def path_next: Parser[PathElement] = '/' ~> ident ^^ {x => PathElement.Simple(x) } |
     "/*" ^^ { x => PathElement.ArrayFilter( JsPattern.AnyVal(GroundType.ANY) ) } |
