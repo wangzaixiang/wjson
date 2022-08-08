@@ -14,7 +14,8 @@
     </script>
 </head>
 <body>
-
+<div>
+Json:
 <textarea rows="20" cols="100" id="input">
       {
     "sha": "650e56cd380c311909cd50408bbb4884f1f5d21e",
@@ -56,6 +57,9 @@
     ]
 }
 </textarea>
+</div>
+<div>
+Pattern:
 <textarea rows="20" cols="100" id="pattern" >
        {
           sha: sha@_,
@@ -64,6 +68,7 @@
           parents/*/sha: parents@_
         }
 </textarea>
+</div>
 <p>
   <button onclick="match_test();">test</button>
 </p>

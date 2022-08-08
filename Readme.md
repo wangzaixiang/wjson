@@ -13,4 +13,6 @@ see [Usage](doc/wjson.md)
    bison -o ../src/main/java/wjson/parse/Program.java Program
    ```
 2. sbt compile
+3. JS
+   `sbt wjsonJS/fullLinkJS`
 
