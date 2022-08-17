@@ -19,6 +19,16 @@ class TestPatternParser extends AnyFunSuite {
 
   }
 
+
+  test("big Long") {
+
+    NumberPattern(589458537707843585) match
+      case NumberPattern(value) =>
+        assert(value.toLong == 589458537707843585L)
+
+  }
+
+
   test("simple program with binding") {
 
     val program = """{name: "wangzx", "age": age@18}"""
