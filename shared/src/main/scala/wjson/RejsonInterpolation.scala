@@ -171,7 +171,7 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
     variable.pattern match
       case NullPattern() => (input == JsNull) ifTrue JsNull
       case BoolPattern(value: Boolean) =>  (input == JsBoolean(value)) ifTrue  input.asInstanceOf[JsBoolean].value
-      case NumberPattern(value: Double) => (input == JsNumber(value)) ifTrue  input.asInstanceOf[JsNumber].value
+      case NumberPattern(value) => (input == JsNumber(value)) ifTrue  input.asInstanceOf[JsNumber].value
       case StringPattern(value: String) => (input == JsString(value)) ifTrue input.asInstanceOf[JsString].value
       case a@ArrPattern(value: Seq[JsPattern.Variable]) =>  arrPatternMatch(a, input, results) ifTrue  input
       case o@ObjPattern(value: Seq[(JsPattern.Path, JsPattern.Variable)]) =>  objPatternMatch(o, input, results) ifTrue input

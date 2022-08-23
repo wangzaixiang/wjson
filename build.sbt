@@ -1,6 +1,6 @@
 import sbt.Keys.{publishConfiguration, publishTo}
 
-ThisBuild / version := "0.1.0-RC2"
+ThisBuild / version := "0.1.0-RC3"
 
 ThisBuild / scalaVersion := "3.1.3"
 

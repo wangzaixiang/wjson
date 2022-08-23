@@ -29,7 +29,7 @@ class JsPatternParser extends RegexParsers:
       | boolean ^^ { x => JsPattern.BoolPattern(x.toBoolean) }
       | string ^^ { x => JsPattern.StringPattern(x) }
       | float ^^ { x => JsPattern.NumberPattern(x.toDouble) }
-      | integer ^^ { x => JsPattern.NumberPattern(x.toDouble) }
+      | integer ^^ { x => JsPattern.NumberPattern(x.toLong) }
       | type_string ^^ { x => JsPattern.AnyVal(GroundType.STRING) }
       | type_number ^^ {x => JsPattern.AnyVal(GroundType.NUMBER) }
       | type_boolean ^^ {x => JsPattern.AnyVal(GroundType.BOOLEAN) }
@@ -79,7 +79,7 @@ class JsPatternParser extends RegexParsers:
   def path_next: Parser[PathElement] = '/' ~> ident ^^ {x => PathElement.Simple(x) } |
     "/*" ^^ { x => PathElement.ArrayFilter( JsPattern.AnyVal(GroundType.ANY) ) } |
     '[' ~> jsval <~ ']' ^^ {
-      case NumberPattern(value) if value == value.toInt =>
+      case NumberPattern(value: Long) =>
         PathElement.Index(value.toInt)
       case x@_ =>  PathElement.ArrayFilter(x)
     }

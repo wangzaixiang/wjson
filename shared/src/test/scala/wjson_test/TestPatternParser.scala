@@ -14,7 +14,7 @@ class TestPatternParser extends AnyFunSuite {
 
     assert(result  == Variable(null, ObjPattern(
             "name" -> Variable(null, StringPattern("wangzx")),
-            "age" -> Variable(null, NumberPattern(18)))
+            "age" -> Variable(null, NumberPattern(18L)))
     ))
 
   }
@@ -22,9 +22,10 @@ class TestPatternParser extends AnyFunSuite {
 
   test("big Long") {
 
-    NumberPattern(589458537707843585) match
-      case NumberPattern(value) =>
-        assert(value.toLong == 589458537707843585L)
+    NumberPattern(589458537707843585L) match
+      case NumberPattern(value: Long) =>
+        assert(value == 589458537707843585L)
+      case _ => assert(false)
 
   }
 
@@ -37,7 +38,7 @@ class TestPatternParser extends AnyFunSuite {
 
     assert(result  == Variable(null, ObjPattern(
       "name" -> Variable(null, StringPattern("wangzx")),
-      "age" -> Variable("age", NumberPattern(18)))
+      "age" -> Variable("age", NumberPattern(18L)))
     ))
 
   }
@@ -79,23 +80,23 @@ class TestPatternParser extends AnyFunSuite {
         "field7" -> Variable(null, BoolPattern(true)),
         "field8" -> Variable(null, BoolPattern(false)),
         "field9" -> Variable(null, AnyVal(GroundType.INTEGER)),
-        "more/age" -> Variable("age", NumberPattern(18)),
+        "more/age" -> Variable("age", NumberPattern(18L)),
         "arr" -> Variable("arr", ArrPattern(
           List(
-            Variable(null, NumberPattern(1)),
-            Variable(null, NumberPattern(2)),
-            Variable(null, NumberPattern(3)),
+            Variable(null, NumberPattern(1L)),
+            Variable(null, NumberPattern(2L)),
+            Variable(null, NumberPattern(3L)),
             Variable("x", AnyVals())
           ))),
         "arr2" -> Variable(null, ArrPattern(
           List(
-            Variable("a", NumberPattern(1)),
-            Variable("b", NumberPattern(2)),
-            Variable("c", NumberPattern(3))
+            Variable("a", NumberPattern(1L)),
+            Variable("b", NumberPattern(2L)),
+            Variable("c", NumberPattern(3L))
           ))),
         "obj" -> Variable("o", ObjPattern(
           "name" -> Variable(null, StringPattern("wangzx")),
-          "age" -> Variable("age", NumberPattern(18)))
+          "age" -> Variable("age", NumberPattern(18L)))
         ),
         (null: String) -> Variable("anys", AnyVals())
       ) ))

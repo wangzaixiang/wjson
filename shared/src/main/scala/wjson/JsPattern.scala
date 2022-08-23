@@ -9,7 +9,7 @@ enum JsPattern:
 
   case NullPattern()  // null literal
   case BoolPattern(value: Boolean)   // true or false literal
-  case NumberPattern(value: Double)   // number literal
+  case NumberPattern(value: Double|Long)   // number literal
   case StringPattern(value: String)   // string literal
   case ArrPattern(value: Seq[JsPattern.Variable])  // array literal
   case ObjPattern(value: Seq[(JsPattern.Path, JsPattern.Variable)])  // object literal
