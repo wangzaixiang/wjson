@@ -2,7 +2,7 @@ import sbt.Keys.{publishConfiguration, publishTo}
 
 ThisBuild / version := "0.1.0-RC3"
 
-ThisBuild / scalaVersion := "3.1.3"
+ThisBuild / scalaVersion := "3.2.1"
 
 lazy val wjsonRoot = (project in file("."))
   .aggregate(wjson.js, wjson.jvm)
@@ -60,7 +60,8 @@ lazy val wjson = crossProject(JSPlatform, JVMPlatform).in(file("."))
   .jvmSettings(
     libraryDependencies += "org.mvel" % "mvel2" % "2.4.14.Final",
   )
-  // .jvmConfigure( _.enablePlugins(GraalVMNativeImagePlugin) )
+//   .jvmConfigure( _.enablePlugins(GraalVMNativeImagePlugin) )
+//   .jvmConfigure( _.enablePlugins(ScalaNativePlugin) )
   .jsSettings(
     scalaJSUseMainModuleInitializer := true,
   )

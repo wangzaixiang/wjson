@@ -75,7 +75,7 @@ class TestCaseClass extends AnyFunSuite {
   test("explict given value") {
     case class Address2(state: String, city: String)
 
-    given mapper: JsValueMapper[Address2] = JsValueMapperMacro.generate[Address2]
+    given mapper: JsValueMapper[Address2] = JsValueMapperMacro.genADT[Address2]
 
     val address = Address2("guangdong", "guangzhou")
     val js = json"{state:'guangdong', city:'guangzhou'}"

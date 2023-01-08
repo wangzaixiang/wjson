@@ -6,6 +6,6 @@ import scala.jdk.CollectionConverters.*
 object Eval {
 
   def eval(script: String, context: Map[String, Any]): Any =
-    MVEL.eval(script, context.asJava)
+     MVEL.eval(script, context.asJava)
 
 }
