@@ -1,6 +1,6 @@
 import sbt.Keys.{publishConfiguration, publishTo}
 
-ThisBuild / version := "0.1.0-RC3"
+ThisBuild / version := "0.1.0-RC4"
 
 ThisBuild / scalaVersion := "3.2.1"
 
@@ -17,6 +17,7 @@ lazy val wjson = crossProject(JSPlatform, JVMPlatform).in(file("."))
     organization := "com.github.wangzaixiang",
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.12" % "test",
     libraryDependencies += "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.1.1",
+    scalacOptions := Seq("-deprecation", "-feature"),
 
     publishMavenStyle := true,
 

@@ -37,7 +37,7 @@ object JsValueMapperMacro:
       case _ => throw new AssertionError("Expected a Product or a Sum")
 
 
-  def genSum[T: Type, elemTypes: Type, elemNames: Type](using Quotes): Expr[JsValueMapper[T]] =
+  private def genSum[T: Type, elemTypes: Type, elemNames: Type](using Quotes): Expr[JsValueMapper[T]] =
     import quotes.reflect.*
     val names = extractNames[elemNames]
     val typeReprs = extractTypeRepres[elemTypes]
@@ -50,18 +50,18 @@ object JsValueMapperMacro:
           case Some(mapper) => mapper
           case _ => throw new Exception("No mapper found for type " + tpe.show(using Printer.TypeReprStructure))
 
-    val prodMappersByName: List[(String, Term)] = nameTypes.filter { case (name, tpe) => tpe.termSymbol == Symbol.noSymbol }
+    val prodMappersByName: List[(String, Term)] = nameTypes.filter { case (_, tpe) => tpe.termSymbol == Symbol.noSymbol }
       .map { case (name, tpe) => (name, getMapper(tpe).asTerm) }
     val prodMappers = prodMappersByName.map(_._2)
     val prodMapperIndexByName: Map[String, Int] = prodMappersByName.zipWithIndex.map { case ((name, _), index) => (name, index) }.toMap
 
     /**
-     * ```scala
+     * <pre>
      *    def fromJson(json: JsValue): Color = json match
      *      case JsString("Red") => Red
      *      ...
      *      case x:JsObject if x.fields("_kind") == "Mixed" => summon[Mixed].fromJson(json)
-     * ```
+     * </pre>
      */
     def fromJsonImpl(refs: List[Ref], js: Expr[JsValue]): Expr[T] =
       val selector = js.asTerm
@@ -90,18 +90,18 @@ object JsValueMapperMacro:
         }
       }
       val cases2 = cases ++ List(
-        CaseDef(Wildcard(), None, ('{ throw new Exception("no _kind field") }).asTerm)
+        CaseDef(Wildcard(), None, '{ throw new Exception("no _kind field") }.asTerm)
       )
       val expr2 = Match(selector, cases2)
       expr2.asExprOf[T]
 
     /**
-     * ```scala
+     * <pre>
      *   def toJson(t: Color): JsValue = t match
      *     case Red => JsString("Red")
      *     ...
      *     case x: Mixed => summon[Mixed].toJson(x)
-     * ```
+     * </pre>
      */
     def toJsonImpl(refs: List[Ref], t: Expr[T]): Expr[JsValue] =
 
@@ -122,7 +122,6 @@ object JsValueMapperMacro:
           val pattern = Bind(sym, bindPattern)
           val xExpr: Expr[Any] = Ref(sym).asExprOf[Any]
 
-          val ref = refs(prodMapperIndexByName(name))
           val mapper = refs(prodMapperIndexByName(name)).asExprOf[JsValueMapper[_]].asInstanceOf[Expr[JsValueMapper[Any]]]
           val body = '{ JsObject($mapper.toJson($xExpr).asInstanceOf[JsObject].fields + ("_kind" -> JsString(${ nameExpr }))) }
 
@@ -136,9 +135,9 @@ object JsValueMapperMacro:
       ValDef.let(Symbol.spliceOwner, prodMappers) { refs =>
         val block = '{
           new JsValueMapper[T]:
-            def fromJson(js: JsValue): T = ${ fromJsonImpl(refs, 'js) }
+            def fromJson(js: JsValue): T = ${ fromJsonImpl(refs, '{js}) }
 
-            def toJson(t: T): JsValue = ${ toJsonImpl(refs, 't) }
+            def toJson(t: T): JsValue = ${ toJsonImpl(refs, '{t}) }
         }
         block.asTerm
       }

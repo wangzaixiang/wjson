@@ -11,8 +11,8 @@ enum JsPattern:
   case BoolPattern(value: Boolean)   // true or false literal
   case NumberPattern(value: Double|Long)   // number literal
   case StringPattern(value: String)   // string literal
-  case ArrPattern(value: Seq[JsPattern.Variable])  // array literal
-  case ObjPattern(value: Seq[(JsPattern.Path, JsPattern.Variable)])  // object literal
+  case ArrPattern(value: List[JsPattern.Variable])  // array literal
+  case ObjPattern(value: List[(JsPattern.Path, JsPattern.Variable)])  // object literal
   case AnyVal(ground: JsPattern.GroundType)       // _: match any JsVal
   case AnyVals()      // _*: match any number of JsVals
   case TaggedString(tag:String, content:String)  // id"pattern": match a specific JsVal
@@ -37,7 +37,7 @@ object JsPattern:
   case class Variable(name: String, pattern: JsPattern)
 
   def ObjPattern(fields: (String, Variable)*): ObjPattern =
-    new ObjPattern(fields.map{ p =>
+    new ObjPattern(fields.toList.map{ p =>
       if(p._1 == null) (null: Path) -> p._2
       else Path(p._1) -> p._2
     })

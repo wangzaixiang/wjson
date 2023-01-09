@@ -10,7 +10,7 @@ object Main {
 
       rejsonMatch(json, pattern) match
         case Some(result) => println("matched:" + result)
-        case null => println("not matched")
+        case _ => println("not matched")
   }
 
   def rejsonMatch(json: String, pattern: String): Option[Map[String, Any]] =

@@ -3,6 +3,7 @@ package wjson_test
 import org.scalatest.funsuite.AnyFunSuite
 import wjson.*
 import wjson.JsValue.{JsEmptyString, JsObject}
+import scala.language.implicitConversions
 
 //  enum Weekday:
 //    case Mon, Tue, Wed, Thu, Fri, Sat, Sun

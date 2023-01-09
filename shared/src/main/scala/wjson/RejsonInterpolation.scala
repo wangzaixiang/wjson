@@ -52,7 +52,7 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
           val has_anys = arrPattern.value.exists(_.pattern == AnyVals())
           if has_anys then
             val head = arrPattern.value.takeWhile(_.pattern != AnyVals())
-            val anys :: tail = arrPattern.value.dropWhile(_.pattern != AnyVals())
+            val anys :: tail = arrPattern.value.dropWhile(_.pattern != AnyVals()) : @unchecked
 
             jsa.elements.size >= (head.size + tail.size) && {
               val a_head = jsa.elements.slice(0, head.size)

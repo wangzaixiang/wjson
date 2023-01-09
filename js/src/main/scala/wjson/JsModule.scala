@@ -41,9 +41,9 @@ object JsModule {
 
   private def mapAsJsValue(value: Any): js.Any =
     value match
-      case x: Map[String, Any] => mapAsJsDictionary(x)
+      case x: Map[_, _] => mapAsJsDictionary(x.asInstanceOf[Map[String, Any]])
       case JsNumber(x: Double) => x
-      case JsNumber(x: Long) => x
+      case JsNumber(x: Long) => x.toDouble
       case x: JsString => x.value
       case x: JsBoolean => x.value
       case x: JsArray => js.Array( x.elements.map(mapAsJsValue):_* )
