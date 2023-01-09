@@ -1,6 +1,7 @@
 package wjson
 
 import com.sun.xml.internal.bind.v2.model.core.TypeRef
+import jdk.nashorn.internal.ir.Terminal
 
 import scala.quoted.*
 import scala.deriving.*
@@ -26,7 +27,7 @@ object JsValueMapperMacro:
         case _ => throw new AssertionError("Expected a String constant type")
       case '[EmptyTuple] => Nil
 
-  def genADTImpl[T: Type](using Quotes): Expr[JsValueMapper[T]] =
+  private def genADTImpl[T: Type](using Quotes): Expr[JsValueMapper[T]] =
     import quotes.reflect.*
 
     Expr.summon[Mirror.Of[T]].get match
@@ -50,9 +51,10 @@ object JsValueMapperMacro:
           case Some(mapper) => mapper
           case _ => throw new Exception("No mapper found for type " + tpe.show(using Printer.TypeReprStructure))
 
+    // "Mixed" -> Expr[JsValueMapper[Mixed]]
     val prodMappersByName: List[(String, Term)] = nameTypes.filter { case (_, tpe) => tpe.termSymbol == Symbol.noSymbol }
       .map { case (name, tpe) => (name, getMapper(tpe).asTerm) }
-    val prodMappers = prodMappersByName.map(_._2)
+    val prodMappers: List[Term] = prodMappersByName.map(_._2)
     val prodMapperIndexByName: Map[String, Int] = prodMappersByName.zipWithIndex.map { case ((name, _), index) => (name, index) }.toMap
 
     /**
@@ -64,18 +66,17 @@ object JsValueMapperMacro:
      * </pre>
      */
     def fromJsonImpl(refs: List[Ref], js: Expr[JsValue]): Expr[T] =
-      val selector = js.asTerm
       val cases = nameTypes.map { arg =>
         val name: String = arg._1
-        val typ: TypeRepr = arg._2
-        if (typ.termSymbol != Symbol.noSymbol) { // case Red
+        val tpe: TypeRepr = arg._2
+        if (tpe.termSymbol != Symbol.noSymbol) { // case Red of single value
           val selector = Ref(Symbol.requiredModule("wjson.JsValue.JsString"))
           val tree = Unapply(Select.unique(selector, "unapply"), Nil, List(Literal(StringConstant(name))))
           val tpt = Inferred(TypeRepr.of[JsString])
           val pattern = TypedOrTest(tree, tpt)
-          CaseDef(pattern, None, Ref(typ.termSymbol))
+          CaseDef(pattern, None, Ref(tpe.termSymbol)) // case JsString("Red") => Red
         }
-        else { // case Mixed(rgb)
+        else { // case Mixed(rgb) of a case class
           val sym = Symbol.newVal(Symbol.spliceOwner, "_x", TypeRepr.of[JsValue.JsObject], Flags.EmptyFlags, Symbol.noSymbol)
           val bindPattern = Typed(Wildcard(), TypeTree.of[JsValue.JsObject])
           val pattern = Bind(sym, bindPattern)
@@ -86,13 +87,13 @@ object JsValueMapperMacro:
           val mapper = refs(prodMapperIndexByName(name)).asExprOf[JsValueMapper[_]]
           val body = '{ $mapper.fromJson($xExpr) }
 
-          CaseDef(pattern, Some(guard.asTerm), body.asTerm)
+          CaseDef(pattern, Some(guard.asTerm), body.asTerm) // case _x: JsObject if _x.fields("_kind") == JsString("Mixed") =>
         }
       }
       val cases2 = cases ++ List(
-        CaseDef(Wildcard(), None, '{ throw new Exception("no _kind field") }.asTerm)
+        CaseDef(Wildcard(), None, '{ throw new Exception("no _kind field") }.asTerm) // case _ => throw new Exception("no _kind field")
       )
-      val expr2 = Match(selector, cases2)
+      val expr2 = Match(js.asTerm, cases2)
       expr2.asExprOf[T]
 
     /**
@@ -104,18 +105,16 @@ object JsValueMapperMacro:
      * </pre>
      */
     def toJsonImpl(refs: List[Ref], t: Expr[T]): Expr[JsValue] =
-
-      val selector = t.asTerm
       val cases = nameTypes.map { arg =>
         val name = arg._1
         val typ: TypeRepr = arg._2
         val nameExpr = Expr(name)
-        if (typ.termSymbol != Symbol.noSymbol) { // case Red
+        if (typ.termSymbol != Symbol.noSymbol) { // case Red => JsString("Red")
           val pattern = Ref(typ.termSymbol)
           val body = '{ JsString(${ nameExpr }) }
           CaseDef(pattern, None, body.asTerm)
         }
-        else {
+        else { // case _x: Mixed => JsObject( summon[Mixed].toJson(_x).fields + ("_kind" -> JsString("Mixed")) )
           val sym = Symbol.newVal(Symbol.spliceOwner, "_x", typ, Flags.EmptyFlags, Symbol.noSymbol)
           val typeTree = TypeTree.of(using typ.asType)
           val bindPattern = Typed(Wildcard(), typeTree)
@@ -128,7 +127,7 @@ object JsValueMapperMacro:
           CaseDef(pattern, None, body.asTerm)
         }
       }
-      val expr = Match(selector, cases)
+      val expr = Match(t.asTerm, cases)
       expr.asExprOf[JsValue]
 
     val expr =
@@ -144,7 +143,7 @@ object JsValueMapperMacro:
     expr.asExprOf[JsValueMapper[T]]
 
 
-  def genProduct[T: Type](using Quotes): Expr[JsValueMapper[T]] =
+  private def genProduct[T: Type](using Quotes): Expr[JsValueMapper[T]] =
     import quotes.reflect.*
     import JsValueMapper.*
 

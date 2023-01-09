@@ -127,9 +127,7 @@ trait JsValueMapper[T]:
  * in the compilation and increase the compile time, the output jar file will be large.
  */
 object JsValueMapper:
-  inline def derived[T](using deriving.Mirror.Of[T]): JsValueMapper[T] =
-    ${ JsValueMapperMacro.genADTImpl[T] }
-
+  inline def derived[T](using deriving.Mirror.Of[T]): JsValueMapper[T] = JsValueMapperMacro.genADT[T]
 
   given JsValueMapper[JsValue] with
     inline def fromJson(js: JsValue): JsValue = js
@@ -304,8 +302,7 @@ object JsValueMapper:
    * the T.derived has high priority than JsValMapper.given so if you define the derives,
    * this macro will not be used.
    */
-  inline given[T](using deriving.Mirror.Of[T]): JsValueMapper[T] =
-    ${ JsValueMapperMacro.genADTImpl[T] }
+  inline given[T](using deriving.Mirror.Of[T]): JsValueMapper[T] = JsValueMapperMacro.genADT[T]
 
 
   inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String): T =

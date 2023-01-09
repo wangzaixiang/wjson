@@ -7,8 +7,9 @@ ThisBuild / scalaVersion := "3.2.1"
 lazy val wjsonRoot = (project in file("."))
   .aggregate(wjson.js, wjson.jvm)
   .settings(
-    publish := {},
-    publishLocal := {}
+    publish / skip := true,
+    publishLocal / skip := true,
+    // publishLocal := {}
   )
 
 lazy val wjson = crossProject(JSPlatform, JVMPlatform).in(file("."))
