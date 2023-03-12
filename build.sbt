@@ -1,8 +1,8 @@
 import sbt.Keys.{publishConfiguration, publishTo}
 
-ThisBuild / version := "0.1.0-RC4"
+ThisBuild / version := "0.2.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "3.2.1"
+ThisBuild / scalaVersion := "3.2.2"
 
 lazy val wjsonRoot = (project in file("."))
   .aggregate(wjson.js, wjson.jvm)
@@ -67,3 +67,14 @@ lazy val wjson = crossProject(JSPlatform, JVMPlatform).in(file("."))
   .jsSettings(
     scalaJSUseMainModuleInitializer := true,
   )
+
+lazy val schema = project.in(file("schema"))
+  .settings(
+    name := "wjson-schema",
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "3.2.12" % "test",
+      "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value,
+      "org.scala-lang" %% "scala3-compiler" % scalaVersion.value
+    ),
+  )
+  .dependsOn(wjson.jvm)

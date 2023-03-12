@@ -1,0 +1,10 @@
+{
+  "name": "wangzx",
+  "age":  50,
+  "color": {
+    _kind: "RGB",
+    r: 100,
+    g: 200,
+    b: 100
+  }
+}
