@@ -90,9 +90,8 @@ object JsValueMapperMacro:
           CaseDef(pattern, Some(guard.asTerm), body.asTerm) // case _x: JsObject if _x.fields("_kind") == JsString("Mixed") =>
         }
       }
-      val cases2 = cases ++ List(
-        CaseDef(Wildcard(), None, '{ throw new Exception("no _kind field") }.asTerm) // case _ => throw new Exception("no _kind field")
-      )
+      val cases2 = cases :+ CaseDef(Wildcard(), None, '{ throw new Exception("no _kind field") }.asTerm) // case _ => throw new Exception("no _kind field")
+      
       val expr2 = Match(js.asTerm, cases2)
       expr2.asExprOf[T]
 
