@@ -12,12 +12,70 @@
       "description": "The person's age."
     },
     "color": {
-      "$ref": "wjson/schema/test/Color.json"
+      "$ref": "#/definitions/wjson.schema.test.Color"
     }
   },
   "required": [
     "name",
     "age"
   ],
+  "definitions": {
+    "wjson.schema.test.Color": {
+      "description": "color",
+      "oneOf":[
+        {
+          "type":"string",
+          "enum":[
+            "Red"
+          ]
+        },
+        {
+          "type":"string",
+          "enum":[
+            "Green"
+          ]
+        },
+        {
+          "type":"object",
+          "properties":{
+            "r":{
+              "type":"integer",
+              "maximum": 255,
+              "minimum": 0
+            },
+            "g":{
+              "type":"integer",
+              "maximum": 255,
+              "minimum": 0
+            },
+            "b":{
+              "type":"integer",
+              "maximum": 255,
+              "minimum": 0
+            },
+            "_kind":{
+              "type":"string",
+              "enum":[
+                "RGB"
+              ]
+            }
+          },
+          "additionalProperties":false,
+          "required": [
+            "r",
+            "g",
+            "b",
+            "_kind"
+          ]
+        },
+        {
+          "type":"string",
+          "enum":[
+            "Blue"
+          ]
+        }
+      ]
+    }
+  },
   "additionalProperties": false
 }
