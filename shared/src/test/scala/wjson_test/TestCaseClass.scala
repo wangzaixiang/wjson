@@ -52,7 +52,7 @@ class TestCaseClass extends AnyFunSuite {
     case class User3(name: String, age:Int, address: JsObject) derives JsValueMapper
     val user = User3("John", 20, JsObject("city"->"guangzhou", "state"->"gd") )
 
-    assert(user.toJson == json"{name:'John', age:20, address:{state: 'gd', city:'guangzhou'} }")
+    assert(user.toJson == json"{name:'John', age:20, address:{city:'guangzhou', state:'gd' } }")
     assert( user.toJson.convertTo[User3] == user)
   }
 

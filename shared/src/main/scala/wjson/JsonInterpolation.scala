@@ -54,12 +54,12 @@ class JsonInterpolation(sc: StringContext) {
 
         p_o.fields.foreach {
           case (key, Placeholder(index))  =>
-            assert(inputObj.fields contains key)   // TODO return JsNull?
-            results(index) = inputObj.fields(key)
+            assert( inputObj.contains(key) )
+            results(index) = inputObj.field(key)
 
           case (key, value) =>
-            assert(inputObj.fields contains key)
-            patternMatch(value, inputObj.fields(key), placeHolders, results)
+            assert(inputObj.contains(key))
+            patternMatch(value, inputObj.field(key), placeHolders, results)
         }
 
       case p_a: JsArray =>

@@ -82,7 +82,7 @@ object JsValueMapperMacro:
           val pattern = Bind(sym, bindPattern)
           val xExpr = Ref(sym).asExprOf[JsValue.JsObject]
           val kind: Expr[String] = Expr(name)
-          val guard = '{ ${ xExpr }.fields("_kind") == JsString(${ kind }) }
+          val guard = '{ ${ xExpr }.field("_kind") == JsString(${ kind }) }
 
           val mapper = refs(prodMapperIndexByName(name)).asExprOf[JsValueMapper[_]]
           val body = '{ $mapper.fromJson($xExpr) }
@@ -121,7 +121,7 @@ object JsValueMapperMacro:
           val xExpr: Expr[Any] = Ref(sym).asExprOf[Any]
 
           val mapper = refs(prodMapperIndexByName(name)).asExprOf[JsValueMapper[_]].asInstanceOf[Expr[JsValueMapper[Any]]]
-          val body = '{ JsObject($mapper.toJson($xExpr).asInstanceOf[JsObject].fields + ("_kind" -> JsString(${ nameExpr }))) }
+          val body = '{ JsObject("_kind" -> JsString(${ nameExpr })) ++ $mapper.toJson($xExpr).asInstanceOf[JsObject]  }
 
           CaseDef(pattern, None, body.asTerm)
         }

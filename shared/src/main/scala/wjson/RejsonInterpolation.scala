@@ -88,7 +88,7 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
       case PathElement.Simple(simple) :: tail =>
         jsv match
           case jso: JsObject =>
-            getElementByPath(jso.fields(simple), Path(tail))
+            getElementByPath(jso.field(simple), Path(tail))
           case _ => JsNull
       case PathElement.ArrayFilter(pattern) :: tail =>
         jsv match
@@ -148,7 +148,7 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
     case JsNumber(v: Long) => new java.lang.Long(v)
     case JsString(v) => v
     case JsArray(v) => v.map(asPojo).toArray
-    case JsObject(v) => v.map(x => (x._1, asPojo((x._2)))).asJava
+    case JsObject(v) => v.map(x => (x._1, asPojo((x._2)))).toMap.asJava
 
   // TODO enable extension tags in a better API
   private def tagStringMatch(tag: String, content: String, value: JsValue, results: MutableMap[String, Any]): Boolean =

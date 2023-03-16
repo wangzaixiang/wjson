@@ -81,7 +81,7 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
   // http://tools.ietf.org/html/rfc4627#section-2.2
   private def `object`(): Unit = {
 
-    @tailrec def members(map: Map[String, JsValue]): Map[String, JsValue] = {
+    @tailrec def members(map: List[(String, JsValue)]): List[(String, JsValue)] = {
       if(jsonExtensionSupport) IDorString()
       else `string`()
 
@@ -89,7 +89,7 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
       ws()
       val key = sb.toString
       `value`()
-      val nextMap = map.updated(key, jsValue)
+      val nextMap = (key, jsValue) :: map
       if (ws(',')) {
         if(jsonExtensionSupport && cursorChar == '}' ) nextMap
         else members(nextMap)
@@ -99,10 +99,10 @@ class JsonParser(input: ParserInput, jsonExtensionSupport: Boolean = false) {
 
     ws()
     jsValue = if (cursorChar != '}') {
-      var map = Map.empty[String, JsValue]
+      var map: List[(String, JsValue)] = Nil
       map = members(map)
       require('}')
-      JsObject(map)
+      JsObject(map.reverse)
     } else {
       advance()
       JsValue.JsEmptyObject

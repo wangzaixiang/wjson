@@ -1,9 +1,8 @@
 package wjson_test
 
 import scala.language.implicitConversions
-
 import org.scalatest.funsuite.AnyFunSuite
-import wjson.JsValue.{JsArray, JsNumber, JsObject}
+import wjson.JsValue.{JsArray, JsBoolean, JsNumber, JsObject}
 import wjson.{*, given}
 
 class TestPatterns extends AnyFunSuite {
@@ -62,7 +61,7 @@ class TestPatterns extends AnyFunSuite {
         assert(d == "ddd")
         assert(e == null)
         assert(f == List(JsNumber(1.2)))
-        assert(g == Map("a" -> JsNumber(1)))
+        assert(g == List("a" -> JsNumber(1)))
       case _ => assert(false)
     }
   
@@ -236,10 +235,10 @@ class TestPatterns extends AnyFunSuite {
             objArr: $array@[$f@{a:$aaa@1,b:$bb@integer}, $rest3@_*],
           },
         }""" =>
-        assert(foo == JsObject("bar" -> JsNumber(123), "far" -> true, "baz" -> JsString("abc")))
+        assert(foo == JsObject("bar" -> JsNumber(123), "baz" -> JsString("abc"), "far"->JsBoolean(true)))
         assert(other == JsObject("bar" -> 123, "baz" -> "abc"))
         assert(baz == "abc")
-        assert(obj == JsObject("foo" -> JsObject("bar" -> JsNumber(123), "far" -> true, "baz" -> JsString("abc")), "biz" -> JsObject("list" -> JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))))
+        assert(obj == JsObject("foo" -> JsObject("bar" -> JsNumber(123), "baz" -> JsString("abc"), "far"->true), "biz" -> JsObject("list" -> JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))))
         assert(foo2 == JsObject("bar2" -> JsNumber(123), "baz2" -> JsString("abc")))
         assert(biz == JsObject("list" -> JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5))))
         assert(list == JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
@@ -272,7 +271,7 @@ class TestPatterns extends AnyFunSuite {
         }""" =>
         assert(a == "1")
         assert(b == 2)
-        assert(other == JsObject(Map("c" -> JsBoolean(true))))
+        assert(other == JsObject(List("c" -> JsBoolean(true))))
       case _ => assert(false)
     }
   }
@@ -351,13 +350,13 @@ class TestPatterns extends AnyFunSuite {
 
     js match
       case rejson"""{users[{name:'Rose'}]: [ ${u1}@_, ${u2}@_ ] }""" =>
-        assert(u1 == json"{age:21, name:'Rose', sex: 'female'}")
-        assert(u2 == json"{age:11, name:'Rose', sex: 'female'}")
+        assert(u1 == json"{ name:'Rose',age:21, sex: 'female'}")
+        assert(u2 == json"{name:'Rose', age:11, sex: 'female'}")
       case _ => assert(false)
 
     js match
       case rejson"""{users[{name:'Rose'}][0]:  ${u1}@_ }""" =>
-        assert(u1 == json"{age:21, name:'Rose', sex: 'female'}")
+        assert(u1 == json"{ name:'Rose', age:21, sex: 'female'}")
       case _ => assert(false)
 
     js match

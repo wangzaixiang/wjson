@@ -14,7 +14,7 @@ enum JsValue:
     case JsNumber(value: Double|Long)
     case JsString(value: String)
     case JsArray(elements: Seq[JsValue])
-    case JsObject(fields: Map[String, JsValue])
+    case JsObject(fields: Seq[(String, JsValue)])  // changed, preserve the order of fields
 
 
 object JsValue:
@@ -26,8 +26,8 @@ object JsValue:
   val JsEmptyArray: JsArray = JsArray()
 
   def parse(str: String): JsValue = JsonParser.parse(ParserInput(str))
-  def JsObject(fields: (String, JsValue)*): JsObject = JsObject(Map(fields: _*))
-  def JsArray(elements: JsValue*): JsArray = JsArray(elements.toList)
+  def JsObject(fields: (String, JsValue)*): JsObject = JsObject(fields)
+  def JsArray(elements: JsValue*): JsArray = JsArray(elements)
   def JsNumber(value: Int) = new JsNumber(value.toLong)
 
   /**
@@ -35,6 +35,27 @@ object JsValue:
    */
   given [T: JsValueMapper]: Conversion[T, JsValue] with
     def apply(x: T): JsValue = summon[JsValueMapper[T]].toJson(x)
+
+  extension (value: JsObject)
+    def contains(name: String): Boolean = value.fields.exists(_._1 == name)
+    def field(name: String): JsValue = value.fields.find(_._1 == name).map(_._2).get
+    def optField(name: String): Option[JsValue] = value.fields.find(_._1 == name).map(_._2)
+
+    def merge(kvs: (String, JsValue)*): JsObject =
+      val keys1 = value.fields.map(_._1).toSet
+      val keys2 = kvs.map(_._1).toSet
+      val dupicateKeys = keys1.intersect(keys2)
+      if dupicateKeys.nonEmpty then
+        JsObject(value.fields.filterNot(x => dupicateKeys.contains(x._1)) ++ kvs)
+      else JsObject(value.fields ++ kvs)
+
+    def ++(other: JsObject): JsObject = merge(other.fields:_*)
+    def ++(other: Seq[(String, JsValue)]): JsObject = merge(other:_*)
+
+    def +(kv: (String, JsValue)): JsObject =
+      if value.fields.exists(_._1 == kv._1) then
+        JsObject(value.fields.filterNot(_._1 == kv._1) :+ kv)
+      else JsObject(value.fields :+ kv)
 
   extension (value: JsValue)
     def show(indent: Int = 2, margin: Int = 100): String =
@@ -282,13 +303,13 @@ object JsValueMapper:
     inline def fromJson(js: JsValue): Map[String, T] = (js: @unchecked) match
       case o:JsObject => o.fields.map( x => (x._1, summon[JsValueMapper[T]].fromJson(x._2) ) ).toMap
       case _ => throw new Exception(s"Expected JsObj but ${js.getClass}")
-    inline def toJson(t: Map[String, T]): JsValue = JsObject( t.map( x => (x._1, summon[JsValueMapper[T]].toJson(x._2)) ) )
+    inline def toJson(t: Map[String, T]): JsValue = JsObject( t.toList.map( x => (x._1, summon[JsValueMapper[T]].toJson(x._2)) ) )
 
   given [T:JsValueMapper]: JsValueMapper[SortedMap[String, T]] with
     inline def fromJson(js: JsValue): SortedMap[String, T] = (js: @unchecked) match
       case o:JsObject => SortedMap( o.fields.map( x => (x._1, summon[JsValueMapper[T]].fromJson(x._2) ) ).toSeq:_* )
       case _ => throw new Exception(s"Expected JsObj but ${js.getClass}")
-    inline def toJson(t: SortedMap[String, T]): JsValue = JsObject( t.toMap.map( x => (x._1, summon[JsValueMapper[T]].toJson(x._2)) ) )
+    inline def toJson(t: SortedMap[String, T]): JsValue = JsObject( t.toList.map( x => (x._1, summon[JsValueMapper[T]].toJson(x._2)) ) )
 
   given [T: JsValueMapper]: JsValueMapper[Option[T]] with
     inline def fromJson(js: JsValue): Option[T] = (js: @unchecked) match
@@ -306,12 +327,12 @@ object JsValueMapper:
 
 
   inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String): T =
-    js.fields.get(name) match
+    js.optField(name) match
       case x: Some[JsValue] if x.value ne JsNull => summon[JsValueMapper[T]].fromJson(x.value)
       case _ => throw new Exception("Expected field " + name + " not exists in JSON")
 
   inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String, default:T): T =
-    js.fields.get(name) match
+    js.optField(name) match
       case x: Some[JsValue] => if x.value eq JsNull then default else summon[JsValueMapper[T]].fromJson(x.value)
       case _ => default
 

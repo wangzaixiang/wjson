@@ -1,6 +1,5 @@
 package wjson.schema.test
 
-
 case class Person(name: String, age: Int, color: Color)
 
 enum Color(val r: Int, val g: Int, val b: Int):

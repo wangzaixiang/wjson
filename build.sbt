@@ -4,8 +4,11 @@ ThisBuild / version := "0.2.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.2.2"
 
+ThisBuild / organization := "com.github.wangzaixiang"
+
 lazy val wjsonRoot = (project in file("."))
   .aggregate(wjson.js, wjson.jvm)
+  .aggregate(schema)
   .settings(
     publish / skip := true,
     publishLocal / skip := true,
