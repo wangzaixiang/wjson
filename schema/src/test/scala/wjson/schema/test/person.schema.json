@@ -1,66 +1,52 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "$id": "wjson/schema/test/Person.json",
-  "type": "object",
+  "$id": "wjson.schema.test.Person",
   "properties": {
     "name": {
-      "type": "string",
-      "description": "The person's name."
+      "type": "string"
     },
     "age": {
-      "type": "integer",
-      "description": "The person's age."
+      "type": "integer"
     },
     "color": {
       "$ref": "#/definitions/wjson.schema.test.Color"
     }
   },
-  "required": [
-    "name",
-    "age"
-  ],
+  "additionalProperties": false,
   "definitions": {
     "wjson.schema.test.Color": {
-      "description": "color",
-      "oneOf":[
+      "oneOf": [
         {
-          "type":"string",
-          "enum":[
+          "type": "string",
+          "enum": [
             "Red"
           ]
         },
         {
-          "type":"string",
-          "enum":[
+          "type": "string",
+          "enum": [
             "Green"
           ]
         },
         {
-          "type":"object",
-          "properties":{
-            "r":{
-              "type":"integer",
-              "maximum": 255,
-              "minimum": 0
+          "type": "object",
+          "properties": {
+            "r": {
+              "type": "integer"
             },
-            "g":{
-              "type":"integer",
-              "maximum": 255,
-              "minimum": 0
+            "g": {
+              "type": "integer"
             },
-            "b":{
-              "type":"integer",
-              "maximum": 255,
-              "minimum": 0
+            "b": {
+              "type": "integer"
             },
-            "_kind":{
-              "type":"string",
-              "enum":[
+            "_kind": {
+              "type": "string",
+              "enum": [
                 "RGB"
               ]
             }
           },
-          "additionalProperties":false,
+          "additionalProperties": false,
           "required": [
             "r",
             "g",
@@ -69,13 +55,19 @@
           ]
         },
         {
-          "type":"string",
-          "enum":[
+          "type": "string",
+          "enum": [
             "Blue"
           ]
         }
       ]
     }
   },
-  "additionalProperties": false
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "name",
+    "age",
+    "color"
+  ]
 }

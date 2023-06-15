@@ -123,7 +123,13 @@ object JsValue:
 export JsValue.{JsNull, JsBoolean, JsNumber, JsString, JsArray, JsObject}
 
 extension (str:String)
-  def parseJson(`extension`: Boolean = false): JsValue = 
+
+  def parseJson: JsValue = parseJson(false)
+
+  def parseJson5: JsValue = ???
+
+  @deprecated("use parseJson5 instead", "0.1.0")
+  def parseJson(`extension`: Boolean): JsValue =
     if(`extension`) new JsonParser(ParserInput(str), true).parseJsValue()
     else JsValue.parse(str)
 
@@ -147,6 +153,13 @@ trait JsValueMapper[T]:
  * macro expansion will generate an anonumous implementation class. so, there will be a lot of classes
  * in the compilation and increase the compile time, the output jar file will be large.
  */
+// basic value types: Boolean/Int/Long/Float/Double/String
+// collection types: Array/List/Seq/Vector/Set/SortedSet
+// Option type, Tuple type
+// ? Either, Result, Try
+// OrType
+// ADT: Sum Type(enum), Product Type (Case Class)
+// TODO refact it with grouped trait, or using LowPriority to avoid conflict
 object JsValueMapper:
   inline def derived[T](using deriving.Mirror.Of[T]): JsValueMapper[T] = JsValueMapperMacro.genADT[T]
 

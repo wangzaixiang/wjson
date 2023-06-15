@@ -6,13 +6,15 @@ import scala.tasty.inspector.{Inspector, Tasty, TastyInspector}
 import scala.quoted.*
 import wjson.*
 
+import java.io.{FileOutputStream, PrintWriter}
 import scala.annotation.tailrec
 
 object JsonSchemaGenerator:
 
-  class MyInspector(quotes: Quotes)(tastys: List[Tasty[quotes.type]]):
+  class TastySchemaLoader(quotes: Quotes)(tastys: List[Tasty[quotes.type]]):
     import quotes.reflect.*
     given Quotes = quotes
+
 
     private object ADTType:
       def applyEnum(symbol: Symbol): SumType = {
@@ -73,7 +75,21 @@ object JsonSchemaGenerator:
         case _ => Nil
     }
 
+    // TODO optimize $ref
     private def schemaOfType(tpe: TypeRepr, ref: Boolean, definitions: collection.mutable.Set[ADTType]): JsObject = tpe match
+        case x if x =:= TypeRepr.of[JsValue] =>
+          JsObject("type" -> Array("null", "boolean", "integer", "number", "array", "object").toJson )
+        case x if x =:= TypeRepr.of[JsValue.JsString] =>
+          JsObject("type" -> JsString("string"))
+        case x if x =:= TypeRepr.of[JsValue.JsNumber] =>
+          JsObject("type" -> JsString("number"))
+        case x if x =:= TypeRepr.of[JsValue.JsBoolean] =>
+          JsObject("type" -> JsString("boolean"))
+        case x if x =:= TypeRepr.of[JsValue.JsArray] =>
+          JsObject("type" -> JsString("array"))
+        case x if x =:= TypeRepr.of[JsValue.JsObject] =>
+          JsObject("type" -> JsString("object"))
+
         case x if x <:< TypeRepr.of[String] =>
           JsObject("type" -> JsString("string"))
         case x if x =:= TypeRepr.of[Int] || x =:= TypeRepr.of[Short] || x =:= TypeRepr.of[Long] =>
@@ -101,15 +117,39 @@ object JsonSchemaGenerator:
         case x@AppliedType(base, args) if base <:< Symbol.requiredClass("scala.collection.immutable.List").typeRef =>
           JsObject("type" -> JsString("array"),
             "items" -> schemaOfType(args(0), ref = true, definitions))
+        case x@AppliedType(base, args) if base <:< Symbol.requiredClass("scala.Array").typeRef =>
+          JsObject("type" -> JsString("array"),
+            "items" -> schemaOfType(args(0), ref = true, definitions))
         case x@AppliedType(base, args) if base <:< Symbol.requiredClass("scala.collection.immutable.Map").typeRef =>
           JsObject("type" -> JsString("object"),
             "additionalProperties" -> schemaOfType(args(1), ref = true, definitions) )
+        case x@AppliedType(base, args) if base <:< Symbol.requiredClass("scala.Option").typeRef =>
+          schemaOfType(args(0), false, definitions)
+        case x@OrType(left, right) =>
+          val l = schemaOfType(left, false, definitions)
+          val r = schemaOfType(right, false, definitions)
+
+          val flatL =
+            if l.contains("oneOf") then l.field("oneOf").asInstanceOf[JsArray].elements.toList
+            else List(l)
+
+          val flatR =
+            if r.contains("oneOf") then r.field("oneOf").asInstanceOf[JsArray].elements.toList
+            else List(r)
+
+          JsObject("oneOf" -> JsArray(flatL ++ flatR))
+
         case _ =>
           val sym = tpe.typeSymbol
-          if sym.flags.is(Flags.Opaque) && sym.isType  then
+          if sym.isType  then
             sym.tree match
-              case TypeDef(_, rhs) =>
+              case TypeDef(_, rhs: Term) =>
                 schemaOfType(rhs.symbol.typeRef, true, definitions)
+              case TypeDef(_, rhs: TypeTree) =>
+                schemaOfType(rhs.tpe, true, definitions)
+              case _ =>
+                println(s"Unsupported type: ${tpe.show} - ${tpe.show(using Printer.TypeReprStructure)}")
+                ???
           else
             assert(false, s"Unsupported type: ${tpe.show} - ${tpe.show(using Printer.TypeReprStructure)}")
             ???
@@ -162,17 +202,26 @@ object JsonSchemaGenerator:
       JsObject( "oneOf" -> JsArray(
           sum.items.map {
             case ADTType.CaseSimple(symbol) =>
+              val description: Option[String] = extractDescription(symbol)
               JsObject( "type" -> JsString("string"), "enum" -> JsArray(JsString(symbol.name)) )
+                ++ description.map(desc => JsObject("description" -> JsString(desc))).getOrElse(JsObject())
             case x @ ADTType.CaseProduct(symbol, fields) =>
+              val description: Option[String] = extractDescription(symbol)
               schemaOfProductCase(x, includeKind = true, definitions)
+                ++ description.map(desc => JsObject("description" -> JsString(desc))).getOrElse(JsObject())
           }
         ) )
+
+    private def extractDescription(symbol: Symbol): Option[String] =
+      symbol.annotations
+        .find(_.tpe.typeSymbol == Symbol.requiredClass("wjson.schema.JsonSchema.description"))
+        .map { case Apply(_, List(Literal(StringConstant(str)))) => str }
 
     private val result = extractTypes(tree)
 
     private val definitions = collection.mutable.Set[ADTType]()
 
-    val root: JsObject = result(0) match
+    private val root: JsObject = result(0) match
       case sum@ADTType.SumType(typeSymbol, items) =>
         val schema = schemaOfSumType(sum, definitions)
         JsObject(
@@ -213,23 +262,39 @@ object JsonSchemaGenerator:
 
           rescure(root2, others, processed+one)
 
-    val root2 = rescure(root, definitions, Set.empty)
+    val schema: JsValue.JsObject = rescure(root, definitions, Set.empty)
 
-    println(root2.show())
 
     //
-  end MyInspector
+  end TastySchemaLoader
+
+  object JsonSchemaInspector:
+    def apply(tastyFile: String): JsObject =
+      val inspector = new JsonSchemaInspector
+      TastyInspector.inspectTastyFiles(List(tastyFile))(inspector)
+      inspector.schema
 
   class JsonSchemaInspector extends Inspector:
 
+    var schema: JsObject = _
     override def inspect(using quotes: Quotes)(tastys: List[Tasty[quotes.type]]): Unit =
-      new MyInspector(quotes)(tastys)
+      val loader = new TastySchemaLoader(quotes)(tastys)
+      schema = loader.schema
       ()
 
-  def main(args: Array[String]): Unit =
-    val inspector = new JsonSchemaInspector
-//    val tastyFiles = List("schema/target/scala-3.2.2/test-classes/wjson/schema/test/Color.tasty")
-    //    val tastyFiles = List("schema/target/scala-3.2.2/test-classes/wjson/schema/test/Person.tasty")
-    val tastyFiles = List("/Users/wangzaixiang/workspaces/wangzaixiang/cube_design/target/scala-3.2.2/classes/tabular/model/TabularModel.tasty")
-    TastyInspector.inspectTastyFiles(tastyFiles)(new JsonSchemaInspector)
+// main
+//  def main(args: Array[String]): Unit =
+////    val inspector = new JsonSchemaInspector
+////    val tastyFiles = List("schema/target/scala-3.2.2/test-classes/wjson/schema/test/Color.tasty")
+//    //    val tastyFiles = List("schema/target/scala-3.2.2/test-classes/wjson/schema/test/Person.tasty")
+//    val tastyFiles = List("/Users/wangzaixiang/workspaces/wangzaixiang/cube_design/target/scala-3.2.2/classes/tabular/model/CubeSettings.tasty")
+////    val tastyFiles = List("/Users/wangzaixiang/workspaces/wangzaixiang/cube_design/target/scala-3.2.2/classes/tabular/model/TabularModel.tasty")
+//    TastyInspector.inspectTastyFiles(tastyFiles)(new JsonSchemaInspector)
+
+  @main
+  def Tasty2Schema(input: String, output: String): Unit =
+    val schema = JsonSchemaInspector.apply(input)
+    val out = new PrintWriter(new FileOutputStream(output))
+    out.println(schema.show())
+    out.close()
 

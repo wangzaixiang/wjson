@@ -1,8 +1,5 @@
 package wjson
 
-import com.sun.xml.internal.bind.v2.model.core.TypeRef
-import jdk.nashorn.internal.ir.Terminal
-
 import scala.quoted.*
 import scala.deriving.*
 

@@ -1,8 +1,8 @@
 import sbt.Keys.{publishConfiguration, publishTo}
 
-ThisBuild / version := "0.2.0-SNAPSHOT"
+ThisBuild / version := "0.3.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "3.2.2"
+ThisBuild / scalaVersion := "3.3.0"
 
 ThisBuild / organization := "com.github.wangzaixiang"
 
@@ -10,17 +10,54 @@ lazy val wjsonRoot = (project in file("."))
   .aggregate(wjson.js, wjson.jvm)
   .aggregate(schema)
   .settings(
+    name := "wjsonRoot",
     publish / skip := true,
     publishLocal / skip := true,
     // publishLocal := {}
   )
 
+// wjson core projects
+lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
+  .settings(
+    name := "wjson-core",
+    organization := "com.github.wangzaixiang",
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "3.2.15" % "test",
+    ),
+    // scalacOptions := Seq("-Xcheck-macros")
+
+  )
+
+// JSON pattern matcher
+lazy val macther = crossProject(JSPlatform, JVMPlatform).in(file("matcher"))
+  .settings(
+    name := "wjson-matcher",
+    organization := "com.github.wangzaixiang",
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "3.2.15" % "test",
+    )
+  )
+
+// ADT support for JSON
+lazy val adt = crossProject(JSPlatform, JVMPlatform).in(file("adt"))
+  .settings(
+    name := "wjson-adt",
+    organization := "com.github.wangzaixiang",
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "3.2.15" % "test",
+    )
+  )
+  .dependsOn(core)
+
 lazy val wjson = crossProject(JSPlatform, JVMPlatform).in(file("."))
   .settings(
     name := "wjson",
     organization := "com.github.wangzaixiang",
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.12" % "test",
-    libraryDependencies += "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.1.1",
+    libraryDependencies ++= Seq(
+      "org.scala-lang" %% "scala3-library" % scalaVersion.value,
+      "org.scalatest" %% "scalatest" % "3.2.15" % "test",
+      "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.1.1",
+    ),
     scalacOptions := Seq("-deprecation", "-feature"),
 
     publishMavenStyle := true,
@@ -75,7 +112,7 @@ lazy val schema = project.in(file("schema"))
   .settings(
     name := "wjson-schema",
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.2.12" % "test",
+      "org.scalatest" %% "scalatest" % "3.2.15" % "test",
       "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value,
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value
     ),
