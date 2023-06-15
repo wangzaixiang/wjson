@@ -14,17 +14,17 @@ import scala.annotation.experimental
  */
 object ADTMappingMacro:
 
-  inline def genADT[T: deriving.Mirror.Of]: JsValueMapper[T] = ${ genADTImpl[T] }
+  // inline def genADT[T: deriving.Mirror.Of]: JsValueMapper[T] = ${ genADTImpl[T] }
 
-  private def genADTImpl[T: Type](using Quotes): Expr[JsValueMapper[T]] =
+  def genADTImpl[T: Type](using Quotes): Expr[JsValueMapper[T]] =
     new ADTMappingMacro(using quotes).genADTImpl[T]
 
-  def caseFieldGet[T: JsValueMapper](js: JsObject, name: String): T =
+  inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String): T =
     js.fieldOpt(name) match
       case x: Some[JsValue] if x.value ne JsNull => summon[JsValueMapper[T]].fromJson(x.value)
       case _ => throw new Exception("Expected field " + name + " not exists in JSON")
 
-  def caseFieldGet[T: JsValueMapper](js: JsObject, name: String, default: T): T =
+  inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String, default: T): T =
     js.fieldOpt(name) match
       case x: Some[JsValue] => if x.value eq JsNull then default else summon[JsValueMapper[T]].fromJson(x.value)
       case _ => default

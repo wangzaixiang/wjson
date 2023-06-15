@@ -34,8 +34,8 @@ given[T: JsValueMapper, CC[x] <: IterableOps[x, CC, CC[x]]]: Conversion[CC[T], J
 
 
 private abstract class ADTMapping:
-  inline def derived[T](using deriving.Mirror.Of[T]): JsValueMapper[T] = ADTMappingMacro.genADT[T]
-  inline given adtMapper[T](using deriving.Mirror.Of[T]): JsValueMapper[T] = ADTMappingMacro.genADT[T]
+  inline def derived[T](using deriving.Mirror.Of[T]): JsValueMapper[T] = ${ ADTMappingMacro.genADTImpl[T] }
+  inline given adtMapper[T](using deriving.Mirror.Of[T]): JsValueMapper[T] = ${ ADTMappingMacro.genADTImpl[T] }
 
 
 private abstract class CollectionMapping extends ADTMapping:
