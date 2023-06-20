@@ -123,16 +123,3 @@ extension (sc: StringContext)
   def json = new JsonInterpolation(sc)
   def json5 = new Json5Interpolation(sc)
 
-/**
- *
- * Best Practice for Case Class Json Mapping:
- *
- * 1. make the case class `derives JsValueMapper`.
- * 2. or declare a given JsValueMaper[T] for the case class
- *
- * otherwise, every time you use API which using a JsValueMapper[T], a new JsValueMapper[T] will be
- * created via the JsValueMapper.given_JsValueMapper_T macro. this is an `expensive` operation, every
- * macro expansion will generate an anonumous implementation class. so, there will be a lot of classes
- * in the compilation and increase the compile time, the output jar file will be large.
- */
-

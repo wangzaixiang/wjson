@@ -13,16 +13,16 @@ object TestAdtMapping:
     case Alpha(r: Int, g: Int, b: Int, a: Float)
 
 
-class TestAdtMapping extends AnyFunSuite {
+class TestAdtMapping extends AnyFunSuite:
 
-  test("simple product") {
+  test("simple product"):
     case class User1(name: String, age: Int) derives JsValueMapper
     case class User2(name: String, age: Int)
 
     given JsValueMapper[User2] = JsValueMapper.derived[User2]
-  }
 
-  test("circle reference") {
+
+  test("circle reference"):
     case class User(name: String, age: Int) // derives JsValueMapper
     case class Family(mother: User, father: User, children: List[List[User]], relate: Family|Null = null)
 
@@ -37,30 +37,19 @@ class TestAdtMapping extends AnyFunSuite {
     val family2 = js.convertTo[Family]
 
     assert(family2 == family)
-  }
 
-//  test("test widen"){
-//    case class User1(name: String, age: Int, languages: List[String]) derives JsValueMapper
-//    case class User2(name: String, age: Int, languages: collection.immutable.List[String]) derives JsValueMapper
-//    case class User3(name: String, age: Int, languages: List[List[String]])
-//
-//    case class Family(mother: User3, father: User3, children: List[List[User3]], relate: Family = null) derives JsValueMapper
-//  }
 
-  test("simple enum") {
-    enum WeekDay  derives JsValueMapper  {
+  test("simple enum"):
+    enum WeekDay  derives JsValueMapper:
       case Mon, Tue, Wed, Thu, Fri, Sat, Sun
-    }
+
     val days = WeekDay.values.toList
     val js = days.toJson
-  }
 
-  test("enums is only supported in global scope") {
+
+  test("enums is only supported in global scope"):
     import TestAdtMapping.*
 
     val color = Color.Alpha(1, 2, 3, 0.5f)
     val js = color.toJson
     println(js.showPretty)
-  }
-
-}

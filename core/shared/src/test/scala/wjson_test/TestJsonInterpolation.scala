@@ -7,8 +7,7 @@ import scala.collection.mutable
 
 class TestJsonInterpolation extends AnyFunSuite {
 
-  test("basic string interpolation") {
-
+  test("basic string interpolation"):
     val name = "John"
     val age = 30
     val city = "New York"
@@ -26,8 +25,6 @@ class TestJsonInterpolation extends AnyFunSuite {
 
     val x: JsValue = List("a", "b", "c")
     assert(x == List("a", "b", "c").toJson)
-
-  }
 
   test("interpolation with insert sapces at boundary") {
     val name = "John"

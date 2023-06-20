@@ -1,15 +1,11 @@
 package wjson
 
-import com.sun.xml.internal.bind.v2.model.core.TypeRef
-import wjson.JsValue.{JsBoolean, JsString}
-
 import scala.deriving.*
 import scala.quoted.*
 import wjson.{*, given}
 
 import scala.Symbol as _
 import scala.annotation.experimental
-
 
 /**
  * Macro to generate a JsValueMapper for a given case class.
@@ -33,13 +29,13 @@ object ADTMappingMacro:
     override def initialValue(): Boolean = false
 
   // use ThreadLocal to trace the recursive calls
-  private val NOT_EXPAND_ADTS = new ThreadLocal[ Int ]():
+  private val NOT_EXPAND_ADTS = new ThreadLocal[Int]():
     override def initialValue(): Int = 0
 
   /**
    * to enable macro debug, runs like `sbt -Dwjson.printMacroCode=true compile`
    */
-  val PRINT_MACRO_CODE: Boolean = java.lang.Boolean.getBoolean("wjson.printMacroCode")
+  private val PRINT_MACRO_CODE: Boolean = java.lang.Boolean.getBoolean("wjson.printMacroCode")
 
 class ADTMappingMacro(q: Quotes):
 
@@ -68,7 +64,7 @@ class ADTMappingMacro(q: Quotes):
           ADTMappingMacro.NO_EXPAND_ADT.set(true)
           Expr.summon[Mirror.Of[T]].get match
             case '{ $m: Mirror.ProductOf[T] } =>
-                visit[T](Map.empty )
+              visit[T](Map.empty )
             case '{ $m: Mirror.SumOf[T] { type MirroredElemTypes = elemTypes; type MirroredElemLabels = elemNames } } =>
               visit[T](Map.empty )
             case _ => throw new AssertionError("Expected a Product or a Sum")
@@ -105,7 +101,8 @@ class ADTMappingMacro(q: Quotes):
 
     val refs: Map[TypeRepr, TermBuilder] = valSyms map : (tpe, sym) =>
       val builder = new TermBuilder:
-        def make(using innerQuotes:Quotes): innerQuotes.reflect.Ref = innerQuotes.reflect.Ref(sym.asInstanceOf[innerQuotes.reflect.Symbol])
+        def make(using innerQuotes:Quotes): innerQuotes.reflect.Ref =
+          innerQuotes.reflect.Ref(sym.asInstanceOf[innerQuotes.reflect.Symbol])
       ( tpe, builder)
 
     val valDefs: Map[TypeRepr, ValDef] = needGenTypes map: (tpe, generator) =>
@@ -254,7 +251,6 @@ class ADTMappingMacro(q: Quotes):
 
   private class OrTypeGenerator[T: Type] extends Generator[T]:
 
-    // X | Y | Z
     def elementTypes(using Quotes)(tpe: quotes.reflect.TypeRepr) : List[quotes.reflect.TypeRepr] =
       tpe match
         case quotes.reflect.OrType(l, r) => elementTypes(l) ++ elementTypes(r)
@@ -333,7 +329,6 @@ class ADTMappingMacro(q: Quotes):
 
       def fromArray(js: Expr[JsArray]): Expr[T] = '{ throw new RuntimeException("fromArray is not implemented yet") }
       def fromObject(js: Expr[JsObject]): Expr[T] = '{ throw new RuntimeException("fromObject is not implmented yet") }
-
 
       '{
         new JsValueMapper[T]:
@@ -445,7 +440,6 @@ class ADTMappingMacro(q: Quotes):
           }
       expr.asExprOf[JsValueMapper[T]]
 
-
   private type GeneratorMap = Map[q.reflect.TypeRepr, Generator[?] ]// Map[q.reflect.TypeRepr, Generator[?]]
 
   private def visit[T: Type](acc:  GeneratorMap) : GeneratorMap =
@@ -463,10 +457,13 @@ class ADTMappingMacro(q: Quotes):
     def visitADT[T: Type](value: GeneratorMap): GeneratorMap =
       Expr.summon[Mirror.Of[T]] match
         case Some('{ $m: Mirror.ProductOf[T] }) => visitProduct[T](acc)
-        case Some('{ $m: Mirror.SumOf[T] {
-          type MirroredElemTypes = elemTypes
-          type MirroredElemLabels = elemLabels
-        } }) => visitSum[T, elemTypes, elemLabels](acc)
+        case Some('{
+          $m: Mirror.SumOf[T] {
+            type MirroredElemTypes = elemTypes
+            type MirroredElemLabels = elemLabels
+          }
+        }) => visitSum[T, elemTypes, elemLabels](acc)
+        case Some(_) => ???
         case None =>
             throw new NotImplementedError("Not a Product or Sum or OrType:" + TypeRepr.of[T].show)
 
@@ -508,20 +505,19 @@ class ADTMappingMacro(q: Quotes):
 
       val flatterned: List[q.reflect.TypeRepr] = flatternOrTypeElements(TypeRepr.of[T])
 
-      flatterned.foldLeft(r2) { (acc, tpe) =>
+      flatterned.foldLeft(r2): (acc, tpe) =>
         tpe.asType match
           case '[t] => visit[t](acc)
-      }
 
     if TypeRepr.of[T] =:= TypeRepr.of[Null] then acc
-    else if acc.isEmpty then                             // this is the root type, dont summon self, on derived case, it maybe has a non-initialized value
-      visitInside[T](acc)
-    else if acc.contains(TypeRepr.of[T]) then acc   // already visited  // TDO Type[?] is not a good key
-    else                                            // a new Type, first summon it, if success, skp it, otherwise, visit it
+    else if acc.isEmpty then visitInside[T](acc)        // this is the root type, dont summon self, on derived case, it maybe has a non-initialized value
+    else if acc.contains(TypeRepr.of[T]) then acc       // already visited  // TDO Type[?] is not a good key
+    else                                                // a new Type, first summon it, if success, skp it, otherwise, visit it
       ADTMappingMacro.NOT_EXPAND_ADTS.set(0)
-      val found = Expr.summon[JsValueMapper[T]]   // here we will not expand ADT, but increase the counter
+      val found = Expr.summon[JsValueMapper[T]]         // here we will not expand ADT, but increase the counter
       if ADTMappingMacro.NOT_EXPAND_ADTS.get().nn > 0  then  // the type contains ADT need to expand
         visitInside[T](acc)
       else  found  match
         case Some(_) => acc
         case None => visitInside[T](acc)
+
