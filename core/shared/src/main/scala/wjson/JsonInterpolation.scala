@@ -1,5 +1,7 @@
 package wjson
 
+import wjson.JsValue.JsNull
+
 import scala.collection.SortedMap
 
 /**
@@ -13,7 +15,7 @@ class JsonInterpolation(sc: StringContext) {
     def unapply(str: JsValue): Option[Int] = {
       str match
         case JsString(str) if str.startsWith("\u0000_placeholder_") && str.endsWith("_\u0000") =>
-          Some(str.substring(14, str.length - 2).toInt)
+          Some(str.substring(14, str.length - 2).nn.toInt)
         case _ => None
     }
   }
@@ -36,7 +38,7 @@ class JsonInterpolation(sc: StringContext) {
     val pattern = parse( pi )
 
     val results = collection.mutable.ArrayBuffer[JsValue]()
-    Seq.range(0, sc.parts.length-1).foreach { x => results += null }
+    Seq.range(0, sc.parts.length-1).foreach { x => results += JsNull }
 
     try {
       patternMatch(pattern, input, placeHolders, results)

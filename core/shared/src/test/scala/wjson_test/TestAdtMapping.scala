@@ -24,7 +24,7 @@ class TestAdtMapping extends AnyFunSuite {
 
   test("circle reference") {
     case class User(name: String, age: Int) // derives JsValueMapper
-    case class Family(mother: User, father: User, children: List[List[User]], relate: Family = null)
+    case class Family(mother: User, father: User, children: List[List[User]], relate: Family|Null = null)
 
     val f1 = Family(User("month", 40), User("father", 42),
       Nil, null)

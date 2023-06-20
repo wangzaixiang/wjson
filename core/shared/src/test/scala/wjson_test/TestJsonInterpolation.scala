@@ -46,7 +46,7 @@ class TestJsonInterpolation extends AnyFunSuite {
 
     val patten = "@".r
     val spaces = " \t\n\r"
-    def cleaned(parts: Array[String]): Array[String] = parts.map( _.replaceAll("@", "") )
+    def cleaned(parts: Array[String]): Array[String] = parts.map( _.replaceAll("@", "").nn )
 
     def randSpaces(n: Int): String =
       val sb = new StringBuilder

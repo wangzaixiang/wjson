@@ -324,16 +324,16 @@ object ParserInput {
     }
   }
 
-  private val UTF8 = Charset.forName("UTF-8")
+  private val UTF8 = Charset.forName("UTF-8").nn
 
   /**
    * ParserInput reading directly off a byte array which is assumed to contain the UTF-8 encoded representation
    * of the JSON input, without requiring a separate decoding step.
    */
   class ByteArrayBasedParserInput(bytes: Array[Byte]) extends DefaultParserInput {
-    private val byteBuffer = ByteBuffer.allocate(4)
-    private val charBuffer = CharBuffer.allocate(2)
-    private val decoder = UTF8.newDecoder()
+    private val byteBuffer = ByteBuffer.allocate(4).nn
+    private val charBuffer = CharBuffer.allocate(2).nn
+    private val decoder = UTF8.newDecoder().nn
     def nextChar(): Char = {
       incrCursor()
       if (cursor < bytes.length) (bytes(cursor) & 0xFF).toChar else EOI
@@ -347,7 +347,7 @@ object ParserInput {
           if (cursor < bytes.length) decode(bytes(cursor), remainingBytes - 1) else ErrorChar
         } else {
           byteBuffer.flip()
-          val coderResult = decoder.decode(byteBuffer, charBuffer, false)
+          val coderResult = decoder.decode(byteBuffer, charBuffer, false).nn
           charBuffer.flip()
           val result = if (coderResult.isUnderflow & charBuffer.hasRemaining) charBuffer.get() else ErrorChar
           byteBuffer.clear()
@@ -374,7 +374,7 @@ object ParserInput {
     }
     def length: Int = bytes.length
     def sliceCharArray(start: Int, end: Int): Array[Char] =
-      UTF8.decode(ByteBuffer.wrap(java.util.Arrays.copyOfRange(bytes, start, end))).array()
+      UTF8.decode(ByteBuffer.wrap(java.util.Arrays.copyOfRange(bytes, start, end))).nn.array().nn
   }
 
   class StringBasedParserInput(string: String) extends DefaultParserInput {
@@ -400,7 +400,7 @@ object ParserInput {
     def currentArgument() = throw new IllegalStateException
     def nextUtf8Char(): Char = nextChar()
     def length: Int = chars.length
-    def sliceCharArray(start: Int, end: Int): Array[Char] = java.util.Arrays.copyOfRange(chars, start, end)
+    def sliceCharArray(start: Int, end: Int): Array[Char] = java.util.Arrays.copyOfRange(chars, start, end).nn
   }
 
   class InterpolationParserInput(sc: StringContext, args: Seq[JsValue]) extends DefaultParserInput {
@@ -456,7 +456,7 @@ object ParserInput {
     final def nextChar(): Char = {
       _sectionCursor += 1
       incrCursor()
-      if _sectionCursor > _sectionContent.length then // switch to next section
+      if _sectionCursor > _sectionContent.nn.length then // switch to next section
         _sectionIndex += 1
         if _sectionIndex <= args.length then
           _sectionContent = sc.parts(_sectionIndex)
@@ -467,8 +467,8 @@ object ParserInput {
 
 
       if _sectionContent == null then EOI // End Of Input
-      else if _sectionCursor < _sectionContent.length then
-        _sectionContent.charAt(_sectionCursor)
+      else if _sectionCursor < _sectionContent.nn.length then
+        _sectionContent.nn.charAt(_sectionCursor)
       else // EOI or EOS
         if _sectionIndex < sc.parts.length - 1 then EOS // End Of Section
         else EOI // End Of Input
@@ -482,8 +482,12 @@ object ParserInput {
     // start and end must inside 1 section
     override def sliceCharArray(start: Int, end: Int): Array[Char] = {
       val chars = new Array[Char](end - start)
-      _sectionContent.getChars(start - _sectionStartCursor, end - _sectionStartCursor, chars, 0)
-      chars
+      if _sectionContent == null then
+        throw new IllegalStateException("sliceCharArray() must be called inside a section")
+      else
+        assert(start >= _sectionStartCursor && end <= _sectionStartCursor + _sectionContent.nn.length)
+        _sectionContent.nn.getChars(start - _sectionStartCursor, end - _sectionStartCursor, chars, 0)
+        chars
     }
   }
 

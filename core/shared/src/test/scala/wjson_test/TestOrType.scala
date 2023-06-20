@@ -6,23 +6,16 @@ import wjson.{*, given}
 
 class TestOrType extends AnyFunSuite {
 
-//  test("ortype") {
-//
-//    case class Bean( name: String | Int)
-//
-//    val bean = Bean("hello")
-//    bean.toJson
-//
-//  }
+  test("ortype") {
 
-  test("example1") {
-    case class User(name: String, age: Int)
-    case class Family(mother: User, father: User, children: List[User])
+    case class Bean( name: String | Int | Null, other: Option[String]|Int) //8
+    val bean = Bean("hello", 5)
+    val js1 = bean.toJson
 
-    val family = Family(User("Julie", 40), User("John", 42), List(User("Chris", 13), User("Meg", 16)))
-    val js = family.toJson // 3
+    val bean2 = js1.convertTo[Bean]
+    assert(bean2 == bean)
 
-    println(js)
   }
+
 
 }

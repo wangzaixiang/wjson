@@ -22,7 +22,7 @@ class TestJsonParser extends AnyFunSuite {
   // insert random spaces into json string, and it should parse the same
   test("insert spaces at boundary") {
     val jsonStr = """@{@"name"@:@"John"@,@"age"@:@30@,@"cars"@:@[@"Ford"@,@"BMW"@,@"Fiat"@]@,@"city"@:@"New York"@}@"""
-    val clean = jsonStr.replaceAll("@", "")
+    val clean = jsonStr.replaceAll("@", "").nn
     val expect = clean.parseJson
 
     val pattern = "@".r
