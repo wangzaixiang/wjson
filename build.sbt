@@ -23,6 +23,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
     organization := "com.github.wangzaixiang",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.2.15" % "test",
+      "org.scala-lang" %% "scala3-library" % scalaVersion.value % "test",
     ),
     scalacOptions := Seq("-Yexplicit-nulls")
   )

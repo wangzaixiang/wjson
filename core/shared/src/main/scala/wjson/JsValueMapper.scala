@@ -2,10 +2,10 @@ package wjson
 
 import wjson.JsValue.{JsArray, JsNumber}
 
-import java.awt.font.OpenType
 import scala.annotation.experimental
 import scala.collection.{IterableOps, SortedMap, SortedSet}
 import scala.reflect.ClassTag
+import wjson.macros.ADTMappingMacro
 
 /**
  * type class for JsValue Mapping
@@ -197,7 +197,6 @@ private abstract class PrimitiveMapping extends OptionMapping:
 
     inline def toJson(t: String): JsValue = JsString(t)
 
-
 private abstract class NativeMapping extends PrimitiveMapping:
 
   given JsValueMapper[JsValue] with
@@ -241,5 +240,3 @@ private abstract class NativeMapping extends PrimitiveMapping:
     inline def toJson(t: JsArray): JsValue = t
 
 object JsValueMapper extends NativeMapping
-
-
