@@ -154,7 +154,7 @@ class ADTMappingMacro(q: Quotes):
     given Quotes = q
     import q.reflect.*
 
-    def visitCollection[T: Type](value: GeneratorMap, generator: Generator[T]): GeneratorMap =
+    def visitAppliedType1[T: Type](value: GeneratorMap, generator: Generator[T]): GeneratorMap =
       val acc2 = value + ( TypeRepr.of[T] -> generator)
       TypeRepr.of[T].asInstanceOf[AppliedType].args.foldLeft(acc2):
         case (acc, arg) => arg.asType match
@@ -172,16 +172,6 @@ class ADTMappingMacro(q: Quotes):
         case Some(_) => ???
         case None =>
             throw new NotImplementedError("Not a Product or Sum or OrType:" + TypeRepr.of[T].show)
-
-    def visitInside[T: Type](acc: GeneratorMap): GeneratorMap =
-      TypeRepr.of[T] match
-        case tpe if tpe <:< TypeRepr.of[List[_]] => visitCollection[T](acc, ListGenerator[T]() )
-        case tpe if tpe <:< TypeRepr.of[Seq[_]] => visitCollection[T](acc, SeqGenerator[T]() )
-        case tpe if tpe <:< TypeRepr.of[Vector[_]] => visitCollection[T](acc, VectorGenerator[T]() )
-        case tpe if tpe <:< TypeRepr.of[Array[_]] => visitCollection[T](acc, ArrayGenerator[T]() )
-        case tpe if tpe <:< TypeRepr.of[Set[_]] => visitCollection[T](acc, SetGenerator[T]() )
-        case OrType(l, r) => visitOrType[T](acc)
-        case _ =>visitADT[T](acc)
 
     def visitProduct[T: Type](acc: GeneratorMap): GeneratorMap =
       val generator = ProductGenerator[T]() // (TypeRepr.of[T], GeneratorKind.GenProduct)
@@ -218,6 +208,19 @@ class ADTMappingMacro(q: Quotes):
       flatterned.foldLeft(r2): (acc, tpe) =>
         tpe.asType match
           case '[t] => visit[t](acc)
+
+    def visitInside[T: Type](acc: GeneratorMap): GeneratorMap =
+      // val tpe = TypeRepr.of[T]   // TODO should we support TypeDefs
+      TypeRepr.of[T] match
+        case tpe if tpe <:< TypeRepr.of[List[_]] => visitAppliedType1[T](acc, ListGenerator[T]())
+        case tpe if tpe <:< TypeRepr.of[Seq[_]] => visitAppliedType1[T](acc, SeqGenerator[T]())
+        case tpe if tpe <:< TypeRepr.of[Vector[_]] => visitAppliedType1[T](acc, VectorGenerator[T]())
+        case tpe if tpe <:< TypeRepr.of[Array[_]] => visitAppliedType1[T](acc, ArrayGenerator[T]())
+        case tpe if tpe <:< TypeRepr.of[Set[_]] => visitAppliedType1[T](acc, SetGenerator[T]())
+        case tpe if tpe <:< TypeRepr.of[Option[_]] => visitAppliedType1[T](acc, OptionGenerator[T]())
+        case OrType(l, r) => visitOrType[T](acc)
+        case _ => visitADT[T](acc)
+
 
     if TypeRepr.of[T] =:= TypeRepr.of[Null] then acc
     else if acc.isEmpty then visitInside[T](acc)        // this is the root type, dont summon self, on derived case, it maybe has a non-initialized value

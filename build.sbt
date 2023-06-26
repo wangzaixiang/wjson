@@ -7,8 +7,8 @@ ThisBuild / scalaVersion := "3.3.0"
 ThisBuild / organization := "com.github.wangzaixiang"
 
 lazy val wjsonRoot = (project in file("."))
-//  .aggregate(wjson.js, wjson.jvm)
-//  .aggregate(schema)
+  .aggregate(core.jvm)
+  .aggregate(schema)
   .settings(
     name := "wjsonRoot",
     publish / skip := true,
@@ -17,7 +17,7 @@ lazy val wjsonRoot = (project in file("."))
   )
 
 // wjson core projects
-lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
+lazy val core = crossProject(JVMPlatform).in(file("core"))
   .settings(
     name := "wjson-core",
     organization := "com.github.wangzaixiang",
@@ -32,12 +32,11 @@ lazy val debug = (project in file("debug"))
   .settings(
     name := "wjson-debug",
     organization := "com.github.wangzaixiang",
-    //    scalacOptions := Seq("-Ycheck:all"),
   )
   .dependsOn(core.jvm)
 
 // JSON pattern matcher
-lazy val macther = crossProject(JSPlatform, JVMPlatform).in(file("matcher"))
+lazy val matcher = project.in(file("matcher"))
   .settings(
     name := "wjson-matcher",
     organization := "com.github.wangzaixiang",
@@ -47,15 +46,16 @@ lazy val macther = crossProject(JSPlatform, JVMPlatform).in(file("matcher"))
   )
 
 // ADT support for JSON
-lazy val adt = crossProject(JSPlatform, JVMPlatform).in(file("adt"))
+lazy val schema = project.in(file("schema"))
   .settings(
-    name := "wjson-adt",
+    name := "wjson-schema",
     organization := "com.github.wangzaixiang",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.2.15" % "test",
+      "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value,
     )
   )
-  .dependsOn(core)
+  .dependsOn(core.jvm)
 //
 //lazy val wjson = crossProject(JSPlatform, JVMPlatform).in(file("."))
 //  .settings(

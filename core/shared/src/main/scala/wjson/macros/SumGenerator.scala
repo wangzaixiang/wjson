@@ -24,7 +24,7 @@ class SumGenerator[T: Type] extends Generator[T]:
      * def fromJson(json: JsValue): Color = json match
      * case JsString("Red") => Red
      * ...
-     * case x:JsObject if x.fields("_kind") == "Mixed" => summon[Mixed].fromJson(json)
+     * case x:JsObject if x.fields("_enum") == "Mixed" => summon[Mixed].fromJson(json)
      * </pre>
      */
     def fromJsonImpl(js: Expr[JsValue]): Expr[T] =
@@ -44,15 +44,15 @@ class SumGenerator[T: Type] extends Generator[T]:
           val pattern = Bind(sym, bindPattern)
           val xExpr = Ref(sym).asExprOf[JsValue.JsObject]
           val kind: Expr[String] = Expr(name)
-          val guard = '{ ${ xExpr }.field("_kind") == JsString(${ kind }) }
+          val guard = '{ ${ xExpr }.field("_enum") == JsString(${ kind }) }
 
           val mapper = summonJsValueMapper(using quotes)(tpe, deps).get
           val body = '{ ${ mapper }.fromJson(${ xExpr }) }
 
-          CaseDef(pattern, Some(guard.asTerm), body.asTerm) // case _x: JsObject if _x.fields("_kind") == JsString("Mixed") =>
+          CaseDef(pattern, Some(guard.asTerm), body.asTerm) // case _x: JsObject if _x.fields("_enum") == JsString("Mixed") =>
         }
       }
-      val cases2 = cases :+ CaseDef(Wildcard(), None, '{ throw new Exception("no _kind field") }.asTerm) // case _ => throw new Exception("no _kind field")
+      val cases2 = cases :+ CaseDef(Wildcard(), None, '{ throw new Exception("no _enum field") }.asTerm) // case _ => throw new Exception("no _enum field")
 
       val expr2 = Match(js.asTerm, cases2)
       expr2.asExprOf[T]
@@ -75,7 +75,7 @@ class SumGenerator[T: Type] extends Generator[T]:
           val body = '{ JsString(${ nameExpr }) }
           CaseDef(pattern, None, body.asTerm)
         }
-        else { // case _x: Mixed => JsObject( summon[Mixed].toJson(_x).fields + ("_kind" -> JsString("Mixed")) )
+        else { // case _x: Mixed => JsObject( summon[Mixed].toJson(_x).fields + ("_enum" -> JsString("Mixed")) )
           val sym = Symbol.newVal(Symbol.spliceOwner, "_x", typ, Flags.EmptyFlags, Symbol.noSymbol)
           val typeTree = TypeTree.of(using typ.asType)
           val bindPattern = Typed(Wildcard(), typeTree)
@@ -85,7 +85,7 @@ class SumGenerator[T: Type] extends Generator[T]:
             case '[t] =>
               val xExpr = Ref(sym).asExprOf[t]
               val mapper = summonJsValueMapper[t](deps).get
-              '{ JsObject("_kind" -> JsString(${ nameExpr })) ++ ${ mapper }.toJson(${ xExpr }).asInstanceOf[JsObject] }
+              '{ JsObject("_enum" -> JsString(${ nameExpr })) ++ ${ mapper }.toJson(${ xExpr }).asInstanceOf[JsObject] }
           CaseDef(pattern, None, body.asTerm)
         }
       }
