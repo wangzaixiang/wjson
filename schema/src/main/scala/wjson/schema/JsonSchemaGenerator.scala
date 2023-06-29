@@ -1,7 +1,5 @@
 package wjson.schema
 
-import wjson.JsValue.JsObject
-
 import scala.tasty.inspector.{Inspector, Tasty, TastyInspector}
 import scala.quoted.*
 import wjson.*
@@ -50,7 +48,7 @@ object JsonSchemaGenerator:
 
     private val tree: Tree = tastys(0).ast
 
-    private def extractTypes(tree: quotes.reflect.Tree): List[ADTType] = {
+    private def extractTopLevelADTTypes(tree: quotes.reflect.Tree): List[ADTType] = {
       tree match
         case PackageClause(pid, stats) =>
           stats.flatMap {
@@ -186,11 +184,11 @@ object JsonSchemaGenerator:
       }
       val kind: List[(String, JsValue)] =
         if includeKind then
-          List("_kind" -> JsObject("type" -> JsString("string"),
+          List("_enum" -> JsObject("type" -> JsString("string"),
             "enum" -> JsArray(JsString(product.symbol.name))))
         else Nil
 
-      val required = product.fields.map(f => f.name) ++ (if (includeKind) List("_kind") else Nil)
+      val required = product.fields.map(f => f.name) ++ (if (includeKind) List("_enum") else Nil)
       JsObject(
         "type" -> JsString("object"),
         "properties" -> new JsObject(kind ++ fields),
@@ -217,7 +215,7 @@ object JsonSchemaGenerator:
         .find(_.tpe.typeSymbol == Symbol.requiredClass("wjson.schema.JsonSchema.description"))
         .map { case Apply(_, List(Literal(StringConstant(str)))) => str }
 
-    private val result = extractTypes(tree)
+    private val result = extractTopLevelADTTypes(tree)
 
     private val definitions = collection.mutable.Set[ADTType]()
 
@@ -240,27 +238,27 @@ object JsonSchemaGenerator:
         throw new UnsupportedOperationException(s"Unsupported type: ${x}")
 
     @tailrec
-    private def rescure(root: JsObject, remains: collection.mutable.Set[ADTType], processed: Set[ADTType]): JsObject =
-      if remains.isEmpty then root
+    private def rescure(schemaRoot: JsObject, remains: collection.mutable.Set[ADTType], processed: Set[ADTType]): JsObject =
+      if remains.isEmpty then schemaRoot
       else
-        val (one, others) = (remains.head, remains.tail)
-        if( processed.contains(one) ) rescure(root, others, processed)
+        val (head, tail) = (remains.head, remains.tail)
+        if( processed.contains(head) ) rescure(schemaRoot, tail, processed)
         else
-          val definition: (String, JsObject) = one match
+          val definition: (String, JsObject) = head match
             case x@ADTType.CaseProduct(symbol, fields) =>
-              symbol.fullName -> schemaOfProductCase(x, includeKind = false, others)
+              symbol.fullName -> schemaOfProductCase(x, includeKind = false, tail)
             case x@ADTType.SumType(symbol, items) =>
-              symbol.fullName -> schemaOfSumType(x, others)
+              symbol.fullName -> schemaOfSumType(x, tail)
             case x: ADTType.CaseSimple =>
               throw new UnsupportedOperationException(s"Unsupported type: ${x}")
           val root2: JsObject =
-             if( root.contains("definitions") )
-               val oldDefinition = root.field("definitions").asInstanceOf[JsObject]
-               root + ("definitions" -> (oldDefinition + definition) )
+             if( schemaRoot.contains("definitions") )
+               val oldDefinition = schemaRoot.field("definitions").asInstanceOf[JsObject]
+               schemaRoot + ("definitions" -> (oldDefinition + definition) )
 
-             else JsObject(root.fields ++ List("definitions" -> JsObject(definition)))
+             else JsObject(schemaRoot.fields ++ List("definitions" -> JsObject(definition)))
 
-          rescure(root2, others, processed+one)
+          rescure(root2, tail, processed+head)
 
     val schema: JsValue.JsObject = rescure(root, definitions, Set.empty)
 
@@ -281,15 +279,6 @@ object JsonSchemaGenerator:
       val loader = new TastySchemaLoader(quotes)(tastys)
       schema = loader.schema
       ()
-
-// main
-//  def main(args: Array[String]): Unit =
-////    val inspector = new JsonSchemaInspector
-////    val tastyFiles = List("schema/target/scala-3.2.2/test-classes/wjson/schema/test/Color.tasty")
-//    //    val tastyFiles = List("schema/target/scala-3.2.2/test-classes/wjson/schema/test/Person.tasty")
-//    val tastyFiles = List("/Users/wangzaixiang/workspaces/wangzaixiang/cube_design/target/scala-3.2.2/classes/tabular/model/CubeSettings.tasty")
-////    val tastyFiles = List("/Users/wangzaixiang/workspaces/wangzaixiang/cube_design/target/scala-3.2.2/classes/tabular/model/TabularModel.tasty")
-//    TastyInspector.inspectTastyFiles(tastyFiles)(new JsonSchemaInspector)
 
   @main
   def Tasty2Schema(input: String, output: String): Unit =
