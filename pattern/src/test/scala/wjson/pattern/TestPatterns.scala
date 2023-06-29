@@ -1,15 +1,16 @@
-package wjson_test
+package wjson.pattern
 
 import scala.language.implicitConversions
 import org.scalatest.funsuite.AnyFunSuite
 import wjson.JsValue.{JsArray, JsBoolean, JsNumber, JsObject}
 import wjson.{*, given}
+import wjson.pattern.*
 
 class TestPatterns extends AnyFunSuite {
 
   test("simple values") {
     json"1" match {
-      case rejson"${i}@integer" => assert(i == 1)
+      case jsonp"${i}@integer" => assert(i == 1)
       case _ => assert(false)
     }
   }
@@ -28,7 +29,7 @@ class TestPatterns extends AnyFunSuite {
 
   test("simple patterns") {
     val js =
-      json"""{
+      json5"""{
       "a": 1,
       "b": "123",
       "b1": 100,
@@ -41,7 +42,7 @@ class TestPatterns extends AnyFunSuite {
     }"""
 
     js match {
-      case rejson"""{
+      case jsonp"""{
         "a": ${a}@integer,
         "b": ${b}@string,
         "b1": ${b1}@integer,
@@ -66,22 +67,22 @@ class TestPatterns extends AnyFunSuite {
     }
   
     json"1" match {
-      case rejson"""$a@1""" =>
+      case jsonp"""$a@1""" =>
         assert(a == 1)
       case _ => assert(false)
     }
     json"true" match {
-      case rejson"""$a@_""" =>
+      case jsonp"""$a@_""" =>
         assert(a == JsBoolean(true))
       case _ => assert(false)
     }
     json"[1,2,3]" match {
-      case rejson"""$a@_*""" =>
+      case jsonp"""$a@_*""" =>
         assert(a == JsArray(JsNumber(1), JsNumber(2), JsNumber(3)))
       case _ => assert(false)
     }
-    json"{a: 1}" match {
-      case rejson"""$a@{a:1}""" =>
+    json5"{a: 1}" match {
+      case jsonp"""$a@{a:1}""" =>
         assert(a == JsObject("a" -> JsNumber(1)))
       case _ => assert(false)
   }
@@ -99,7 +100,7 @@ class TestPatterns extends AnyFunSuite {
     }"""
 
     js match {
-      case rejson"""
+      case jsonp"""
          {
           "a": integer,
           "b": string,
@@ -110,7 +111,7 @@ class TestPatterns extends AnyFunSuite {
     }
 
     js match {
-      case rejson"""
+      case jsonp"""
          {
           "a": ${a}@integer,
           "b": ${b}@string,
@@ -137,7 +138,7 @@ class TestPatterns extends AnyFunSuite {
     }"""
 
     js match {
-      case rejson"""
+      case jsonp"""
          {
           "a": 1,
           "b": "hello",
@@ -149,7 +150,7 @@ class TestPatterns extends AnyFunSuite {
     }
 
     js match {
-      case rejson"""
+      case jsonp"""
          {
           "a": ${a}@1,
           "b": ${b}@"hello",
@@ -170,11 +171,11 @@ class TestPatterns extends AnyFunSuite {
   test("array matching") {
     val js =
       json"""{
-      "a": [1,2,3],
+      "a": [1,2,3]
     }"""
 
     js match {
-      case rejson"""
+      case jsonp"""
          {
           "a": $arr@[1,2,3],
         }""" =>
@@ -184,7 +185,7 @@ class TestPatterns extends AnyFunSuite {
     }
 
     js match {
-      case rejson"""
+      case jsonp"""
          {
           "a": $arr@[1,2,4],
         }""" =>
@@ -194,7 +195,7 @@ class TestPatterns extends AnyFunSuite {
     }
 
     js match {
-      case rejson"""
+      case jsonp"""
          {
           "a": ${arr}@[${a1}@1,${a2}@integer,3],
         }""" =>
@@ -204,7 +205,7 @@ class TestPatterns extends AnyFunSuite {
       case _ => assert(false)
     }
     js match {
-      case rejson"""
+      case jsonp"""
          {
           "a": ${arr}@_,
         }""" =>
@@ -216,14 +217,14 @@ class TestPatterns extends AnyFunSuite {
   test("nested object matching") {
     import wjson.given
     val js =
-      json"""{
+      json5"""{
       "obj": {"foo": {"bar": 123, baz: "abc", far: true}, biz: {list: [1,2,3,4,5]}},
       "obj2": {"foo2": {"bar2": 123, baz2: "abc"}},
       "obj3": {objArr: [{a: 1, b: 2}, {a: 3, b: 4}]},
     }"""
 
     js match {
-      case rejson"""
+      case jsonp"""
         {
           obj/foo: ${foo}@{far:boolean, ${other}@_*},
           obj/foo/baz: ${baz}@"abc",
@@ -259,11 +260,11 @@ class TestPatterns extends AnyFunSuite {
       json"""{
       "a": "1",
       "b": 2,
-      "c": true,
+      "c": true
     }"""
 
     js match {
-      case rejson"""
+      case jsonp"""
          {
           a: ${a}@"1",
           ${other}@_*,
@@ -279,11 +280,11 @@ class TestPatterns extends AnyFunSuite {
   test("anyVals in array") {
     val js =
       json"""{
-      "a": [1,2,3,4,5],
+      "a": [1,2,3,4,5]
     }"""
 
     js match {
-      case rejson"""
+      case jsonp"""
          {
           a: ${a}@[1,2,3, ${other}@_*, 5],
         }""" =>
@@ -292,7 +293,7 @@ class TestPatterns extends AnyFunSuite {
       case _ => assert(false)
     }
     js match {
-      case rejson"""
+      case jsonp"""
          {
           a: ${a}@[1,2,${other}@_*],
         }""" =>
@@ -304,7 +305,7 @@ class TestPatterns extends AnyFunSuite {
   
   test("unapply to map") {
     val js =
-      json"""{
+      json5"""{
       "a": 1,
       "obj": {
           "foo": {
@@ -316,7 +317,7 @@ class TestPatterns extends AnyFunSuite {
       
     }"""
 
-    new RejsonMatcher( """
+    new JsPatternMatcher( """
           {
             a: a@_,
             obj/objArr: [{a:1,b:2}, _*],
@@ -331,7 +332,7 @@ class TestPatterns extends AnyFunSuite {
   }
 
   test("array filters"){
-    val js = json"""
+    val js = json5"""
       { users: [
           { name: 'John', age: 10, sex: 'male' },
           { name: 'Rose', age: 21, sex: 'female' },
@@ -341,34 +342,34 @@ class TestPatterns extends AnyFunSuite {
       }
     """
     js match
-      case rejson"""
+      case jsonp"""
            { users[{sex:'male'}] : ${u: JsValue}@_,
            }
            """ =>
-        assert(u == json"[{name:'John', age:10, sex:'male'},{name:'steven', age:12, sex:'male'}]")
+        assert(u == json5"[{name:'John', age:10, sex:'male'},{name:'steven', age:12, sex:'male'}]")
       case _ => assert(false)
 
     js match
-      case rejson"""{users[{name:'Rose'}]: [ ${u1}@_, ${u2}@_ ] }""" =>
-        assert(u1 == json"{ name:'Rose',age:21, sex: 'female'}")
-        assert(u2 == json"{name:'Rose', age:11, sex: 'female'}")
+      case jsonp"""{users[{name:'Rose'}]: [ ${u1}@_, ${u2}@_ ] }""" =>
+        assert(u1 == json5"{ name:'Rose',age:21, sex: 'female'}")
+        assert(u2 == json5"{name:'Rose', age:11, sex: 'female'}")
       case _ => assert(false)
 
     js match
-      case rejson"""{users[{name:'Rose'}][0]:  ${u1}@_ }""" =>
-        assert(u1 == json"{ name:'Rose', age:21, sex: 'female'}")
+      case jsonp"""{users[{name:'Rose'}][0]:  ${u1}@_ }""" =>
+        assert(u1 == json5"{ name:'Rose', age:21, sex: 'female'}")
       case _ => assert(false)
 
     js match
-      case rejson"""{users[{name:'steven'}]/age[0]:  12 }""" => assert(true)
+      case jsonp"""{users[{name:'steven'}]/age[0]:  12 }""" => assert(true)
       case _ => assert(false)
 
     js match
-      case rejson""" { users[3]/name: 'steven' }  """ => assert(true)
+      case jsonp""" { users[3]/name: 'steven' }  """ => assert(true)
       case _ => assert(false)
 
     js match
-      case rejson""" { users/*/name: ['John', 'Rose', 'Rose', 'steven'] } """ =>
+      case jsonp""" { users/*/name: ['John', 'Rose', 'Rose', 'steven'] } """ =>
         assert(true)
       case _ => assert(false)
   }
@@ -417,8 +418,8 @@ class TestPatterns extends AnyFunSuite {
 }
       """
 
-    info.parseJson() match
-      case rejson"""
+    info.parseJson match
+      case jsonp"""
         {
           sha: $sha@_,
           commit: { author: { name: $commit_name@_ } },

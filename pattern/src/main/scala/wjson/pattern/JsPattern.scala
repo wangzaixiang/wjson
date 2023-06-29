@@ -1,4 +1,6 @@
-package wjson
+package wjson.pattern
+
+import wjson.*
 
 /**
  * Json Pattern DSL
@@ -53,3 +55,6 @@ object JsPattern:
       case parser.Success(result, _) => result
       case x@parser.Failure(msg, next) => throw new Exception(s"invalid path $path : $msg")
       case x@parser.Error(msg, next) => throw new Exception(s"invalid path $path : $msg")
+
+extension (sc: StringContext)
+  def jsonp = new JsPatternInterpolation(sc)

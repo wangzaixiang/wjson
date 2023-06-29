@@ -1,16 +1,15 @@
-package wjson
+package wjson.pattern
 
-//import org.mvel2.MVEL
 import wjson.*
-import wjson.JsPattern.*
+import JsPattern.*
 import wjson.JsValue.{JsArray, JsNull, JsObject}
-import wjson.RejsonMatcher.Placeholder
+import JsPatternMatcher.Placeholder
 
 import scala.annotation.tailrec
 import scala.collection.mutable.Map as MutableMap
 import scala.jdk.CollectionConverters.*
 
-class RejsonInterpolation(sc: StringContext):
+class JsPatternInterpolation(sc: StringContext):
 
   def unapplySeq(input: JsValue): Option[Seq[Any]] =
 
@@ -20,10 +19,10 @@ class RejsonInterpolation(sc: StringContext):
 
     val pattern = JsPatternParser.parseRejson(str)
 
-    new RejsonMatcher(pattern).unapplyAsMap(input)
+    new JsPatternMatcher(pattern).unapplyAsMap(input)
       .map( results => Seq.range(0, sc.parts.length-1).map( i => results(Placeholder(i)) ) )
 
-object RejsonMatcher:
+object JsPatternMatcher:
 
   object Placeholder:
     def apply(index: Int): String = "_placeholder_" + index + "_"
@@ -32,12 +31,21 @@ object RejsonMatcher:
         Some(str.substring(13, str.length - 1).toInt)
       case _ => None
 
+trait JsonMatcherTagHandler(tag: String):
+  def handle(content: String, context: Map[String, Any]): Any
+
+object EvalTagHandler extends JsonMatcherTagHandler("eval"):
+  override def handle(content: String, context: Map[String, Any]): Any =
+    org.mvel2.MVEL.eval(content, context.asJava)
+
 /**
  * rejson is a pattern language for JSON
  */
-case class RejsonMatcher(pattern: JsPattern.Variable):
+case class JsPatternMatcher(pattern: JsPattern.Variable):
 
   def this(program: String) = this( JsPatternParser.parseRejson(program) )
+
+  def tags: Map[String, JsonMatcherTagHandler] = Map("eval" -> EvalTagHandler)
   
   def unapplyAsMap(input: JsValue): Option[Map[String, Any]] =
     val results = MutableMap[String, Any]()
@@ -153,8 +161,8 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
   // TODO enable extension tags in a better API
   private def tagStringMatch(tag: String, content: String, value: JsValue, results: MutableMap[String, Any]): Boolean =
     val context = Map("it"->asPojo(value), "js" -> value)
-    if tag == "eval" then
-      Eval.eval(content, context) == true
+    if tag == "eval" && tags.contains(tag) then
+      tags(tag).handle(content, context) == true
     else if tag == "r" && value.isInstanceOf[JsString] then
       java.util.regex.Pattern.compile(content).matcher(value.asInstanceOf[JsString].value).matches()
     else

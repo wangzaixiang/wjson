@@ -1,18 +1,19 @@
-package wjson_test
+package wjson.pattern
 
 import org.scalatest.funsuite.AnyFunSuite
 import wjson.*
+import wjson.pattern.*
 
 class TestTagStringPatterns extends AnyFunSuite {
 
   test("eval expressions"){
 
-    json"""{
+    json5"""{
           str: "123456", num: 10,
           addr: { state: 'gd', city: 'gz' },
           scores: [ 1,2,3,4,5 ]
     }""" match
-      case rejson"""{
+      case jsonp"""{
         num: ${a}@eval'it % 2 == 0',
         str: ${b}@eval'it.startsWith("12")',
         addr: eval'it.state == "gd"',

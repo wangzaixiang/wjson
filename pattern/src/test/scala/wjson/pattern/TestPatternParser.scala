@@ -1,8 +1,8 @@
-package wjson_test
+package wjson.pattern
 
 import org.scalatest.funsuite.AnyFunSuite
-import wjson.JsPatternParser
-import wjson.JsPattern.*
+import wjson.pattern.*
+import wjson.pattern.JsPattern.*
 
 class TestPatternParser extends AnyFunSuite {
 
@@ -44,7 +44,6 @@ class TestPatternParser extends AnyFunSuite {
   }
 
   test("a complete program") {
-    import wjson.JsPattern.*
 
     val program =
     """

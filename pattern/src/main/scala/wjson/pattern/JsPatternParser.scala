@@ -1,8 +1,8 @@
-package wjson
+package wjson.pattern
 
 import scala.jdk.CollectionConverters.*
 import scala.util.parsing.combinator.*
-import wjson.JsPattern.*
+import JsPattern.*
 
 class JsPatternParser extends RegexParsers:
   override def skipWhitespace = true
