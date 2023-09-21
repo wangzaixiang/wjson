@@ -47,7 +47,7 @@ class TestAdtMapping extends AnyFunSuite:
     val js = days.toJson
 
 
-  test("enums is only supported in global scope"):
+  test("enums is supported in global scope"):
     import TestAdtMapping.*
 
     val color = Color.Alpha(1, 2, 3, 0.5f)

@@ -5,6 +5,15 @@ import wjson.{*, given}
 
 import scala.annotation.{switch, tailrec}
 
+/** JSON5 is a superset of JSON, the specification can be found at: http://json5.org/
+ * the main differences are:
+ * - single quoted strings are allowed
+ * - comments are allowed
+ * - trailing commas are allowed
+ * - trailing commas are allowed in objects and arrays
+ * - numbers can be hexadecimal
+ * - numbers can have a leading or trailing decimal point
+ */
 class Json5Parser(input: ParserInput) {
   import JsonParser.{ParsingException, EOI, EOS }
 

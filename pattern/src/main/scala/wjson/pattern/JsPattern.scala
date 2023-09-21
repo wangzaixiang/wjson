@@ -7,7 +7,7 @@ import wjson.*
  */
 enum JsPattern:
 
-  def unapplySeq(js: JsValue): Option[List[Any]] = JsPattern.unapplySeq(this, js)
+//  def unapplySeq(js: JsValue): Option[List[Any]] = JsPattern.unapplySeq(this, js)
 
   case NullPattern()  // null literal
   case BoolPattern(value: Boolean)   // true or false literal
@@ -44,11 +44,11 @@ object JsPattern:
       else Path(p._1) -> p._2
     })
 
-  def unapplySeq(pat: JsPattern, js: JsValue): Option[List[Any]] = ???
-  def test(pat: JsPattern, js: JsValue): (Boolean, Map[String, Any]) = ???
-  def parsePattern(string: String): JsPattern = ???
+//  def unapplySeq(pat: JsPattern, js: JsValue): Option[List[Any]] = ???
+//  def test(pat: JsPattern, js: JsValue): (Boolean, Map[String, Any]) = ???
+//  def parsePattern(string: String): JsPattern = ???
 
-  def simplePath(path: String) = Path(List(PathElement.Simple(path)))
+//  def simplePath(path: String) = Path(List(PathElement.Simple(path)))
   def Path(path: String): Path =
     val parser = new JsPatternParser
     parser.parse( parser.path, path ) match

@@ -5,15 +5,12 @@
 see [Usage](doc/wjson.md)
 
 ## Build
-1. JS
-   `sbt wjsonJS/fullLinkJS`
 
 # Tasks
--[ ] cpmiles with explicit nulls -Yexplicit-nulls
-
--[ ] make JsonPattern & RejsonInterpolation a submodule "wjsonPattern"
+-[X] cpmiles with explicit nulls -Yexplicit-nulls
+-[X] make JsonPattern & RejsonInterpolation a submodule "wjsonPattern"
 -[ ] JsonValueMapper 测试用例完善，尽可能完备的支持 ADT，支持 OrType，支持 循环引用
--[ ] 支持 [JSON5](https://spec.json5.org/#grammar) 格式， parseJson(true) -> parseJson5 
+-[X] 支持 [JSON5](https://spec.json5.org/#grammar) 格式， parseJson(true) -> parseJson5 
 -[ ] 完善 schema 项目，补充测试用例
 
 # wjson.core
@@ -23,7 +20,7 @@ module wjson.core provides:
 3. a fast json parser and pretty printer
 
 # wjson.json5
--[ ] 支持 [JSON5](https://spec.json5.org/#grammar) 格式
+-[X] 支持 [JSON5](https://spec.json5.org/#grammar) 格式
 
 # wjson.pattern
 一个独立的 JSON Pattern Matcher, 相关文档参考：[wjson模式匹配简介](https://zhuanlan.zhihu.com/p/538029804)

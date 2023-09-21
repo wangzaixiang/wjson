@@ -1,11 +1,8 @@
 import sbt.Keys.{publishConfiguration, publishTo}
 
-ThisBuild / version := "0.3.0-RC1"
-
-ThisBuild / scalaVersion := "3.3.0"
-
 ThisBuild / organization := "com.github.wangzaixiang"
-
+ThisBuild / version := "0.3.0-RC1"
+ThisBuild / scalaVersion := "3.3.1"
 ThisBuild / versionScheme := Some("early-semver")
 
 ThisBuild / publishTo := {
@@ -45,7 +42,7 @@ lazy val wjsonRoot = (project in file("."))
   .aggregate(core)
   .aggregate(schema)
   .settings(
-    name := "wjsonRoot",
+    name := "wjson",
     publish / skip := true,
     publishLocal / skip := true,
   )
@@ -70,7 +67,7 @@ lazy val pattern = project.in(file("pattern"))
     organization := "com.github.wangzaixiang",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.2.15" % "test",
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.1",
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "2.2.0",
       "org.mvel" % "mvel2" % "2.4.11.Final",
     )
   )

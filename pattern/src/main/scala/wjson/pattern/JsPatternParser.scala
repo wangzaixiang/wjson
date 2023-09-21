@@ -1,19 +1,20 @@
 package wjson.pattern
 
-import scala.jdk.CollectionConverters.*
 import scala.util.parsing.combinator.*
 import JsPattern.*
 
+import scala.util.matching.Regex
+
 class JsPatternParser extends RegexParsers:
   override def skipWhitespace = true
-  override val whiteSpace = """([ \t\r\n]*(#[^\n]*\n)?)*""".r
-  def ident: Parser[String] = """[a-zA-Z_][a-zA-Z0-9_]*""".r
-  def integer: Parser[String] =  """-?\d+""".r
-  def float: Parser[String] = """-?\d+\.\d+""".r
+  override val whiteSpace: Regex = """([ \t\r\n]*(#[^\n]*\n)?)*""".r
+  private def ident: Parser[String] = """[a-zA-Z_][a-zA-Z0-9_]*""".r
+  private def integer: Parser[String] =  """-?\d+""".r
+  private def float: Parser[String] = """-?\d+\.\d+""".r
   def string: Parser[String] =
     """"[^"]*"""".r ^^ { x=> x.substring(1, x.length-1) } |
     """'[^']*'""".r ^^ { x => x.substring(1, x.length-1) }
-  def boolean: Parser[String] = """(true|false)""".r
+  private def boolean: Parser[String] = """(true|false)""".r
   def `null`: Parser[String] = """null""".r
 
   def bind_jsval: Parser[Variable] = opt(binding) ~ jsval ^^ {
@@ -21,63 +22,64 @@ class JsPatternParser extends RegexParsers:
     case Some(b) ~ v => Variable(b, v)
   }
 
-  val TagPattern1 = """([a-zA-Z][a-zA-Z0-9_]*)"([^"]*)"""".r
-  val TagPattern2 = """([a-zA-Z][a-zA-Z0-9_]*)'([^']*)'""".r
+  private val TagPattern1 = """([a-zA-Z][a-zA-Z0-9_]*)"([^"]*)"""".r
+  private val TagPattern2 = """([a-zA-Z][a-zA-Z0-9_]*)'([^']*)'""".r
 
-  def jsval: Parser[JsPattern] = (
-      `null` ^^ { x => JsPattern.NullPattern() }
+  private def jsval: Parser[JsPattern] =
+      `null` ^^^ { JsPattern.NullPattern() }
       | boolean ^^ { x => JsPattern.BoolPattern(x.toBoolean) }
       | string ^^ { x => JsPattern.StringPattern(x) }
       | float ^^ { x => JsPattern.NumberPattern(x.toDouble) }
       | integer ^^ { x => JsPattern.NumberPattern(x.toLong) }
-      | type_string ^^ { x => JsPattern.AnyVal(GroundType.STRING) }
-      | type_number ^^ {x => JsPattern.AnyVal(GroundType.NUMBER) }
-      | type_boolean ^^ {x => JsPattern.AnyVal(GroundType.BOOLEAN) }
-      | type_integer ^^ {x => JsPattern.AnyVal(GroundType.INTEGER) }
-      | type_array ^^ {x => JsPattern.AnyVal(GroundType.ARRAY) }
-      | type_object ^^ {x => JsPattern.AnyVal(GroundType.OBJECT) }
-      | any1 ^^ {x => JsPattern.AnyVal(GroundType.ANY) }
-      | tagedString ^^ { x => JsPattern.TaggedString(x._1, x._2) }
-      | array  | `object` )
-  def binding: Parser[String] = ident ~ "@" ^^ { case id ~ _ => id }
-  def type_string: Parser[String] = "string"
-  def type_number: Parser[String] = "number"
-  def type_boolean: Parser[String] = "boolean"
-  def type_integer: Parser[String] = "integer"
-  def type_array: Parser[String] = "array"
-  def type_object: Parser[String] = "object"
-  def any1: Parser[String] = "_"
-  def anys: Parser[String] = "_*"
-  def tagedString: Parser[(String, String)] = """[a-zA-Z][a-zA-Z0-9_]*"[^"]*"""".r ^^ {
+      | type_string ^^^ { JsPattern.AnyVal(GroundType.STRING) }
+      | type_number ^^^ { JsPattern.AnyVal(GroundType.NUMBER) }
+      | type_boolean ^^^ { JsPattern.AnyVal(GroundType.BOOLEAN) }
+      | type_integer ^^^ { JsPattern.AnyVal(GroundType.INTEGER) }
+      | type_array ^^^ { JsPattern.AnyVal(GroundType.ARRAY) }
+      | type_object ^^^ { JsPattern.AnyVal(GroundType.OBJECT) }
+      | any1 ^^^ { JsPattern.AnyVal(GroundType.ANY) }
+      | taggedString ^^ { x => JsPattern.TaggedString(x._1, x._2) }
+      | array | `object`
+
+  private def binding: Parser[String] = ident ~ "@" ^^ { case id ~ _ => id }
+  private def type_string: Parser[String] = "string"
+  private def type_number: Parser[String] = "number"
+  private def type_boolean: Parser[String] = "boolean"
+  private def type_integer: Parser[String] = "integer"
+  private def type_array: Parser[String] = "array"
+  private def type_object: Parser[String] = "object"
+  private def any1: Parser[String] = "_"
+  private def anys: Parser[String] = "_*"
+  private def taggedString: Parser[(String, String)] = """[a-zA-Z][a-zA-Z0-9_]*"[^"]*"""".r ^^ {
       case TagPattern1(tag, content) => (tag, content)
     }  | """[a-zA-Z][a-zA-Z0-9_]*'[^']*'""".r ^^ {
       case TagPattern2(tag, content) => (tag, content)
     }
 
-  def array_item: Parser[Variable] = opt(binding) ~ anys ^^ {
+  private def array_item: Parser[Variable] = opt(binding) ~ anys ^^ {
     case None ~ _ => Variable(null, AnyVals())
     case Some(b) ~ _ => Variable(b, AnyVals())
   } | bind_jsval
 
-  def array: Parser[ArrPattern] = "[" ~> repsep(array_item, ",") <~ opt(",") <~ "]" ^^ {
+  private def array: Parser[ArrPattern] = "[" ~> repsep(array_item, ",") <~ opt(",") <~ "]" ^^ {
     case Nil => ArrPattern(Nil)
     case xs => ArrPattern(xs)
   }
 
-  def `object`: Parser[JsPattern.ObjPattern] = "{" ~> repsep(field, ",") <~ opt(",") ~ "}" ^^ {
+  private def `object`: Parser[JsPattern.ObjPattern] = "{" ~> repsep(field, ",") <~ opt(",") ~ "}" ^^ {
     case Nil => JsPattern.ObjPattern(Nil)
     case xs => JsPattern.ObjPattern(xs)
   }
-  def field: Parser[(JsPattern.Path,Variable)] =
+  private def field: Parser[(JsPattern.Path,Variable)] =
     (path ~ ":" ~ bind_jsval) ^^ { case p ~ _ ~ v => (p, v) } |
-    (opt(binding) ~ anys) ^^ { case binding ~ _ => (null, Variable(binding.getOrElse(null), AnyVals())) }
+    (opt(binding) ~ anys) ^^ { case binding ~ _ => (null, Variable(binding.orNull, AnyVals())) }
 
   def path: Parser[JsPattern.Path] = string ^^ { x => Path( List(PathElement.Simple(x)) ) } |
     ident ~ rep(path_next)  ^^ {
       case id ~ path => Path( List( PathElement.Simple(id) ) ++ path )
     }
-  def path_next: Parser[PathElement] = '/' ~> ident ^^ {x => PathElement.Simple(x) } |
-    "/*" ^^ { x => PathElement.ArrayFilter( JsPattern.AnyVal(GroundType.ANY) ) } |
+  private def path_next: Parser[PathElement] = '/' ~> ident ^^ {x => PathElement.Simple(x) } |
+    "/*" ^^ { _ => PathElement.ArrayFilter( JsPattern.AnyVal(GroundType.ANY) ) } |
     '[' ~> jsval <~ ']' ^^ {
       case NumberPattern(value: Long) =>
         PathElement.Index(value.toInt)
@@ -87,11 +89,11 @@ class JsPatternParser extends RegexParsers:
 
 object JsPatternParser {
 
-  def parseRejson(program: String): Variable =
+  def parseJsPattern(program: String): Variable =
     val parser = new JsPatternParser()
     parser.parse(parser.bind_jsval, program) match
       case parser.Success(result, _) => result
-      case x@parser.Failure(msg, next) => throw new Exception("failed:" + x.toString)
-      case x@parser.Error(msg, next) => throw new Exception("error:" + x.toString)
+      case x: parser.Failure => throw new Exception("failed:" + x.toString)
+      case x: parser.Error => throw new Exception("error:" + x.toString)
 
 }

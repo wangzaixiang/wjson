@@ -10,7 +10,7 @@ class TestPatternParser extends AnyFunSuite {
 
     val program = """{name: "wangzx", age: 18}"""
 
-    val result = JsPatternParser.parseRejson(program)
+    val result = JsPatternParser.parseJsPattern(program)
 
     assert(result  == Variable(null, ObjPattern(
             "name" -> Variable(null, StringPattern("wangzx")),
@@ -34,7 +34,7 @@ class TestPatternParser extends AnyFunSuite {
 
     val program = """{name: "wangzx", "age": age@18}"""
 
-    val result = JsPatternParser.parseRejson(program)
+    val result = JsPatternParser.parseJsPattern(program)
 
     assert(result  == Variable(null, ObjPattern(
       "name" -> Variable(null, StringPattern("wangzx")),
@@ -67,7 +67,7 @@ class TestPatternParser extends AnyFunSuite {
       anys@_*
     }"""
 
-    val result = JsPatternParser.parseRejson(program)
+    val result = JsPatternParser.parseJsPattern(program)
 
     assert(result  == Variable(null, ObjPattern(
         "name1" -> Variable(null, StringPattern("wangzx")),
