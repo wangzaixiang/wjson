@@ -8,15 +8,15 @@ import wjson.*
 
 object ProductGenerator:
 
-  private inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String): T =
-    js.fieldOpt(name) match
-      case x: Some[JsValue] if x.value ne JsNull => summon[JsValueMapper[T]].fromJson(x.value)
-      case _ => throw new Exception("Expected field " + name + " not exists in JSON")
+  inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String): T =
+    val a = js.fieldOpt(name)
+    if a == None then throw new Exception("Expected field " + name + " not exists in JSON")
+    else summon[JsValueMapper[T]].fromJson(a.get)
 
-  private inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String, default: T): T =
-    js.fieldOpt(name) match
-      case x: Some[JsValue] => if x.value eq JsNull then default else summon[JsValueMapper[T]].fromJson(x.value)
-      case _ => default
+  inline def caseFieldGet[T: JsValueMapper](js: JsObject, name: String, default: T): T =
+    val a = js.fieldOpt(name)
+    if a == None then default
+    else summon[JsValueMapper[T]].fromJson(a.get)
 
 
 class ProductGenerator[T: Type] extends Generator[T]:
@@ -35,6 +35,7 @@ class ProductGenerator[T: Type] extends Generator[T]:
       ValDef.let(Symbol.spliceOwner, terms) { refs =>
         Apply(Select(New(TypeTree.of[T]), constructor), refs)
       }.asExpr.asInstanceOf[Expr[T]]
+
 
     def buildJsVal(value: Expr[T]): Expr[JsValue] =
       import quotes.reflect.*

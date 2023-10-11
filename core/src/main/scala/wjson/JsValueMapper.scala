@@ -203,9 +203,9 @@ private abstract class PrimitiveMapping extends OptionMapping:
     inline def toJson(t: java.math.BigInteger): JsValue = JsNumber(t.doubleValue)
 
   given JsValueMapper[String] with
-    inline def fromJson(js: JsValue): String = (js: @unchecked) match
-      case x: JsString => x.value
-      case _ => throw new Exception(s"Expected JsString but ${js.getClass}")
+    inline def fromJson(js: JsValue): String =
+      if js.isInstanceOf[JsString] then js.asInstanceOf[JsString].value
+      else throw new Exception(s"Expected JsString but ${js.getClass}")
 
     inline def toJson(t: String): JsValue = JsString(t)
 
