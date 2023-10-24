@@ -26,6 +26,19 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
   private def generateWithTags(using Quotes)(elementTypes: List[quotes.reflect.TypeRepr], tags: List[String], deps: Map[quotes.reflect.TypeRepr, quotes.reflect.Ref]): Expr[JsValueMapper[T]] =
     ???
 
+  // TODO orType mapping spec
+  /**
+   * fromJson:
+   * 1. object with _ortype_ field
+   * 2. object without _ortype_ field, ensure there is only 1 elementType which is object.
+   * 3. array, ensure there is only 1 elementType which is array.
+   * 4. boolean, ensure there is only 1 elementType which is boolean.
+   * 5. number, ensure there is only 1 elementType which is number.
+   * 6. string, ensure there is only 1 elementType which is string.
+   *
+   * toJson: simple as above or force to serialize as object with _ortype_ field.
+   *
+   */
   private def generateWithoutTags(using Quotes)(elementTypes: List[quotes.reflect.TypeRepr], deps: Map[quotes.reflect.TypeRepr, quotes.reflect.Ref]): Expr[JsValueMapper[T]] =
     import quotes.reflect.*
 

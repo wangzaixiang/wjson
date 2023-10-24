@@ -1,11 +1,12 @@
-package wjson.schema
+package wjson.schema.generator
 
-import scala.tasty.inspector.{Inspector, Tasty, TastyInspector}
-import scala.quoted.*
 import wjson.*
+import wjson.JsValue.JsObject
 
 import java.io.{FileOutputStream, PrintWriter}
 import scala.annotation.tailrec
+import scala.quoted.*
+import scala.tasty.inspector.{Inspector, Tasty, TastyInspector}
 
 object JsonSchemaGenerator:
 

@@ -1,7 +1,7 @@
 import sbt.Keys.{publishConfiguration, publishTo}
 
 ThisBuild / organization := "com.github.wangzaixiang"
-ThisBuild / version := "0.3.0-RC1"
+ThisBuild / version := "0.3.0-RC3"
 ThisBuild / scalaVersion := "3.3.1"
 ThisBuild / versionScheme := Some("early-semver")
 
@@ -41,6 +41,8 @@ ThisBuild / pomExtra := (
 lazy val wjsonRoot = (project in file("."))
   .aggregate(core)
   .aggregate(schema)
+  .aggregate(schemaGenerator)
+  .aggregate(pattern)
   .settings(
     name := "wjson",
     publish / skip := true,
@@ -51,7 +53,6 @@ lazy val wjsonRoot = (project in file("."))
 lazy val core = (project in file("core"))
   .settings(
     name := "wjson-core",
-    organization := "com.github.wangzaixiang",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.2.15" % "test",
       "org.scala-lang" %% "scala3-library" % scalaVersion.value % "test",
@@ -64,7 +65,6 @@ lazy val pattern = project.in(file("pattern"))
   .dependsOn(core)
   .settings(
     name := "wjson-pattern",
-    organization := "com.github.wangzaixiang",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.2.15" % "test",
       "org.scala-lang.modules" %% "scala-parser-combinators" % "2.2.0",
@@ -76,8 +76,13 @@ lazy val pattern = project.in(file("pattern"))
 lazy val schema = project.in(file("schema"))
   .dependsOn(core)
   .settings(
-    name := "wjson-schema",
-    organization := "com.github.wangzaixiang",
+    name := "wjson-schema"
+  )
+
+lazy val schemaGenerator = project.in(file("schema-generator"))
+  .dependsOn(core, schema)
+  .settings(
+    name := "wjson-schema-generator",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.2.15" % "test",
       "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value,

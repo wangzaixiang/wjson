@@ -1,4 +1,4 @@
-package wjson.schema
+package wjson.schema.generator
 
 import scala.quoted.*
 import scala.tasty.inspector.{Inspector, Tasty, TastyInspector}
@@ -7,7 +7,7 @@ object Test1:
 
   class MyInspector extends Inspector:
     def inspect(using Quotes)(tastys: List[Tasty[quotes.type]]): Unit =
-      import quotes.reflect._
+      import quotes.reflect.*
       tastys.foreach { tasty =>
         println(tasty.toString)
         val q = tasty.quotes
@@ -76,7 +76,6 @@ object Test1:
 
     def dumpTest1(using Quotes)(ast: quotes.reflect.Tree): Unit =
       import quotes.reflect.*
-
       ast match
         case PackageClause(pid, stats) =>
           stats(1) match
