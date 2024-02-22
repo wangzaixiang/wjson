@@ -453,5 +453,26 @@ class TestPatterns extends AnyFunSuite {
 
   }
 
+  test("number key filters") {
+    val js =
+      json"""
+        { users: {
+           "1":{ name: 'John', age: 10, sex: 'male' },
+            "2":{ name: 'Rose', age: 21, sex: 'female' },
+            "3":{ name: 'Rose', age: 11, sex: 'female' },
+            "key":{ name: 'steven', age:12, sex: 'male' }
+          }
+        }
+      """
+    js match
+      case rejson""" { users/1/name: 'John'} """ =>
+        assert(true)
+      case _ => assert(false)
+    js match
+      case rejson""" { users/key/name: 'steven'} """ =>
+        assert(true)
+      case _ => assert(false)
+  }
+
 
 }
