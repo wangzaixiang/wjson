@@ -64,7 +64,7 @@ class TestPatterns extends AnyFunSuite {
         assert(g == List("a" -> JsNumber(1)))
       case _ => assert(false)
     }
-  
+
     json"1" match {
       case rejson"""$a@1""" =>
         assert(a == 1)
@@ -88,7 +88,7 @@ class TestPatterns extends AnyFunSuite {
 
   }
 
-  
+
   test("type matching") {
     val js =
       json"""{
@@ -301,7 +301,7 @@ class TestPatterns extends AnyFunSuite {
       case _ => assert(false)
     }
   }
-  
+
   test("unapply to map") {
     val js =
       json"""{
@@ -313,7 +313,7 @@ class TestPatterns extends AnyFunSuite {
            objArr: [{a: 1, b: 2}, {a: 3, b: 4}]
       },
       b:234
-      
+
     }"""
 
     new RejsonMatcher( """
@@ -370,6 +370,26 @@ class TestPatterns extends AnyFunSuite {
     js match
       case rejson""" { users/*/name: ['John', 'Rose', 'Rose', 'steven'] } """ =>
         assert(true)
+      case _ => assert(false)
+
+    js match
+      case rejson""" { users[-1]/name: 'steven' }  """ => assert(true)
+      case _ => assert(false)
+
+    js match
+      case rejson""" { users[-2]/name: 'Rose' , users[-2]/age: 11, users[-2]/sex: 'female' }  """ => assert(true)
+      case _ => assert(false)
+
+    js match
+      case rejson""" { users[-4]/age: 10 }  """ => assert(true)
+      case _ => assert(false)
+
+    js match
+      case rejson""" { users[6]/age: _ }  """ => assert(true)
+      case _ => assert(false)
+
+    js match
+      case rejson""" { users[-6]/age: _ }  """ => assert(true)
       case _ => assert(false)
   }
 
@@ -431,6 +451,27 @@ class TestPatterns extends AnyFunSuite {
       case _ =>
         assert(false)
 
+  }
+
+  test("number key filters") {
+    val js =
+      json"""
+        { users: {
+           "1":{ name: 'John', age: 10, sex: 'male' },
+            "2":{ name: 'Rose', age: 21, sex: 'female' },
+            "3":{ name: 'Rose', age: 11, sex: 'female' },
+            "key":{ name: 'steven', age:12, sex: 'male' }
+          }
+        }
+      """
+    js match
+      case rejson""" { users/1/name: 'John'} """ =>
+        assert(true)
+      case _ => assert(false)
+    js match
+      case rejson""" { users/key/name: 'steven'} """ =>
+        assert(true)
+      case _ => assert(false)
   }
 
 

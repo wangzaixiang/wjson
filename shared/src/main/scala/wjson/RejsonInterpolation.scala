@@ -38,10 +38,10 @@ object RejsonMatcher:
 case class RejsonMatcher(pattern: JsPattern.Variable):
 
   def this(program: String) = this( JsPatternParser.parseRejson(program) )
-  
+
   def unapplyAsMap(input: JsValue): Option[Map[String, Any]] =
     val results = MutableMap[String, Any]()
-    
+
     val m1 = patternMatch(pattern, input, results)
     if(m1) Some(results.toMap) else None
 
@@ -83,7 +83,9 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
       case PathElement.Index(index) :: tail =>
         jsv match
           case array: JsArray if array.elements.size > index =>
-            getElementByPath( array.elements(index), Path(tail) )
+            val finalIndex = if (index < 0) array.elements.size + index else index
+            if (finalIndex >= 0) then getElementByPath( array.elements(finalIndex), Path(tail) )
+            else JsNull
           case _ =>  JsNull
       case PathElement.Simple(simple) :: tail =>
         jsv match

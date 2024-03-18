@@ -7,7 +7,7 @@ import wjson.JsPattern.*
 class JsPatternParser extends RegexParsers:
   override def skipWhitespace = true
   override val whiteSpace = """([ \t\r\n]*(#[^\n]*\n)?)*""".r
-  def ident: Parser[String] = """[a-zA-Z_][a-zA-Z0-9_]*""".r
+  def ident: Parser[String] = """[a-zA-Z0-9_][a-zA-Z0-9_]*""".r
   def integer: Parser[String] =  """-?\d+""".r
   def float: Parser[String] = """-?\d+\.\d+""".r
   def string: Parser[String] =
