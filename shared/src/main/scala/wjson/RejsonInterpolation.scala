@@ -46,7 +46,7 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
     if(m1) Some(results.toMap) else None
 
   // does input match arrPattern?
-  private def arrPatternMatch(arrPattern: ArrPattern, input: JsValue, results: MutableMap[String, Any]): Boolean =
+  private def arrPatternMatch(arrPattern: ArrPattern, input: JsValue, results: MutableMap[String, Any], throwable: Boolean = false): Boolean =
     input match
       case jsa: JsArray =>
           val has_anys = arrPattern.value.exists(_.pattern == AnyVals())
@@ -61,10 +61,10 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
 
               val matches =
                 head.zip(a_head).forall { case (variable, input) =>
-                  patternMatch(variable, input, results)
+                  patternMatch(variable, input, results, throwable)
                 } &&
                 tail.zip(a_tail).forall { case (variable, input) =>
-                  patternMatch(variable, input, results)
+                  patternMatch(variable, input, results, throwable)
                 }
 
               if (matches && anys.name != null)
@@ -73,7 +73,7 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
             }
           else // has_anys == false
             jsa.elements.size >= arrPattern.value.size && arrPattern.value.zip(jsa.elements).forall { case(variable, input) =>
-              patternMatch(variable, input, results)
+              patternMatch(variable, input, results, throwable)
             }
       case _ => false
 
@@ -115,7 +115,7 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
       case Nil => arr
 
   // does input match the objPattern?
-  private def objPatternMatch(objPattern: ObjPattern, input: JsValue, results: MutableMap[String, Any]): Boolean =
+  private def objPatternMatch(objPattern: ObjPattern, input: JsValue, results: MutableMap[String, Any], throwable: Boolean = false): Boolean =
     input match
       case jso: JsObject =>
           val has_anys = objPattern.value.exists(_._2.pattern == AnyVals())
@@ -127,8 +127,8 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
             }.toSet //(_._1.value(0).value)
             val matches = not_anys.forall { case (key, variable: Variable) =>
               getElementByPath(jso, key) match
-                case x: JsValue => patternMatch(variable, x, results)
-                case x: Seq[JsValue]@unchecked => patternMatch(variable, JsArray(x), results)
+                case x: JsValue => patternMatch(variable, x, results, throwable)
+                case x: Seq[JsValue]@unchecked => patternMatch(variable, JsArray(x), results, throwable)
             }
             if matches && anys.name != null then // bound anys
                results(anys.name) = JsObject(jso.fields.filterNot( x => not_anys_keys.contains(x._1) ))
@@ -137,8 +137,8 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
             objPattern.value.forall { case (key, variable) =>
               val elem = getElementByPath(jso, key)
               elem match
-                case x: JsValue => patternMatch(variable, x, results)
-                case x: Seq[JsValue]@unchecked => patternMatch(variable, JsArray(x), results)
+                case x: JsValue => patternMatch(variable, x, results, throwable)
+                case x: Seq[JsValue]@unchecked => patternMatch(variable, JsArray(x), results, throwable)
             }
       case _ => false
 
@@ -175,8 +175,8 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
       case BoolPattern(value: Boolean) =>  (input == JsBoolean(value)) ifTrue  input.asInstanceOf[JsBoolean].value
       case NumberPattern(value) => (input == JsNumber(value)) ifTrue  input.asInstanceOf[JsNumber].value
       case StringPattern(value: String) => (input == JsString(value)) ifTrue input.asInstanceOf[JsString].value
-      case a@ArrPattern(value: Seq[JsPattern.Variable]) =>  arrPatternMatch(a, input, results) ifTrue  input
-      case o@ObjPattern(value: Seq[(JsPattern.Path, JsPattern.Variable)]) =>  objPatternMatch(o, input, results) ifTrue input
+      case a@ArrPattern(value: Seq[JsPattern.Variable]) =>  arrPatternMatch(a, input, results, throwable) ifTrue  input
+      case o@ObjPattern(value: Seq[(JsPattern.Path, JsPattern.Variable)]) =>  objPatternMatch(o, input, results, throwable) ifTrue input
       case AnyVal(GroundType.NUMBER) => input.isInstanceOf[JsNumber] ifTrue input.asInstanceOf[JsNumber].value
       case AnyVal(GroundType.INTEGER) =>
         input match
