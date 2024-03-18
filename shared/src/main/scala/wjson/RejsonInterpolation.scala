@@ -39,10 +39,10 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
 
   def this(program: String) = this( JsPatternParser.parseRejson(program) )
 
-  def unapplyAsMap(input: JsValue): Option[Map[String, Any]] =
+  def unapplyAsMap(input: JsValue, throwable: Boolean = false): Option[Map[String, Any]] =
     val results = MutableMap[String, Any]()
 
-    val m1 = patternMatch(pattern, input, results)
+    val m1 = patternMatch(pattern, input, results, throwable)
     if(m1) Some(results.toMap) else None
 
   // does input match arrPattern?
@@ -166,7 +166,7 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
     def ifTrue( result: =>Any ): Option[Any] = if(bool) Some(result) else None
 
   private def patternMatch(variable: Variable, input: JsValue,
-                           results: MutableMap[String, Any]): Boolean =
+                           results: MutableMap[String, Any], throwable: Boolean = false): Boolean =
     import JsPattern.*
 
     val value =
@@ -195,6 +195,12 @@ case class RejsonMatcher(pattern: JsPattern.Variable):
         results(variable.name) = if(v==JsNull) null else v
         true
       case Some(v) => true
-      case None  => false
+      case None  => {
+        if (throwable) {
+          val msg = s"Expected pattern [${variable.pattern}] but got [${input}]"
+          throw new Exception(msg)
+        }
+        false
+      }
 
 
