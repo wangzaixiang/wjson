@@ -92,8 +92,11 @@ class ProductGenerator[T: Type] extends Generator[T]:
               report.error(s"No JsValueMapper found, owner:${TypeTree.of[T].show} field:${field.name} type:${TypeTree.of[t].show}")
               '{ (${ Expr(field.name) }, ???) }
 
+    // for better debug
+    val typeInfo = Expr( TypeRepr.of[T].show(using Printer.TypeReprCode) )
     val expr: Expr[?] = '{
       new JsValueMapper[T]:
+        val TYPE = ${typeInfo}
         def fromJson(json: JsValue): T =
           val jso = json.asInstanceOf[JsObject]
           ${ buildBeanFrom('{ jso }) }

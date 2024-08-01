@@ -97,6 +97,26 @@ private abstract class CollectionMapping extends ADTMapping:
 
     inline def toJson(t: Map[String, T]): JsValue = JsObject(t.toList.map(x => (x._1, summon[JsValueMapper[T]].toJson(x._2))))
 
+  // support Map[K,V] mapping to List[(K,V)]
+  given [K: JsValueMapper, V: JsValueMapper]: JsValueMapper[Map[K, V]] = mapMapping2[K, V]
+  def mapMapping2[K: JsValueMapper, V: JsValueMapper]: JsValueMapper[Map[K, V]] = new JsValueMapper[Map[K, V]]:
+    inline def fromJson(js: JsValue): Map[K, V] = (js: @unchecked) match
+      case o: JsArray =>
+        o.elements.map:
+          case el: JsObject =>
+            val key = summon[JsValueMapper[K]].fromJson(el.field("key"))  // expect key field
+            val value = summon[JsValueMapper[V]].fromJson(el.field("value")) // expect value field
+            key -> value
+          case _ => throw new Exception(s"Expected JsObj but ${js.getClass}")
+        .toMap
+
+      case _ => throw new Exception(s"Expected JsObj but ${js.getClass}")
+
+    inline def toJson(t: Map[K, V]): JsValue =
+      val entry2Json = (k: K, v: V) => JsObject( "key" -> summon[JsValueMapper[K]].toJson(k), "value" -> summon[JsValueMapper[V]].toJson(v) )
+      val entries = t.toList.map { case (k, v) => entry2Json(k,v) }
+      JsArray( entries: _* )
+
   given[T: JsValueMapper]: JsValueMapper[SortedMap[String, T]] = sortedMapMapping[T]
   def sortedMapMapping[T: JsValueMapper]: JsValueMapper[SortedMap[String, T]] = new JsValueMapper[SortedMap[String, T]]:
     inline def fromJson(js: JsValue): SortedMap[String, T] = (js: @unchecked) match

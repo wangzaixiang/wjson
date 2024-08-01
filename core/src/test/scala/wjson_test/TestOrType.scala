@@ -8,12 +8,24 @@ class TestOrType extends AnyFunSuite {
 
   test("ortype") {
 
-    case class Bean( name: String | Int | Null, other: Option[String]|Int) //8
-    val bean = Bean("hello", 5)
-    val js1 = bean.toJson
+    case class User(name: String)
 
-    val bean2 = js1.convertTo[Bean]
-    assert(bean2 == bean)
+    type T1 = String | Int | User | Null
+    type T2 = Option[User] | String | Int
+    case class Bean( name: T1, other: T2) ; //8
+
+    val names: List[ T1 ] = List("hello", 5, User("wang"), null)
+    //  val others: List[ T2 ] = List(Some("hello"), Some("world"), User("wang"), None, 5)
+    val others: List[ T2 ] = List("hello", "world", Some(User("wang")), None, 5)
+
+    for(name <- names; other <- others) {
+        val bean = Bean(name, other)
+        // println("\nbean = " + bean)
+        val js = bean.toJson
+        println(js.show)
+        val bean2 = js.convertTo[Bean]
+        assert(bean2 == bean)
+    }
 
   }
 

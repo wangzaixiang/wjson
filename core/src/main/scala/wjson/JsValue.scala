@@ -58,6 +58,7 @@ object JsValue:
 
     def show(indent: Int = 2, margin: Int = 100): String =
       val buffer = new StringBuilder
+      val cr = if indent > 0 then "\n" else ""  // when no ident, dont crlf
 
       def show0(value: JsValue, indentString: String): Unit =
         value match
@@ -66,45 +67,40 @@ object JsValue:
           case JsNumber(value) => buffer.append(value)
           case JsString(value) => buffer.append(escapedString(value))
           case JsObject(fields) =>
-            buffer.append("{\n")
+            buffer.append("{").append(cr)
+            val pos = buffer.length
             fields.foreach { case (name, value) =>
+              if buffer.length > pos then buffer.append(",").append(cr)
               buffer.append(indentString + " " * indent)
               buffer.append(escapedString(name))
               buffer.append(":")
               show0(value, indentString + " " * indent)
-              buffer.append(",\n")
-            }
-            if(buffer.endsWith(",\n")){
-              buffer.delete(buffer.length() - 2, buffer.length()-1)
             }
             buffer.append(indentString)
             buffer.append("}")
           case JsArray(elements) =>
-            buffer.append("[\n")
+            buffer.append("[".appended(cr))
+            val pos = buffer.length
             elements.foreach { elem =>
+              if buffer.length > pos then buffer.append(",").append(cr)
               buffer.append( indentString + " " * indent)
               show0(elem, indentString + " " * indent)
-              buffer.append(",\n")
-            }
-            if(buffer.endsWith(",\n")){
-              buffer.delete(buffer.length() - 2, buffer.length()-1)
             }
             buffer.append(indentString).append("]")
 
       def escapedString(str: String): String =
         val sb = new StringBuilder()
         sb.append('"')
-        str.foreach { c =>
-          c match
-            case '\\' => sb.append("\\\\")
-            case '"' => sb.append("\\\"")
-            case '\b' => sb.append("\\b")
-            case '\f' => sb.append("\\f")
-            case '\n' => sb.append("\\n")
-            case '\r' => sb.append("\\r")
-            case '\t' => sb.append("\\t")
-            // case x if x > 0x100 => sb.append("\\u%04x".format(x.toInt))
-            case _ => sb.append(c)
+        str.foreach {
+          case '\\' => sb.append("\\\\")
+          case '"' => sb.append("\\\"")
+          case '\b' => sb.append("\\b")
+          case '\f' => sb.append("\\f")
+          case '\n' => sb.append("\\n")
+          case '\r' => sb.append("\\r")
+          case '\t' => sb.append("\\t")
+          // case x if x > 0x100 => sb.append("\\u%04x".format(x.toInt))
+          case c => sb.append(c)
         }
         sb.append('"')
         sb.toString()

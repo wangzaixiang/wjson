@@ -12,7 +12,13 @@ import scala.Symbol as _
 object ADTMappingMacro:
 
   def genADTImpl[T: Type](using Quotes): Expr[JsValueMapper[T]] =
-    new ADTMappingMacro(quotes).genADTImpl[T]
+    import quotes.reflect.*
+    val result = new ADTMappingMacro(quotes).genADTImpl[T]
+
+    // the following code is used for debug only
+     if TypeRepr.of[T].typeSymbol.fullName contains "TestOrType" then
+       println(s"genADTImpl ${TypeRepr.of[T].show}" + " => " + result.show)
+    result
 
   private val NO_EXPAND_ADT = new ThreadLocal[Boolean]:
     override def initialValue(): Boolean = false
