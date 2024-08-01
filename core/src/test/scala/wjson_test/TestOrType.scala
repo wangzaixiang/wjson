@@ -1,32 +1,55 @@
 package wjson_test
 
 import org.scalatest.funsuite.AnyFunSuite
-
 import wjson.{*, given}
+
+import scala.collection.immutable.List
 
 class TestOrType extends AnyFunSuite {
 
-  test("ortype") {
-
     case class User(name: String)
 
-    type T1 = String | Int | User | Null
-    type T2 = Option[User] | String | Int
-    case class Bean( name: T1, other: T2) derives JsValueMapper; //8
+    test("ortype") {
 
-    val names: List[ T1 ] = List("hello", 5, User("wang"), null)
-    //  val others: List[ T2 ] = List(Some("hello"), Some("world"), User("wang"), None, 5)
-    val others: List[ T2 ] = List("hello", "world", Some(User("wang")), None, 5)
+        type T1 = String | Int | User | Null
+        type T2 = Option[User] | Option[String] | Int
+        case class Bean(name: T1, other: T2)derives JsValueMapper; //8
+        //
 
-    for(name <- names; other <- others) {
-        val bean = Bean(name, other)
-        val js = bean.toJson
-        println(js.show)
-        val bean2 = js.convertTo[Bean]
-        assert(bean2 == bean)
+        val names: List[T1] = List("hello", 5, User("wang"), null)
+        //  val others: List[ T2 ] = List(Some("hello"), Some("world"), User("wang"), None, 5)
+        val others: List[T2] = List(Some("hello"), Some("world"), Some(User("wang")), None, 5)
+
+        for (name <- names; other <- others) {
+            val bean = Bean(name, other)
+            val js = bean.toJson
+            println(js.show)
+            val bean2 = js.convertTo[Bean]
+            assert(bean2 == bean)
+        }
     }
 
-  }
+
+    test("ortype 2") { // 1
+
+        type T1 = Option[String] | Option[Int] | List[String]
+        type T2 = User | Option[String] | Int
+        case class Bean(name: T1, other: T2) derives JsValueMapper; //8
+        //
+
+        val names: List[T1] = List(Some("hello"), Some(5), List("aa", "bb"), Nil)
+        val others: List[T2] = List(Some("hello"), Some("world"), User("wang"), None, 5)
+
+        for (name <- names; other <- others) {
+            val bean = Bean(name, other)
+            val js = bean.toJson
+            println(js.show)
+            val bean2 = js.convertTo[Bean]
+            assert(bean2 == bean)
+        } //
+    }
+
+
 
 
   test("simple ortype") {

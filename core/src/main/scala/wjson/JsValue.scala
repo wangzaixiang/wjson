@@ -79,7 +79,7 @@ object JsValue:
             buffer.append(indentString)
             buffer.append("}")
           case JsArray(elements) =>
-            buffer.append("[".appended(cr))
+            buffer.append("[").append(cr)
             val pos = buffer.length
             elements.foreach { elem =>
               if buffer.length > pos then buffer.append(",").append(cr)
