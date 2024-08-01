@@ -12,13 +12,7 @@ import scala.Symbol as _
 object ADTMappingMacro:
 
   def genADTImpl[T: Type](using Quotes): Expr[JsValueMapper[T]] =
-    import quotes.reflect.*
-    val result = new ADTMappingMacro(quotes).genADTImpl[T]
-
-    // the following code is used for debug only
-     if TypeRepr.of[T].typeSymbol.fullName contains "TestOrType" then
-       println(s"genADTImpl ${TypeRepr.of[T].show}" + " => " + result.show)
-    result
+    new ADTMappingMacro(quotes).genADTImpl[T]
 
   private val NO_EXPAND_ADT = new ThreadLocal[Boolean]:
     override def initialValue(): Boolean = false
@@ -29,8 +23,11 @@ object ADTMappingMacro:
 
   /**
    * to enable macro debug, runs like `sbt -Dwjson.printMacroCode=true compile`
+   * 
+   * 1. -Dwjson.printMacroCode=all   
+   * 2. -Dwjson.printMacroCode=class1,class2  all classes contains class1, class2 will dumped
    */
-  private val PRINT_MACRO_CODE: Boolean = java.lang.Boolean.getBoolean("wjson.printMacroCode")
+  private val PRINT_MACRO_CODE: String|Null = System.getProperty("wjson.printMacroCode")
 
   def extractElemTypes[T: Type](using Quotes): List[quotes.reflect.TypeRepr] =
     Type.of[T] match
@@ -112,8 +109,6 @@ class ADTMappingMacro(q: Quotes):
         finally
           ADTMappingMacro.NO_EXPAND_ADT.set(false)
 
-      if ADTMappingMacro.PRINT_MACRO_CODE then
-        println("!!! dependencies: " + dependencies)
       genMultiMapperBlock[T](dependencies)
 
 
@@ -141,7 +136,19 @@ class ADTMappingMacro(q: Quotes):
 
     val term  = Block(valDefs.values.toList, refs(TypeRepr.of[T]) )
 
-    if ADTMappingMacro.PRINT_MACRO_CODE then
+    val debug =
+      val typeName = TypeRepr.of[T] match
+        case x if x.typeSymbol != Symbol.noSymbol => x.typeSymbol.fullName
+        case x if x.termSymbol != Symbol.noSymbol => x.termSymbol.fullName
+        case _ => ""
+
+      if "all" equalsIgnoreCase ADTMappingMacro.PRINT_MACRO_CODE then true
+      else if PRINT_MACRO_CODE != null then
+        val parts = PRINT_MACRO_CODE.split(",").nn
+        parts.exists( part => typeName contains part )
+      else false
+
+    if debug then
       println("generated JsValueMapper[" + TypeRepr.of[T].show(using Printer.TypeReprAnsiCode) + "] = "
         + term.show(using Printer.TreeAnsiCode))
 

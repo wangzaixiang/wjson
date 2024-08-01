@@ -129,19 +129,22 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
       else '{ throw new RuntimeException("No boolean value allowed") }
 
     def fromJsObjectByTag(tagName: Expr[String|Null], value: Expr[JsValue]): Expr[T] =
-      val cases: List[CaseDef] = elemTpes .filterNot(tpe => tpe =:= TypeRepr.of[Null]) .map(_.asType)map:
+      val cases: List[CaseDef] = elemTpes .filterNot(tpe => tpe =:= TypeRepr.of[Null]) .map(_.asType) flatMap:
         case '[t] =>
-          val dep: Expr[JsValueMapper[t]] = summonJsValueMapper[t](deps) match
-            case Some(x) => x
-            case None => throw new RuntimeException(s"Cannot find JsValueMapper for ${tagOf(TypeRepr.of[t])}")
+          val tag = tagsByTpe(TypeRepr.of[t])
+          if tag.isJsonPrimitive then
+            None
+          else
+            val dep: Expr[JsValueMapper[t]] = summonJsValueMapper[t](deps) match
+              case Some(x) => x
+              case None => throw new RuntimeException(s"Cannot find JsValueMapper for ${tagOf(TypeRepr.of[t])}")
 
-          val sym = Symbol.newVal(Symbol.spliceOwner, "_x", TypeRepr.of[t], Flags.EmptyFlags, Symbol.noSymbol)
-          val refSym: Expr[t] = Ref(sym).asExprOf[t]
-          val bindPattern = Typed(Wildcard(), TypeTree.of[t])
-          val pattern = Bind(sym, bindPattern)
-          val tag = tagOf(TypeRepr.of[t])
-          val body = '{ ${dep}.fromJson(${value}).asInstanceOf[T] }
-          CaseDef(Literal(StringConstant(tag)), None, body.asTerm)
+            val sym = Symbol.newVal(Symbol.spliceOwner, "_x", TypeRepr.of[t], Flags.EmptyFlags, Symbol.noSymbol)
+            val refSym: Expr[t] = Ref(sym).asExprOf[t]
+            val bindPattern = Typed(Wildcard(), TypeTree.of[t])
+            val pattern = Bind(sym, bindPattern)
+            val body = '{ ${dep}.fromJson(${value}).asInstanceOf[T] }
+            Some( CaseDef(Literal(StringConstant(tag.tag)), None, body.asTerm) )
 
       Match(tagName.asTerm, cases).asExprOf[T]
 
@@ -160,14 +163,12 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
           ${ fromJsObjectByTag('{tag }, '{value}) }
         }
       else  // at most 1 non-primitive type
-        val objectTag: Expr[String|Null] = tags.find(tag => !tag.isJsonPrimitive).map(_.tag).orNull match
-          case null => '{ null }
-          case x: String => Expr(x)
+        tags.find(tag => !tag.isJsonPrimitive) match
+          case Some(tag: TagInfo) =>
+            fromJsObjectByTag(Expr(tag.tag), jso)
+          case None =>
+            '{ throw new RuntimeException("No object type allowed") }
 
-        '{
-          if ${ objectTag } == null then throw new RuntimeException("No object type allowed")
-          else ${ fromJsObjectByTag(objectTag, jso) }
-        }
 
 
     '{

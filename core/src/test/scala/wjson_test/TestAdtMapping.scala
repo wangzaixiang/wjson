@@ -15,16 +15,16 @@ object TestAdtMapping:
 
 class TestAdtMapping extends AnyFunSuite:
 
-  test("simple product"):
-    case class User1(name: String, age: Int) derives JsValueMapper
+  test("simple product") {
+    case class User1(name: String, age: Int)derives JsValueMapper
     case class User2(name: String, age: Int)
 
     given JsValueMapper[User2] = JsValueMapper.derived[User2]
+  }
 
-
-  test("circle reference"):
+  test("circle reference") {
     case class User(name: String, age: Int) // derives JsValueMapper
-    case class Family(mother: User, father: User, children: List[List[User]], relate: Family|Null = null)
+    case class Family(mother: User, father: User, children: List[List[User]], relate: Family | Null = null)
 
     val f1 = Family(User("month", 40), User("father", 42),
       Nil, null)
@@ -37,7 +37,7 @@ class TestAdtMapping extends AnyFunSuite:
     val family2 = js.convertTo[Family]
 
     assert(family2 == family)
-
+  }
 
   test("simple enum"):
     enum WeekDay  derives JsValueMapper:
