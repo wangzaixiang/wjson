@@ -8,7 +8,7 @@ import scala.annotation.tailrec
 import scala.quoted.*
 import scala.tasty.inspector.{Inspector, Tasty, TastyInspector}
 
-object JsonSchemaGenerator:
+object JsonSchemaGenerator2:
 
   class TastySchemaLoader(quotes: Quotes)(tastys: List[Tasty[quotes.type]]):
     import quotes.reflect.*

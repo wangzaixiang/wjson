@@ -28,7 +28,9 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
     else if tpe <:< TypeRepr.of[Option[?]] then
         tpe.asType match
             case '[Option[t]] => tagOf(TypeRepr.of[t])
-        else tpe.typeSymbol.fullName
+        else tpe.show
+        // tpe.show(using Printer.TypeReprShortCode)
+        // avoid tpe.typeSymbol.fullName
 
   @tailrec
   private def isJsonPrimitive(using Quotes)(tpe: quotes.reflect.TypeRepr): Boolean =
@@ -72,21 +74,18 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
         val simple = '{ ${mapper}.toJson( ${obj}) }
         if tag.isJsonPrimitive then simple
         else if hasMultiTags then
-        '{ JsObject( "_type" ->  JsString($tagExpr), "_value" -> ${ mapper }.toJson(${ obj }) ) }
+        '{ JsObject( "$tag" ->  JsString($tagExpr), "$value" -> ${ mapper }.toJson(${ obj }) ) }
         else simple
 
     def toJsonImpl(obj: Expr[T], hasMultiTag: Boolean): Expr[JsValue] =
-      val matchNone: List[CaseDef] = tags.exists(_.isOption) match
-        case true =>
-           // TODO explict None match will report match may not be exhaustive
-           // val noneObj = Ref( Symbol.requiredModule("scala.None") )
-           // Some(CaseDef(noneObj, None, '{ JsNull }.asTerm))
-           List( CaseDef( Wildcard(), None, '{ JsNull }.asTerm) )
-        case false => Nil
+      val matchNone: List[CaseDef] = if tags.exists(_.isOption) then
+        List(CaseDef(Wildcard(), None, '{ JsNull }.asTerm))   // case _ => JsNull  // TODO
+      else
+        Nil
 
       val cases: List[CaseDef] = elemTpes.map(_.asType).map:
         case '[t] if TypeRepr.of[t] =:= TypeRepr.of[Null] =>
-          CaseDef(Literal(NullConstant()), None, '{ JsNull }.asTerm)
+          CaseDef(Literal(NullConstant()), None, '{ JsNull }.asTerm)  // case null => JsNull
         case '[t] =>
           val dep: Expr[JsValueMapper[t]] = summonJsValueMapper[t](deps).get
           val symOut = Symbol.newVal(Symbol.spliceOwner, "x1", TypeRepr.of[t], Flags.EmptyFlags, Symbol.noSymbol)
@@ -104,6 +103,9 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
             else // x1: t =>
               Bind(symOut, Typed(Wildcard(), TypeTree.of[t]) )
           val body = toJsonWrapTagIfNeeded[t](dep, Ref(symOut).asExprOf[t]).asTerm  // ${mapper}.toJson(${obj}).asInstanceOf[JsValue]
+
+          // case x1: T => ${mapper}.toJson(x1).asInstanceOf[JsValue]
+          // case Some(x1: T) => ${mapper}.toJson(x1).asInstanceOf[JsValue]
           CaseDef(pattern, None, body)
 
       val result = Match(obj.asTerm, cases ++ matchNone ).asExprOf[JsValue]
@@ -159,12 +161,11 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
     def fromJsObject(jso: Expr[JsObject]): Expr[T] =
       if hasMultiTags then
         '{
-          assert($jso.contains("_type"), "required _type field in Json")
-          assert($jso.contains("_value"), "required _value field in Json")
-          assert($jso.field("_type").isInstanceOf[JsString], "required _type field in Json")
+          assert($jso.contains("$tag"), "required $tag field in Json")
+          assert($jso.contains("$value"), "required $value field in Json")
 
-          val tag = $jso.field("_type").asInstanceOf[JsString].value
-          val value = $jso.field("_value")
+          val tag = $jso.field("$tag").asInstanceOf[JsString].value
+          val value = $jso.field("$value")
           ${ fromJsObjectByTag('{tag }, '{value}) }
         }
       else  // at most 1 non-primitive type

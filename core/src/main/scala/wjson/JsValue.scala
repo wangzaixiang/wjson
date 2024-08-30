@@ -76,8 +76,7 @@ object JsValue:
               buffer.append(":")
               show0(value, indentString + " " * indent)
             }
-            buffer.append(indentString)
-            buffer.append("}")
+            buffer.append(cr).append(indentString).append("}")
           case JsArray(elements) =>
             buffer.append("[").append(cr)
             val pos = buffer.length
@@ -86,7 +85,7 @@ object JsValue:
               buffer.append( indentString + " " * indent)
               show0(elem, indentString + " " * indent)
             }
-            buffer.append(indentString).append("]")
+            buffer.append(cr).append(indentString).append("]")
 
       def escapedString(str: String): String =
         val sb = new StringBuilder()

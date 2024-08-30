@@ -49,38 +49,43 @@ class TestOrType extends AnyFunSuite {
         } //
     }
 
+    test("simple ortype") {
+        type StrOrInt = String | Int
+        case class Bean(name: StrOrInt) //8
+        val v1 = Bean("100")
+        val v2 = Bean(50)
+
+        val js1 = v1.toJson
+        val js2 = v2.toJson
+
+        val v11 = js1.convertTo[Bean]
+        val v21 = js2.convertTo[Bean]
+
+        assert(v11 == v1)
+        assert(v21 == v2)
+    }
 
 
 
-  test("simple ortype") {
-    type StrOrInt = String | Int
-    case class Bean(name: StrOrInt) //8
-    val v1 = Bean("100")
-    val v2 = Bean(50)
+    test("More Beans") {
 
-    val js1 = v1.toJson
-    val js2 = v2.toJson
+      import demo2.* //
+      case class Root(bean: Bean1 | List[Bean2]) derives JsValueMapper
 
-    val v11 = js1.convertTo[Bean]
-    val v21 = js2.convertTo[Bean]
+      {
+            val root: Root = Root(Bean1("wang", 18))
+            val js = root.toJson
+            println(js.show)
+            assert(root == js.convertTo[Root])
+      } //
+      {
+          val root: Root = Root( bean = List(Bean2("wang", 18))  )
+          val js = root.toJson
+          println(js.show)
+          assert(root == js.convertTo[Root])
+      }
 
-    assert(v11 == v1)
-    assert(v21 == v2)
-  }
-
-
-  test("More Beans") {
-      case class Bean1(name: String, age: Int)
-      case class Bean2(name: String, age: Int)
-
-      case class Root(bean: Bean1 | Bean2) derives JsValueMapper
-
-      val root: Root = Root( Bean1("wang", 18) )
-      val js = root.toJson
-      println(js.show)
-      assert( root == js.convertTo[Root] )
-
-  }
+    }
 
 
 }
