@@ -1,7 +1,6 @@
 package wjson
 
 import wjson.JsValue.JsNumber
-import wjson.{*, given}
 
 import scala.annotation.{switch, tailrec}
 
@@ -35,7 +34,7 @@ class Json5Parser(input: ParserInput) {
   // http://tools.ietf.org/html/rfc4627#section-2.1
   private def `value`(): Unit = {
     val mark = input.cursor
-    inline def simpleValue(matched: Boolean, value: JsValue) =
+    inline def simpleValue(matched: Boolean, value: JsValue): Unit =
       if (matched) jsValue = value else fail("JSON Value", mark)
 
     (cursorChar: @switch) match {
@@ -81,7 +80,7 @@ class Json5Parser(input: ParserInput) {
       var map: List[(String, JsValue)] = Nil
       map = members(map)
       require('}')
-      new JsObject(map.reverse)
+      JsObject(map.reverse)
     } else {
       advance()
       JsValue.JsEmptyObject
@@ -99,7 +98,7 @@ class Json5Parser(input: ParserInput) {
         list += jsValue
         ws()
         if cursorChar == ',' then
-          advance(); ws();
+          advance(); ws()
           if cursorChar == ']' then ()
           else values();
         else if cursorChar != ']' then
@@ -152,7 +151,7 @@ class Json5Parser(input: ParserInput) {
     else 0
 
   private def `frac`(): Double =
-    if (ch('.')) then
+    if ch('.') then
       val p0 = input.cursor
       val num  = zeroOrMoreDigits(0)
       val p1 = input.cursor
@@ -246,7 +245,7 @@ class Json5Parser(input: ParserInput) {
   private def `string`(): Unit = {
     if cursorChar == '"' then double_quoted_string()
     else if cursorChar == '\'' then single_quoted_string()
-    else fail("require '\"' or '''");
+    else fail("require '\"' or '''")
   }
 
   private def double_quoted_string(): Unit = {
@@ -267,7 +266,7 @@ class Json5Parser(input: ParserInput) {
   private def sqs_char(): Boolean =
     cursorChar match {
       case '\'' | EOI | EOS => false
-      case '\\' => advance();
+      case '\\' => advance()
         if cursorChar == '\r' then advance() && ch('\n') && appendSB('\n') && sqs_char()
         else if cursorChar == '\n' then advance() && appendSB('\n') && sqs_char()
         else `escaped`()
@@ -327,12 +326,13 @@ class Json5Parser(input: ParserInput) {
     if ch('/') then { while (cursorChar != '\n' && cursorChar != EOI) advance() }
     else if ch('*') then
       var cont = true
-      while (cont) {
+      while (cont && cursorChar != EOI) {
         if (cursorChar == '*') {
           advance()
           if (cursorChar == '/') { cont = false; advance() }
         } else advance()
       }
+      if (cursorChar == EOI) fail("comment")
     else fail("comment")
 
   private inline def ch(c: Char): Boolean = if (cursorChar == c) { advance(); true } else false

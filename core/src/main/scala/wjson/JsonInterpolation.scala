@@ -2,8 +2,6 @@ package wjson
 
 import wjson.JsValue.JsNull
 
-import scala.collection.SortedMap
-
 /**
  * Created by wangzx on 15/7/6.
  */
@@ -38,14 +36,14 @@ class JsonInterpolation(sc: StringContext) {
     val pattern = parse( pi )
 
     val results = collection.mutable.ArrayBuffer[JsValue]()
-    Seq.range(0, sc.parts.length-1).foreach { x => results += JsNull }
+    Seq.range(0, sc.parts.length-1).foreach { _ => results += JsNull }
 
     try {
       patternMatch(pattern, input, placeHolders, results)
       Some(results.toSeq)
     }
     catch {
-      case ex: Throwable => None
+      case _: Throwable => None
     }
 
   }

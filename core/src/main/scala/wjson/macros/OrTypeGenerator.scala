@@ -14,7 +14,7 @@ import scala.quoted.*
  */
 class OrTypeGenerator[T: Type] extends Generator[T]:
 
-  def elementTypes(using Quotes)(tpe: quotes.reflect.TypeRepr): List[quotes.reflect.TypeRepr] =
+  private def elementTypes(using Quotes)(tpe: quotes.reflect.TypeRepr): List[quotes.reflect.TypeRepr] =
     tpe match
       case quotes.reflect.OrType(l, r) => elementTypes(l) ++ elementTypes(r)
       case _ => List(tpe)
@@ -186,10 +186,10 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
               case Some(x) => x
               case None => throw new RuntimeException(s"Cannot find JsValueMapper for ${tagOf(TypeRepr.of[t])}")
 
-            val sym = Symbol.newVal(Symbol.spliceOwner, "_x", TypeRepr.of[t], Flags.EmptyFlags, Symbol.noSymbol)
-            val refSym: Expr[t] = Ref(sym).asExprOf[t]
-            val bindPattern = Typed(Wildcard(), TypeTree.of[t])
-            val pattern = Bind(sym, bindPattern)
+//            val sym = Symbol.newVal(Symbol.spliceOwner, "_x", TypeRepr.of[t], Flags.EmptyFlags, Symbol.noSymbol)
+//            val refSym: Expr[t] = Ref(sym).asExprOf[t]
+//            val bindPattern = Typed(Wildcard(), TypeTree.of[t])
+//            val pattern = Bind(sym, bindPattern)
             val body = '{ ${ dep }.fromJson(${ value }).asInstanceOf[T] }
             Some(CaseDef(Literal(StringConstant(tag.tag)), None, body.asTerm))
 

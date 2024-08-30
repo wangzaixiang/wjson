@@ -25,7 +25,7 @@ object ADTMappingMacro:
    * to enable macro debug, runs like `sbt -Dwjson.printMacroCode=true compile`
    * 
    * 1. -Dwjson.printMacroCode=all   
-   * 2. -Dwjson.printMacroCode=class1,class2  all classes contains class1, class2 will dumped
+   * 2. -Dwjson.printMacroCode=class1,class2  all classes contains class1, class2 will dump
    */
   private val PRINT_MACRO_CODE: String|Null = System.getProperty("wjson.printMacroCode")
 
@@ -78,7 +78,7 @@ object ADTMappingMacro:
       Some(deps(TypeRepr.of[t]).asExprOf[JsValueMapper[t]])
     else
       try
-        ADTMappingMacro.NO_EXPAND_ADT.set(true);
+        ADTMappingMacro.NO_EXPAND_ADT.set(true)
         ADTMappingMacro.NOT_EXPAND_ADTS.set(0)
         val found = Expr.summon[JsValueMapper[t]]
         if ADTMappingMacro.NOT_EXPAND_ADTS.get().nn > 0 then
@@ -120,7 +120,7 @@ class ADTMappingMacro(q: Quotes):
     var i = 0  // variable name counter
     val valSyms: Map[TypeRepr, Symbol] = needGenTypes map: (tpe, generator) =>
       i += 1
-      val sym = Symbol.newVal( Symbol.spliceOwner, s"mapper_${i}",  generator.mapperTpe, Flags.Lazy, Symbol.noSymbol )
+      val sym = Symbol.newVal( Symbol.spliceOwner, s"mapper_$i",  generator.mapperTpe, Flags.Lazy, Symbol.noSymbol )
       ( tpe.asInstanceOf[TypeRepr], sym )
 
     val refs: Map[TypeRepr, Ref] = valSyms map { (tpe, sym) => ( tpe, Ref(sym) ) }
@@ -157,7 +157,7 @@ class ADTMappingMacro(q: Quotes):
   private type GeneratorMap = Map[q.reflect.TypeRepr, Generator[?] ]// Map[q.reflect.TypeRepr, Generator[?]]
 
   /**
-   * recursive visit Type and it dependencies types and build the dependency map
+   * recursive visit Type and its dependencies types and build the dependency map
    * for Product types, the dependencies is it's fields types.
    * for SUM types, the dependencies is it's elements types with recursive visit
    * for List[T], the dependencies is T with recursive visit
@@ -231,12 +231,12 @@ class ADTMappingMacro(q: Quotes):
         case tpe if tpe <:< TypeRepr.of[Array[_]] => visitAppliedType1[T](acc, ArrayGenerator[T]())
         case tpe if tpe <:< TypeRepr.of[Set[_]] => visitAppliedType1[T](acc, SetGenerator[T]())
         case tpe if tpe <:< TypeRepr.of[Option[_]] => visitAppliedType1[T](acc, OptionGenerator[T]())
-        case OrType(l, r) => visitOrType[T](acc)
+        case OrType(_, _) => visitOrType[T](acc)
         case _ => visitADT[T](acc)
 
 
     if TypeRepr.of[T] =:= TypeRepr.of[Null] then acc
-    else if acc.isEmpty then visitInside[T](acc)        // this is the root type, dont summon self, on derived case, it maybe has a non-initialized value
+    else if acc.isEmpty then visitInside[T](acc)        // this is the root type, don't summon self, on derived case, it maybe has a non-initialized value
     else if acc.contains(TypeRepr.of[T]) then acc       // already visited  // TDO Type[?] is not a good key
     else                                                // a new Type, first summon it, if success, skp it, otherwise, visit it
       ADTMappingMacro.NOT_EXPAND_ADTS.set(0)

@@ -54,7 +54,7 @@ class JsonParser(input: ParserInput) {
   // http://tools.ietf.org/html/rfc4627#section-2.1
   private def `value`(): Unit = {
     val mark = input.cursor
-    inline def simpleValue(matched: Boolean, value: JsValue) =
+    inline def simpleValue(matched: Boolean, value: JsValue): Unit =
       if (matched) jsValue = value else fail("JSON Value", mark)
 
     (cursorChar: @switch) match {
@@ -93,7 +93,7 @@ class JsonParser(input: ParserInput) {
       var map: List[(String, JsValue)] = Nil
       map = members(map)
       require('}')
-      new JsObject(map.reverse)
+      JsObject(map.reverse)
     } else {
       advance()
       JsValue.JsEmptyObject
@@ -255,7 +255,7 @@ trait ParserInput {
 
   /**
    * Advance the cursor and get the next char, which could potentially be outside
-   * of the 7-Bit ASCII range. Therefore decoding might be required.
+   * the 7-Bit ASCII range. Therefore, decoding might be required.
    */
   def nextUtf8Char(): Char
 
@@ -301,7 +301,7 @@ object ParserInput {
     protected inline def incrCursor(): Unit = _cursor += 1
 
     /**
-     * move to given position. in InterpolationParserInput, it may used to sync cursor and arguments.
+     * move to given position. in InterpolationParserInput, it may be used to sync cursor and arguments.
      */
     protected def resetCursor(pos: Int): Unit = _cursor = pos
 
@@ -338,7 +338,7 @@ object ParserInput {
       incrCursor()
       if (cursor < bytes.length) (bytes(cursor) & 0xFF).toChar else EOI
     }
-    def currentArgument() = throw new IllegalStateException
+    def currentArgument(): JsValue = throw new IllegalStateException
     def nextUtf8Char(): Char = {
       @tailrec def decode(byte: Byte, remainingBytes: Int): Char = {
         byteBuffer.put(byte)
@@ -382,7 +382,7 @@ object ParserInput {
       incrCursor()
       if (cursor < string.length) string.charAt(cursor) else EOI
     }
-    def currentArgument() = throw new IllegalStateException
+    def currentArgument(): JsValue = throw new IllegalStateException
     def nextUtf8Char(): Char = nextChar()
     def length: Int = string.length
     def sliceCharArray(start: Int, end: Int): Array[Char] = {
@@ -397,13 +397,13 @@ object ParserInput {
       incrCursor()
       if (cursor < chars.length) chars(cursor) else EOI
     }
-    def currentArgument() = throw new IllegalStateException
+    def currentArgument(): JsValue = throw new IllegalStateException
     def nextUtf8Char(): Char = nextChar()
     def length: Int = chars.length
     def sliceCharArray(start: Int, end: Int): Array[Char] = java.util.Arrays.copyOfRange(chars, start, end).nn
   }
 
-  class InterpolationParserInput(sc: StringContext, args: Seq[JsValue]) extends DefaultParserInput {
+  private class InterpolationParserInput(sc: StringContext, args: Seq[JsValue]) extends DefaultParserInput {
 
     // Section0 arg0 Section1 arg1 ... SectionN
     // 01234567 8    9ABCDEFG H    ...           -- cursor
@@ -436,22 +436,6 @@ object ParserInput {
           }
 
     }
-
-//    final def nextChar(): Char = {
-//      val ch = nextChar0()
-//      println(s"[$ch]")
-//      ch
-//    }
-
-    private def switchToNextSection(): Unit = {
-      _sectionIndex += 1
-      if _sectionIndex < args.length then
-        _sectionContent = sc.parts(_sectionIndex)
-
-      _sectionStartCursor = cursor
-      _sectionCursor = 0
-    }
-
 
     final def nextChar(): Char = {
       _sectionCursor += 1

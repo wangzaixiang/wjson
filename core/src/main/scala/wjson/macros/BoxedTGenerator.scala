@@ -39,7 +39,7 @@ class ArrayGenerator[T: Type] extends Generator[T]:
     baseTpe.asInstanceOf[AppliedType].args(0).asType match
       case '[t] =>
         val ref = summonJsValueMapper[t](deps).get
-        val classTag: Expr[ClassTag[t]] = Expr.summon[ClassTag[t]].get // should exists
+        val classTag: Expr[ClassTag[t]] = Expr.summon[ClassTag[t]].get // should exist
         '{ JsValueMapper.arrayMapping[t](using ${ref}, ${classTag}) }.asExprOf[JsValueMapper[T]]
 
 class SetGenerator[T: Type] extends Generator[T]:

@@ -283,6 +283,6 @@ object JsonSchemaGenerator2:
   def Tasty2Schema(input: String, output: String): Unit =
     val schema = JsonSchemaInspector.apply(input)
     val out = new PrintWriter(new FileOutputStream(output))
-    out.println(schema.show())
+    out.println(schema.showPretty)
     out.close()
 

@@ -3,8 +3,7 @@ package wjson
 import wjson.JsValue.{JsArray, JsNumber}
 
 import scala.annotation.targetName
-import scala.collection.{IterableOps, SortedMap, SortedSet, mutable}
-import scala.reflect.ClassTag
+import scala.collection.mutable
 
 /**
  * Json Model ADT
@@ -45,9 +44,13 @@ object JsValue:
         JsObject(value.fields.filterNot(x => duplicateKeys.contains(x._1)) ++ kvs)
       else JsObject(value.fields ++ kvs)
 
+    @targetName("appendObject")
     def ++(other: JsObject): JsObject = merge(other.fields:_*)
+
+    @targetName("appendSeq")
     def ++(other: Seq[(String, JsValue)]): JsObject = merge(other:_*)
 
+    @targetName("append")
     def +(kv: (String, JsValue)): JsObject =
       if value.fields.exists(_._1 == kv._1) then
         JsObject(value.fields.filterNot(_._1 == kv._1) :+ kv)
@@ -65,30 +68,30 @@ object JsValue:
     def +:(elem: JsValue): JsArray = JsArray(elem +: value.elements)
 
   extension (value: JsValue)
-    def show: String = show(0, -1)
-    def showPretty: String = show(2, 100)
+    def show: String = show(0)
+    def showPretty: String = show(indent = 2)
 
     def asStr: JsString = value match
       case x: JsString => x
-      case _ => throw new Exception(s"expect JsString, but got ${value}")
+      case _ => throw new Exception(s"expect JsString, but got $value")
 
     def asNum: JsNumber = value match
       case x: JsNumber => x
-      case _ => throw new Exception(s"expect JsNumber, but got ${value}")
+      case _ => throw new Exception(s"expect JsNumber, but got $value")
 
     def asArr: JsArray = value match
       case x: JsArray => x
-      case _ => throw new Exception(s"expect JsArray, but got ${value}")
+      case _ => throw new Exception(s"expect JsArray, but got $value")
 
     def asObj : JsObject = value match
       case x: JsObject => x
-      case _ => throw new Exception(s"expect JsObject, but got ${value}")
+      case _ => throw new Exception(s"expect JsObject, but got $value")
 
     def asBool : JsBoolean = value match
       case x: JsBoolean => x
-      case _ => throw new Exception(s"expect JsBoolean, but got ${value}")
+      case _ => throw new Exception(s"expect JsBoolean, but got $value")
 
-    def show(indent: Int = 2, margin: Int = 100): String =
+    def show(indent: Int): String =
       val buffer = new StringBuilder
       val cr = if indent > 0 then "\n" else ""  // when no ident, dont crlf
 
@@ -102,7 +105,9 @@ object JsValue:
             buffer.append("{").append(cr)
             val pos = buffer.length
             fields.foreach { case (name, value) =>
-              if buffer.length > pos then buffer.append(",").append(cr)
+              if(buffer.length > pos) {
+                buffer.append(",").append(cr)
+              }
               buffer.append(indentString + " " * indent)
               buffer.append(escapedString(name))
               buffer.append(":")

@@ -79,9 +79,9 @@ class TestJsValue extends AnyFunSuite {
     val user = User2("John\t\r\n\"abc\"", 30, null)
     val child = User2("中国人", 10, user)
 
-    println("child = " + child.toJson.show())
+    println("child = " + child.toJson.showPretty)
 
-    assert(child.toJson.show().parseJson.convertTo[User2] == child)
+    assert(child.toJson.showPretty.parseJson.convertTo[User2] == child)
 
   }
 
