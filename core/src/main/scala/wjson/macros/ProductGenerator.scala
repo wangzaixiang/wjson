@@ -42,7 +42,7 @@ class ProductGenerator[T: Type] extends Generator[T]:
       val tpeSym = TypeTree.of[T].symbol
       val terms: List[Expr[(String, JsValue)]] = tpeSym.caseFields.map(field => getFieldAsKV(value, field))
       val asSeq = Expr.ofSeq(terms)
-      '{ JsObject((${ asSeq }).filter(_._2 != JsNull): _*) }
+      '{ JsValue.obj((${ asSeq }).filter(_._2 != JsNull): _*) }
 
     // '{ new CaseField[t](field, default).apply(jso) }'
     def getField(jso: Expr[JsObject], field: Symbol): Term =
@@ -98,7 +98,7 @@ class ProductGenerator[T: Type] extends Generator[T]:
       new JsValueMapper[T]:
         val TYPE = ${typeInfo}
         def fromJson(json: JsValue): T =
-          val jso = json.asInstanceOf[JsObject]
+          val jso = json.asObj
           ${ buildBeanFrom('{ jso }) }
 
         def toJson(value: T): JsValue =

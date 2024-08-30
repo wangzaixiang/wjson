@@ -48,7 +48,7 @@ class TestCaseClass extends AnyFunSuite {
 
   test("raw JsValue fields") {
     case class User3(name: String, age:Int, address: JsObject) derives JsValueMapper
-    val user = User3("John", 20, JsObject("city"->"guangzhou", "state"->"gd") )
+    val user = User3("John", 20, JsValue.obj("city"->"guangzhou", "state"->"gd") )
 
     assert(user.toJson == json"""{"name":"John", "age":20, "address":{"city":"guangzhou", "state":"gd" } }""")
 
@@ -60,7 +60,7 @@ class TestCaseClass extends AnyFunSuite {
 
     val jsonStr = json"""{"name":"John", "age":20, "address":{"state": "gd", "city":"guangzhou"}, "features":{"love":"read a book"}}"""
     assert( jsonStr.convertTo[User3] ==
-      User3("John", 20, json"""{"state":"gd", "city":"guangzhou"}""".asInstanceOf[JsObject], Map("love"->"read a book")) )
+      User3("John", 20, json"""{"state":"gd", "city":"guangzhou"}""".asObj, Map("love"->"read a book")) )
   }
 
   test("collections") {
@@ -106,8 +106,8 @@ class TestCaseClass extends AnyFunSuite {
     case class Address1(street: String, city: String) derives JsValueMapper
 
     val user = User1("John", 30, Address1("Main St", "New York"))
-    assert( user.toJson == JsObject("name"->"John","age"->30,
-      "address"->JsObject("street"->"Main St","city"->"New York")))
+    assert( user.toJson == JsValue.obj("name"->"John","age"->30,
+      "address"->JsValue.obj("street"->"Main St","city"->"New York")))
     assert( json"""{"name":"John","age":30,"address":{"street":"Main St","city":"New York"}}""".convertTo[User1] == user)
 
   }
@@ -120,8 +120,8 @@ class TestCaseClass extends AnyFunSuite {
 
     val js = child.toJson
 
-    assert( js == JsObject("name"->"Mary","age"->10,
-      "owner"->JsObject("name"->"John","age"->30)))
+    assert( js == JsValue.obj("name"->"Mary","age"->10,
+      "owner"->JsValue.obj("name"->"John","age"->30)))
     assert( js.convertTo[User2] == child)
 
   }

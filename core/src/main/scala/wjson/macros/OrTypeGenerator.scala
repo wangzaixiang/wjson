@@ -74,7 +74,7 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
         val simple = '{ ${mapper}.toJson( ${obj}) }
         if tag.isJsonPrimitive then simple
         else if hasMultiTags then
-        '{ JsObject( "$tag" ->  JsString($tagExpr), "$value" -> ${ mapper }.toJson(${ obj }) ) }
+        '{ JsValue.obj( "$tag" ->  JsString($tagExpr), "$value" -> ${ mapper }.toJson(${ obj }) ) }
         else simple
 
     def toJsonImpl(obj: Expr[T], hasMultiTag: Boolean): Expr[JsValue] =
@@ -164,7 +164,7 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
           assert($jso.contains("$tag"), "required $tag field in Json")
           assert($jso.contains("$value"), "required $value field in Json")
 
-          val tag = $jso.field("$tag").asInstanceOf[JsString].value
+          val tag = $jso.field("$tag").asStr.value
           val value = $jso.field("$value")
           ${ fromJsObjectByTag('{tag }, '{value}) }
         }

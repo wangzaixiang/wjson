@@ -56,8 +56,8 @@ class TestPatterns extends AnyFunSuite {
         // println(s"a=$a, b=$b, c=$c, d=$d")
         assert(a == 1)
         assert(b == "123")
-        assert(b1 == new java.lang.Long(100L))
-        assert(b2 == new java.lang.Double("100.0"))
+        assert(b1 == java.lang.Long.valueOf(100L))
+        assert(b2 == java.lang.Double.valueOf("100.0"))
         assert(c == true )
         assert(d == "ddd")
         assert(e == null)
@@ -78,12 +78,12 @@ class TestPatterns extends AnyFunSuite {
     }
     json"[1,2,3]" match {
       case jsonp"""$a@_*""" =>
-        assert(a == JsArray(JsNumber(1), JsNumber(2), JsNumber(3)))
+        assert(a == JsValue.arr(JsNumber(1), JsNumber(2), JsNumber(3)))
       case _ => assert(false)
     }
     json5"{a: 1}" match {
       case jsonp"""$a@{a:1}""" =>
-        assert(a == JsObject("a" -> JsNumber(1)))
+        assert(a == JsValue.obj("a" -> JsNumber(1)))
       case _ => assert(false)
   }
 
@@ -179,7 +179,7 @@ class TestPatterns extends AnyFunSuite {
          {
           "a": $arr@[1,2,3],
         }""" =>
-        assert(arr == JsArray(JsNumber(1), JsNumber(2), JsNumber(3)))
+        assert(arr == JsValue.arr(JsNumber(1), JsNumber(2), JsNumber(3)))
       case _ =>
         assert(false, "should not match")
     }
@@ -189,7 +189,7 @@ class TestPatterns extends AnyFunSuite {
          {
           "a": $arr@[1,2,4],
         }""" =>
-        assert(arr == JsArray(JsNumber(1), JsNumber(2), JsNumber(3)))
+        assert(arr == JsValue.arr(JsNumber(1), JsNumber(2), JsNumber(3)))
       case _ =>
         assert(true, "should not match")
     }
@@ -199,7 +199,7 @@ class TestPatterns extends AnyFunSuite {
          {
           "a": ${arr}@[${a1}@1,${a2}@integer,3],
         }""" =>
-        assert(arr == JsArray(JsNumber(1), JsNumber(2), JsNumber(3)))
+        assert(arr == JsValue.arr(JsNumber(1), JsNumber(2), JsNumber(3)))
         assert(a1 == 1)
         assert(a2 == 2)
       case _ => assert(false)
@@ -236,19 +236,20 @@ class TestPatterns extends AnyFunSuite {
             objArr: $array@[$f@{a:$aaa@1,b:$bb@integer}, $rest3@_*],
           },
         }""" =>
-        assert(foo == JsObject("bar" -> JsNumber(123), "baz" -> JsString("abc"), "far"->JsBoolean(true)))
-        assert(other == JsObject("bar" -> 123, "baz" -> "abc"))
+        assert(foo == JsValue.obj("bar" -> JsNumber(123), "baz" -> JsString("abc"), "far"->JsBoolean(true)))
+        assert(other == JsValue.obj("bar" -> 123, "baz" -> "abc"))
         assert(baz == "abc")
-        assert(obj == JsObject("foo" -> JsObject("bar" -> JsNumber(123), "baz" -> JsString("abc"), "far"->true), "biz" -> JsObject("list" -> JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))))
-        assert(foo2 == JsObject("bar2" -> JsNumber(123), "baz2" -> JsString("abc")))
-        assert(biz == JsObject("list" -> JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5))))
-        assert(list == JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
+        assert(obj == JsValue.obj("foo" -> JsValue.obj("bar" -> JsNumber(123), "baz" -> JsString("abc"), "far"->true),
+            "biz" -> JsValue.obj("list" -> JsValue.arr(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))))
+        assert(foo2 == JsValue.obj("bar2" -> JsNumber(123), "baz2" -> JsString("abc")))
+        assert(biz == JsValue.obj("list" -> JsValue.arr(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5))))
+        assert(list == JsValue.arr(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
         assert(first == 1)
         assert(snd == 2)
 //        assert(rest == JsArray(List(JsNumber(4), JsNumber(5))))
-        assert(array == JsArray(JsObject("a" -> JsNumber(1), "b" -> JsNumber(2)), JsObject("a" -> JsNumber(3), "b" -> JsNumber(4))))
-        assert(rest3 == JsArray(List(JsObject("a" -> JsNumber(3), "b" -> JsNumber(4)))))
-        assert(f == JsObject("a" -> JsNumber(1), "b" -> JsNumber(2)))
+        assert(array == JsValue.arr(JsValue.obj("a" -> JsNumber(1), "b" -> JsNumber(2)), JsValue.obj("a" -> JsNumber(3), "b" -> JsNumber(4))))
+        assert(rest3 == JsValue.arr(JsValue.obj("a" -> JsNumber(3), "b" -> JsNumber(4))))
+        assert(f == JsValue.obj("a" -> JsNumber(1), "b" -> JsNumber(2)))
         assert(aaa == 1)
         assert(bb == 2)
       case _ => assert(false)
@@ -288,8 +289,8 @@ class TestPatterns extends AnyFunSuite {
          {
           a: ${a}@[1,2,3, ${other}@_*, 5],
         }""" =>
-        assert(a == JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
-        assert(other == JsArray(JsNumber(4)))
+        assert(a == JsValue.arr(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
+        assert(other == JsValue.arr(JsNumber(4)))
       case _ => assert(false)
     }
     js match {
@@ -297,8 +298,8 @@ class TestPatterns extends AnyFunSuite {
          {
           a: ${a}@[1,2,${other}@_*],
         }""" =>
-        assert(a == JsArray(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
-        assert(other == JsArray(JsNumber(3), JsNumber(4), JsNumber(5)))
+        assert(a == JsValue.arr(JsNumber(1), JsNumber(2), JsNumber(3), JsNumber(4), JsNumber(5)))
+        assert(other == JsValue.arr(JsNumber(3), JsNumber(4), JsNumber(5)))
       case _ => assert(false)
     }
   }
@@ -326,8 +327,9 @@ class TestPatterns extends AnyFunSuite {
           }""").unapplyAsMap(js) match
       case Some(map) =>
         assert(map("a") == JsNumber(1))
-        assert(map("obj") == JsObject("foo" -> JsObject("bar" -> JsArray(JsNumber(1), JsNumber(2), JsNumber(3)), "baz" -> JsString("abc"), "far" -> JsBoolean(true)), "objArr" -> JsArray(JsObject("a" -> JsNumber(1), "b" -> JsNumber(2)), JsObject("a" -> JsNumber(3), "b" -> JsNumber(4)))))
-        assert(map("other") == JsObject("b" -> JsNumber(234)))
+        assert(map("obj") == JsValue.obj("foo" -> JsValue.obj("bar" -> JsValue.arr(JsNumber(1), JsNumber(2), JsNumber(3)), "baz" -> JsString("abc"), "far" -> JsBoolean(true)),
+            "objArr" -> JsValue.arr(JsValue.obj("a" -> JsNumber(1), "b" -> JsNumber(2)), JsValue.obj("a" -> JsNumber(3), "b" -> JsNumber(4)))))
+        assert(map("other") == JsValue.obj("b" -> JsNumber(234)))
       case _ => assert(false)
   }
 

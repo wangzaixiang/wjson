@@ -1,7 +1,6 @@
 package wjson.schema.generator
 
-import wjson.*
-import wjson.JsValue.JsObject
+import wjson.{*, given}
 
 import java.io.{FileOutputStream, PrintWriter}
 import scala.annotation.tailrec
@@ -77,30 +76,30 @@ object JsonSchemaGenerator2:
     // TODO optimize $ref
     private def schemaOfType(tpe: TypeRepr, ref: Boolean, definitions: collection.mutable.Set[ADTType]): JsObject = tpe match
         case x if x =:= TypeRepr.of[JsValue] =>
-          JsObject("type" -> Array("null", "boolean", "integer", "number", "array", "object").toJson )
+          JsValue.obj("type" -> Array("null", "boolean", "integer", "number", "array", "object").toJson )
         case x if x =:= TypeRepr.of[JsValue.JsString] =>
-          JsObject("type" -> JsString("string"))
+          JsValue.obj("type" -> "string".toJson )
         case x if x =:= TypeRepr.of[JsValue.JsNumber] =>
-          JsObject("type" -> JsString("number"))
+          JsValue.obj("type" -> "number".toJson)
         case x if x =:= TypeRepr.of[JsValue.JsBoolean] =>
-          JsObject("type" -> JsString("boolean"))
+          JsValue.obj("type" -> "boolean".toJson)
         case x if x =:= TypeRepr.of[JsValue.JsArray] =>
-          JsObject("type" -> JsString("array"))
+          JsValue.obj("type" -> "array".toJson)
         case x if x =:= TypeRepr.of[JsValue.JsObject] =>
-          JsObject("type" -> JsString("object"))
+          JsValue.obj("type" -> "object".toJson)
 
         case x if x <:< TypeRepr.of[String] =>
-          JsObject("type" -> JsString("string"))
+          JsValue.obj("type" -> "string".toJson)
         case x if x =:= TypeRepr.of[Int] || x =:= TypeRepr.of[Short] || x =:= TypeRepr.of[Long] =>
-          JsObject("type" -> JsString("integer"))
+          JsValue.obj("type" -> "integer".toJson)
         case x if x =:= TypeRepr.of[Float] || x =:= TypeRepr.of[Double] =>
-          JsObject("type" -> JsString("integer"))
+          JsValue.obj("type" -> "integer".toJson)
         case x if x =:= TypeRepr.of[Boolean] =>
-          JsObject("type" -> JsString("boolean"))
+          JsValue.obj("type" -> "boolean".toJson)
         case x if x.typeSymbol.flags.is(Flags.Enum) =>
           if ref then
             definitions.add(ADTType.applyEnum(x.typeSymbol))
-            JsObject("$ref" -> JsString("#/definitions/" + x.typeSymbol.fullName))
+            JsValue.obj("$ref" -> ("#/definitions/" + x.typeSymbol.fullName).toJson)
           else
             val sum = ADTType.applyEnum(x.typeSymbol)
             schemaOfSumType(sum, definitions)
@@ -108,19 +107,19 @@ object JsonSchemaGenerator2:
           // TODO check List/Array etc
           if ref then
             definitions.add(ADTType.applyCaseClass(x.typeSymbol))
-            JsObject("$ref" -> JsString("#/definitions/" + x.typeSymbol.fullName))
+            JsValue.obj("$ref" -> ("#/definitions/" + x.typeSymbol.fullName).toJson)
           else
              val product = ADTType.applyCaseClass(x.typeSymbol)
               schemaOfProductCase(product, includeKind = false, definitions)
           end if
         case x@AppliedType(base, args) if base <:< Symbol.requiredClass("scala.collection.immutable.List").typeRef =>
-          JsObject("type" -> JsString("array"),
+          JsValue.obj("type" -> JsString("array"),
             "items" -> schemaOfType(args(0), ref = true, definitions))
         case x@AppliedType(base, args) if base <:< Symbol.requiredClass("scala.Array").typeRef =>
-          JsObject("type" -> JsString("array"),
+          JsValue.obj("type" -> JsString("array"),
             "items" -> schemaOfType(args(0), ref = true, definitions))
         case x@AppliedType(base, args) if base <:< Symbol.requiredClass("scala.collection.immutable.Map").typeRef =>
-          JsObject("type" -> JsString("object"),
+          JsValue.obj("type" -> JsString("object"),
             "additionalProperties" -> schemaOfType(args(1), ref = true, definitions) )
         case x@AppliedType(base, args) if base <:< Symbol.requiredClass("scala.Option").typeRef =>
           schemaOfType(args(0), false, definitions)
@@ -129,14 +128,14 @@ object JsonSchemaGenerator2:
           val r = schemaOfType(right, false, definitions)
 
           val flatL =
-            if l.contains("oneOf") then l.field("oneOf").asInstanceOf[JsArray].elements.toList
+            if l.contains("oneOf") then l.field("oneOf").asArr.elements.toList
             else List(l)
 
           val flatR =
-            if r.contains("oneOf") then r.field("oneOf").asInstanceOf[JsArray].elements.toList
+            if r.contains("oneOf") then r.field("oneOf").asArr.elements.toList
             else List(r)
 
-          JsObject("oneOf" -> JsArray(flatL ++ flatR))
+          JsValue.obj("oneOf" -> (flatL ++ flatR))
 
         case _ =>
           val sym = tpe.typeSymbol
@@ -178,38 +177,37 @@ object JsonSchemaGenerator2:
             .find(_.tpe.typeSymbol == Symbol.requiredClass("wjson.schema.JsonSchema.description"))
             .map { case Apply(_, List(Literal(StringConstant(str)))) => str }
         val desc = description match
-            case Some(description) => JsObject("description" -> JsString(description))
-            case None => JsObject()
+            case Some(description) => JsValue.obj("description" -> JsString(description))
+            case None => JsValue.obj()
 
         name -> (typeObj ++ desc)
       }
       val kind: List[(String, JsValue)] =
         if includeKind then
-          List("_enum" -> JsObject("type" -> JsString("string"),
-            "enum" -> JsArray(JsString(product.symbol.name))))
+          List("_enum" -> JsValue.obj("type" -> JsString("string"),
+            "enum" -> JsValue.asArr(product.symbol.name)))
         else Nil
 
       val required = product.fields.map(f => f.name) ++ (if (includeKind) List("_enum") else Nil)
-      JsObject(
+      JsValue.obj(
         "type" -> JsString("object"),
-        "properties" -> new JsObject(kind ++ fields),
+        "properties" -> JsObject(kind ++ fields),
         "additionalProperties" -> JsBoolean(false),
         // "required" -> JsArray(required.map(JsString(_)): _*)  // TODO
       )
 
     private def schemaOfSumType(sum: ADTType.SumType, definitions: collection.mutable.Set[ADTType]): JsObject =
-      JsObject( "oneOf" -> JsArray(
-          sum.items.map {
+      JsValue.obj( "oneOf" -> sum.items.map {
             case ADTType.CaseSimple(symbol) =>
               val description: Option[String] = extractDescription(symbol)
-              JsObject( "type" -> JsString("string"), "enum" -> JsArray(JsString(symbol.name)) )
-                ++ description.map(desc => JsObject("description" -> JsString(desc))).getOrElse(JsObject())
+              JsValue.obj( "type" -> "string", "enum" -> JsValue.asArr(symbol.name) )
+                ++ description.map(desc => JsValue.obj("description" -> desc.toJson)).getOrElse(JsValue.JsEmptyObject)
             case x @ ADTType.CaseProduct(symbol, fields) =>
               val description: Option[String] = extractDescription(symbol)
               schemaOfProductCase(x, includeKind = true, definitions)
-                ++ description.map(desc => JsObject("description" -> JsString(desc))).getOrElse(JsObject())
-          }
-        ) )
+                ++ description.map(desc => JsValue.obj("description" -> desc.toJson)).getOrElse(JsValue.JsEmptyObject)
+          }.toJson
+        )
 
     private def extractDescription(symbol: Symbol): Option[String] =
       symbol.annotations
@@ -223,16 +221,16 @@ object JsonSchemaGenerator2:
     private val root: JsObject = result(0) match
       case sum@ADTType.SumType(typeSymbol, items) =>
         val schema = schemaOfSumType(sum, definitions)
-        JsObject(
-            "$schema" -> JsString("http://json-schema.org/draft-07/schema#"),
-            "$id" -> JsString(typeSymbol.fullName)
+        JsValue.obj(
+            "$schema" -> "http://json-schema.org/draft-07/schema#",
+            "$id" -> typeSymbol.fullName
         ) ++ schema
 
       case prd@ADTType.CaseProduct(symbol, fields) =>
         val schema = schemaOfProductCase(prd, includeKind = false, definitions)
-        JsObject(
-            "$schema" -> JsString("http://json-schema.org/draft-07/schema#"),
-            "$id" -> JsString(symbol.fullName)
+        JsValue.obj(
+            "$schema" -> "http://json-schema.org/draft-07/schema#",
+            "$id" -> symbol.fullName
         ) ++ schema
 
       case x: ADTType.CaseSimple =>
@@ -254,10 +252,10 @@ object JsonSchemaGenerator2:
               throw new UnsupportedOperationException(s"Unsupported type: ${x}")
           val root2: JsObject =
              if( schemaRoot.contains("definitions") )
-               val oldDefinition = schemaRoot.field("definitions").asInstanceOf[JsObject]
+               val oldDefinition = schemaRoot.field("definitions").asObj
                schemaRoot + ("definitions" -> (oldDefinition + definition) )
-
-             else JsObject(schemaRoot.fields ++ List("definitions" -> JsObject(definition)))
+             else
+               schemaRoot + ("definitions" -> JsValue.obj(definition))
 
           rescure(root2, tail, processed+head)
 

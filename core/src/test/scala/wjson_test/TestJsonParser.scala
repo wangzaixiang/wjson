@@ -10,7 +10,7 @@ class TestJsonParser extends AnyFunSuite {
     val jsonStr = """{"name":"John","age":30,"cars":["Ford","BMW","Fiat"],"city":"New York"}"""
     val jsval = jsonStr.parseJson
 
-    assert(jsval == JsObject(
+    assert(jsval == JsValue.obj(
       "name" -> "John",
       "age" -> 30,
       "cars" -> List("Ford", "BMW", "Fiat"),

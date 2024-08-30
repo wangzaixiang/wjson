@@ -152,9 +152,9 @@ case class JsPatternMatcher(pattern: JsPattern.Variable):
   // pojo values used in MVEL expression
   private def asPojo(value: JsValue): AnyRef = value match
     case JsNull => null
-    case JsBoolean(v) => new java.lang.Boolean(v)
-    case JsNumber(v: Double) => new java.lang.Double(v)
-    case JsNumber(v: Long) => new java.lang.Long(v)
+    case JsBoolean(v) => java.lang.Boolean.valueOf(v)
+    case JsNumber(v: Double) => java.lang.Double.valueOf(v)
+    case JsNumber(v: Long) => java.lang.Long.valueOf(v)
     case JsString(v) => v
     case JsArray(v) => v.map(asPojo).toArray
     case JsObject(v) => v.map(x => (x._1, asPojo(x._2))).toMap.asJava
@@ -165,7 +165,7 @@ case class JsPatternMatcher(pattern: JsPattern.Variable):
     if tag == "eval" && tags.contains(tag) then
       tags(tag).handle(content, context) == true
     else if tag == "r" && value.isInstanceOf[JsString] then
-      java.util.regex.Pattern.compile(content).matcher(value.asInstanceOf[JsString].value).matches()
+      java.util.regex.Pattern.compile(content).matcher(value.asStr.value).matches()
     else
       false
 
@@ -178,20 +178,20 @@ case class JsPatternMatcher(pattern: JsPattern.Variable):
     val value =
     variable.pattern match
       case NullPattern() => ifTrue( input == JsNull, JsNull )
-      case BoolPattern(value: Boolean) =>  ifTrue(input == JsBoolean(value),  input.asInstanceOf[JsBoolean].value)
-      case NumberPattern(value) => ifTrue(input == JsNumber(value),  input.asInstanceOf[JsNumber].value)
-      case StringPattern(value: String) => ifTrue(input == JsString(value), input.asInstanceOf[JsString].value)
+      case BoolPattern(value: Boolean) =>  ifTrue(input == JsBoolean(value),  input.asBool.value)
+      case NumberPattern(value) => ifTrue(input == JsNumber(value),  input.asNum.value)
+      case StringPattern(value: String) => ifTrue(input == JsString(value), input.asStr.value)
       case a@ArrPattern(value: Seq[JsPattern.Variable]) =>  ifTrue( arrPatternMatch(a, input, results) ,  input)
       case o@ObjPattern(value: Seq[(JsPattern.Path, JsPattern.Variable)]) =>  ifTrue( objPatternMatch(o, input, results), input)
-      case AnyVal(GroundType.NUMBER) => ifTrue( input.isInstanceOf[JsNumber], input.asInstanceOf[JsNumber].value)
+      case AnyVal(GroundType.NUMBER) => ifTrue( input.isInstanceOf[JsNumber], input.asNum.value)
       case AnyVal(GroundType.INTEGER) =>
         input match
           case JsNumber(x:Long) => Some(x)
           case _ => None
-      case AnyVal(GroundType.STRING) => ifTrue( input.isInstanceOf[JsString], input.asInstanceOf[JsString].value)
-      case AnyVal(GroundType.BOOLEAN) => ifTrue(input.isInstanceOf[JsBoolean] ,input.asInstanceOf[JsBoolean].value)
-      case AnyVal(GroundType.OBJECT) => ifTrue(input.isInstanceOf[JsObject], input.asInstanceOf[JsObject].fields)
-      case AnyVal(GroundType.ARRAY) => ifTrue( input.isInstanceOf[JsArray], input.asInstanceOf[JsArray].elements)
+      case AnyVal(GroundType.STRING) => ifTrue( input.isInstanceOf[JsString], input.asStr.value)
+      case AnyVal(GroundType.BOOLEAN) => ifTrue(input.isInstanceOf[JsBoolean] ,input.asBool.value)
+      case AnyVal(GroundType.OBJECT) => ifTrue(input.isInstanceOf[JsObject], input.asObj.fields)
+      case AnyVal(GroundType.ARRAY) => ifTrue( input.isInstanceOf[JsArray], input.asArr.elements)
       case AnyVal(GroundType.ANY) => Some(input)
       case AnyVals() => throw new RuntimeException("_* not supported to using here")
       case TaggedString(tag:String, content:String) => ifTrue( tagStringMatch(tag, content, input, results), input) // TODO

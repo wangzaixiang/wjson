@@ -4,7 +4,6 @@
 1. 使用 scala ADT 类型进行 JSON 建模，用于描述数据结果，可以自动生成 JSON Schema.
 2. 通过 @js.description 之类的 annotation 定义更多的 constraint.
 
-
 ## Usage
 1. via macro during compile time
    ```scala

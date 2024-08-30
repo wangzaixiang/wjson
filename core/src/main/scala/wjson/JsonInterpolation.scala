@@ -57,7 +57,7 @@ class JsonInterpolation(sc: StringContext) {
     pattern match {
       case p_o: JsObject =>
         assert( input.isInstanceOf[JsObject] )
-        val inputObj = input.asInstanceOf[JsObject]
+        val inputObj = input.asObj
 
         p_o.fields.foreach {
           case (key, Placeholder(index))  =>
@@ -71,8 +71,8 @@ class JsonInterpolation(sc: StringContext) {
 
       case p_a: JsArray =>
         assert(input.isInstanceOf[JsArray] &&
-               input.asInstanceOf[JsArray].elements.size >= p_a.elements.size)
-        val inputArr = input.asInstanceOf[JsArray]
+               input.asArr.elements.size >= p_a.elements.size)
+        val inputArr = input.asArr
 
         p_a.elements.zipWithIndex.foreach {
           case (Placeholder(index), y: Int) =>

@@ -19,10 +19,10 @@ class TestJson5Parser extends AnyFunSuite {
                   |  "backwardsCompatible": "with JSON",
                   |}""".stripMargin
     val input = ParserInput(json5)
-    val json: JsValue.JsObject = Json5Parser(input).parseJsValue().asInstanceOf[JsValue.JsObject]
+    val json: JsValue.JsObject = Json5Parser(input).parseJsValue().asObj
     assert(json.field("unquoted") == JsString("and you can quote me on that"))
 
-    val expect = JsObject(
+    val expect = JsValue.obj(
       "unquoted" -> "and you can quote me on that",
       "singleQuotes" -> "I can use \"double quotes\" here",
       "lineBreaks" -> "Look, Mom! \n No \\n's!",

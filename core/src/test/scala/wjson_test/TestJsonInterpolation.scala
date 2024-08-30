@@ -16,7 +16,7 @@ class TestJsonInterpolation extends AnyFunSuite {
 
     val js1 = json"""{"name":${name},"age":${age},"cars":[${ford},${bmw},"Fiat"],"city":${city}}"""
 
-    assert(js1 == JsObject(
+    assert(js1 == JsValue.obj(
       "name" -> "John",
       "age" -> 30,
       "cars" -> List("Ford", "BMW", "Fiat"),

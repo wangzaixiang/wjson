@@ -30,7 +30,7 @@ given[T: JsValueMapper]: Conversion[T, JsValue] with
  * support List,Seq,Vector,Set, SortedSet etc.
  */
 given[T: JsValueMapper, CC[x] <: IterableOps[x, CC, CC[x]]]: Conversion[CC[T], JsArray] with
-  inline def apply(x: CC[T]): JsArray = JsArray(x.map(x => summon[JsValueMapper[T]].toJson(x)).toList: _*)
+  inline def apply(x: CC[T]): JsArray = JsValue.arr(x.map(x => summon[JsValueMapper[T]].toJson(x)).toList: _*)
 
 
 private abstract class ADTMapping:
@@ -54,7 +54,7 @@ private abstract class CollectionMapping extends ADTMapping:
       case x: JsArray => x.elements.map(x => summon[JsValueMapper[T]].fromJson(x)).toList
       case _ => throw new Exception(s"Expected JsArr but ${js.getClass}")
 
-    inline def toJson(t: List[T]): JsValue = JsArray(t.map(x => summon[JsValueMapper[T]].toJson(x)): _*)
+    inline def toJson(t: List[T]): JsValue = JsValue.arr(t.map(x => summon[JsValueMapper[T]].toJson(x)): _*)
 
   given [T: JsValueMapper]: JsValueMapper[Seq[T]] = seqMapping[T]
   def seqMapping[T: JsValueMapper]: JsValueMapper[Seq[T]] = new JsValueMapper[Seq[T]]:
@@ -62,7 +62,7 @@ private abstract class CollectionMapping extends ADTMapping:
       case x: JsArray => x.elements.map(x => summon[JsValueMapper[T]].fromJson(x))
       case _ => throw new Exception(s"Expected JsArr but ${js.getClass}")
 
-    inline def toJson(t: Seq[T]): JsValue = JsArray(t.map(x => summon[JsValueMapper[T]].toJson(x)): _*)
+    inline def toJson(t: Seq[T]): JsValue = JsValue.arr(t.map(x => summon[JsValueMapper[T]].toJson(x)): _*)
 
   given [T: JsValueMapper]: JsValueMapper[Vector[T]] = vectorMapping[T]
   def vectorMapping[T: JsValueMapper]: JsValueMapper[Vector[T]] = new JsValueMapper[Vector[T]]:
@@ -70,7 +70,7 @@ private abstract class CollectionMapping extends ADTMapping:
       case x: JsArray => x.elements.map(x => summon[JsValueMapper[T]].fromJson(x)).toVector
       case _ => throw new Exception(s"Expected JsArr but ${js.getClass}")
 
-    inline def toJson(t: Vector[T]): JsValue = JsArray(t.map(x => summon[JsValueMapper[T]].toJson(x)): _*)
+    inline def toJson(t: Vector[T]): JsValue = JsValue.arr(t.map(x => summon[JsValueMapper[T]].toJson(x)): _*)
 
   given [T: JsValueMapper]: JsValueMapper[Set[T]] = setMapping[T]
   def setMapping[T: JsValueMapper]: JsValueMapper[Set[T]] = new JsValueMapper[Set[T]]:
@@ -78,7 +78,7 @@ private abstract class CollectionMapping extends ADTMapping:
       case x: JsArray => x.elements.map(x => summon[JsValueMapper[T]].fromJson(x)).toSet
       case _ => throw new Exception(s"Expected JsArr but ${js.getClass}")
 
-    inline def toJson(t: Set[T]): JsValue = JsArray(t.toSeq.map(x => summon[JsValueMapper[T]].toJson(x)): _*)
+    inline def toJson(t: Set[T]): JsValue = JsValue.arr(t.toSeq.map(x => summon[JsValueMapper[T]].toJson(x)): _*)
 
   given[T: JsValueMapper : Ordering]: JsValueMapper[SortedSet[T]] = sortedSetMapping[T]
   def sortedSetMapping[T: JsValueMapper : Ordering]: JsValueMapper[SortedSet[T]] = new JsValueMapper[SortedSet[T]]:
@@ -86,7 +86,7 @@ private abstract class CollectionMapping extends ADTMapping:
       case x: JsArray => SortedSet(x.elements.map(x => summon[JsValueMapper[T]].fromJson(x)): _*)
       case _ => throw new Exception(s"Expected JsArr but ${js.getClass}")
 
-    inline def toJson(t: SortedSet[T]): JsValue = JsArray(t.toList.map(x => summon[JsValueMapper[T]].toJson(x)): _*)
+    inline def toJson(t: SortedSet[T]): JsValue = JsValue.arr(t.toList.map(x => summon[JsValueMapper[T]].toJson(x)): _*)
 
   given[T: JsValueMapper]: JsValueMapper[Map[String, T]] = mapMapping[T]
   def mapMapping[T: JsValueMapper]: JsValueMapper[Map[String, T]] = new JsValueMapper[Map[String, T]]:
@@ -112,9 +112,9 @@ private abstract class CollectionMapping extends ADTMapping:
       case _ => throw new Exception(s"Expected JsObj but ${js.getClass}")
 
     inline def toJson(t: Map[K, V]): JsValue =
-      val entry2Json = (k: K, v: V) => JsObject( "key" -> summon[JsValueMapper[K]].toJson(k), "value" -> summon[JsValueMapper[V]].toJson(v) )
+      val entry2Json = (k: K, v: V) => JsValue.obj( "key" -> summon[JsValueMapper[K]].toJson(k), "value" -> summon[JsValueMapper[V]].toJson(v) )
       val entries = t.toList.map { case (k, v) => entry2Json(k,v) }
-      JsArray( entries: _* )
+      JsValue.arr( entries: _* )
 
   given[T: JsValueMapper]: JsValueMapper[SortedMap[String, T]] = sortedMapMapping[T]
   def sortedMapMapping[T: JsValueMapper]: JsValueMapper[SortedMap[String, T]] = new JsValueMapper[SortedMap[String, T]]:
@@ -223,7 +223,7 @@ private abstract class PrimitiveMapping extends OptionMapping:
 
   given JsValueMapper[String] with
     inline def fromJson(js: JsValue): String =
-      if js.isInstanceOf[JsString] then js.asInstanceOf[JsString].value
+      if js.isInstanceOf[JsString] then js.asStr.value
       else throw new Exception(s"Expected JsString but ${js.getClass}")
 
     inline def toJson(t: String): JsValue = JsString(t)

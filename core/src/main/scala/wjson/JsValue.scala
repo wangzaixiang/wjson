@@ -2,6 +2,7 @@ package wjson
 
 import wjson.JsValue.{JsArray, JsNumber}
 
+import scala.annotation.targetName
 import scala.collection.{IterableOps, SortedMap, SortedSet, mutable}
 import scala.reflect.ClassTag
 
@@ -22,14 +23,14 @@ object JsValue:
   val JsFalse: JsBoolean = JsBoolean(false)
   val JsZero: JsNumber = JsNumber(0L)
   val JsEmptyString: JsString = JsString("")
-  val JsEmptyObject: JsObject = JsObject()
-  val JsEmptyArray: JsArray = JsArray()
+  val JsEmptyObject: JsObject = JsObject(Seq.empty)
+  val JsEmptyArray: JsArray = JsArray(Seq.empty)
 
-  def parse(str: String): JsValue = JsonParser.parse(ParserInput(str))
-  def JsObject(fields: (String, JsValue)*): JsObject = JsObject(fields)
-  def JsArray(elements: JsValue*): JsArray = JsArray(elements)
-  def JsNumber(value: Int) = new JsNumber(value.toLong)
-
+  def JsNumber(value: Int): JsNumber = JsNumber(value.toLong)
+  def parseJson(str: String): JsValue = JsonParser.parse(ParserInput(str))
+  def parseJson5(str: String): JsValue = new Json5Parser(ParserInput(str)).parseJsValue()
+  def obj(fields: (String, JsValue)*): JsObject = JsObject(fields)
+  def arr(elements: JsValue*): JsArray = JsArray(elements)
 
   extension (value: JsObject)
     def contains(name: String): Boolean = value.fields.exists(_._1 == name)
@@ -52,9 +53,40 @@ object JsValue:
         JsObject(value.fields.filterNot(_._1 == kv._1) :+ kv)
       else JsObject(value.fields :+ kv)
 
+  extension (value: JsArray)
+
+    @targetName("append")
+    def :+(elem: JsValue): JsArray = JsArray(value.elements :+ elem)
+
+    @targetName("appendSeq")
+    def ++(other: JsArray): JsArray = JsArray(value.elements ++ other.elements)
+
+    @targetName("prepend")
+    def +:(elem: JsValue): JsArray = JsArray(elem +: value.elements)
+
   extension (value: JsValue)
     def show: String = show(0, -1)
     def showPretty: String = show(2, 100)
+
+    def asStr: JsString = value match
+      case x: JsString => x
+      case _ => throw new Exception(s"expect JsString, but got ${value}")
+
+    def asNum: JsNumber = value match
+      case x: JsNumber => x
+      case _ => throw new Exception(s"expect JsNumber, but got ${value}")
+
+    def asArr: JsArray = value match
+      case x: JsArray => x
+      case _ => throw new Exception(s"expect JsArray, but got ${value}")
+
+    def asObj : JsObject = value match
+      case x: JsObject => x
+      case _ => throw new Exception(s"expect JsObject, but got ${value}")
+
+    def asBool : JsBoolean = value match
+      case x: JsBoolean => x
+      case _ => throw new Exception(s"expect JsBoolean, but got ${value}")
 
     def show(indent: Int = 2, margin: Int = 100): String =
       val buffer = new StringBuilder
@@ -111,8 +143,8 @@ object JsValue:
 export JsValue.{JsNull, JsBoolean, JsNumber, JsString, JsArray, JsObject}
 
 extension (str:String)
-
-  def parseJson: JsValue = JsValue.parse(str)
+  def parseJson: JsValue = JsValue.parseJson(str)
+  def parseJson5: JsValue = JsValue.parseJson5(str)
 
 extension (sc: StringContext)
   def json = new JsonInterpolation(sc)

@@ -85,7 +85,7 @@ class SumGenerator[T: Type] extends Generator[T]:
             case '[t] =>
               val xExpr = Ref(sym).asExprOf[t]
               val mapper = summonJsValueMapper[t](deps).get
-              '{ JsObject("_enum" -> JsString(${ nameExpr })) ++ ${ mapper }.toJson(${ xExpr }).asInstanceOf[JsObject] }
+              '{ JsValue.obj("_enum" -> JsString(${ nameExpr })) ++ ${ mapper }.toJson(${ xExpr }).asObj }
           CaseDef(pattern, None, body.asTerm)
         }
       }

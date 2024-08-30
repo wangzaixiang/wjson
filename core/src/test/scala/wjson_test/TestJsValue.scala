@@ -42,24 +42,24 @@ class TestJsValue extends AnyFunSuite {
   test("Collection Mappers and coversions") {
 
     // List
-    assert( List(1,2,3).toJson == JsArray(1,2,3) )
-    assert( JsArray(1,2,3).convertTo[List[Int]] == List(1,2,3))
-    assert( JsArray(1,2,3).convertTo[List[Short]] == List(1.toShort,2.toShort,3.toShort))
-    assert( (List(1,2,3):JsValue) == JsArray(1,2,3))
+    assert( List(1,2,3).toJson == JsValue.arr(1,2,3) )
+    assert( JsValue.arr(1,2,3).convertTo[List[Int]] == List(1,2,3))
+    assert( JsValue.arr(1,2,3).convertTo[List[Short]] == List(1.toShort,2.toShort,3.toShort))
+    assert( (List(1,2,3):JsValue) == JsValue.arr(1,2,3))
 
     // Seq
-    assert( Seq(1,2,3).toJson == JsArray(1,2,3) )
-    assert( JsArray(1,2,3).convertTo[Seq[Int]] == Seq(1,2,3))
-    assert( (Seq(1,2,3):JsValue) == JsArray(1,2,3))
+    assert( Seq(1,2,3).toJson == JsValue.arr(1,2,3) )
+    assert( JsValue.arr(1,2,3).convertTo[Seq[Int]] == Seq(1,2,3))
+    assert( (Seq(1,2,3):JsValue) == JsValue.arr(1,2,3))
 
     // SortedSet
-    assert( SortedSet(3,2,1).toJson == JsArray(1,2,3) )
-    assert( JsArray(3,2,1).convertTo[SortedSet[Int]] == SortedSet(1,2,3))
-    assert( (SortedSet(3,2,1):JsValue) == JsArray(1,2,3))
+    assert( SortedSet(3,2,1).toJson == JsValue.arr(1,2,3) )
+    assert( JsValue.arr(3,2,1).convertTo[SortedSet[Int]] == SortedSet(1,2,3))
+    assert( (SortedSet(3,2,1):JsValue) == JsValue.arr(1,2,3))
 
     // Map
-    assert( Map("a"->1,"b"->2,"c"->3).toJson == JsObject("a"->1,"b"->2,"c"->3))
-    assert( JsObject("a"->1,"b"->2,"c"->3).convertTo[Map[String,Int]] == Map("a"->1,"b"->2,"c"->3))
+    assert( Map("a"->1,"b"->2,"c"->3).toJson == JsValue.obj("a"->1,"b"->2,"c"->3))
+    assert( JsValue.obj("a"->1,"b"->2,"c"->3).convertTo[Map[String,Int]] == Map("a"->1,"b"->2,"c"->3))
 //    assert( (Map("a"->1,"b"->2,"c"->3):JsValue) == JsObject("a"->1,"b"->2,"c"->3)) // the code fails
 
   }
