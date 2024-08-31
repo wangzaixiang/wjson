@@ -76,7 +76,10 @@ lazy val pattern = project.in(file("pattern"))
 lazy val schema = project.in(file("schema"))
   .dependsOn(core)
   .settings(
-    name := "wjson-schema"
+    name := "wjson-schema",
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "3.2.15" % "test",
+    )
   )
 
 lazy val schemaGenerator = project.in(file("schema-generator"))

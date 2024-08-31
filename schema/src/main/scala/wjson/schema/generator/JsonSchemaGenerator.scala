@@ -1,9 +1,12 @@
 package wjson.schema.generator
 
+import wjson.macros.OrTypeGenerator
+import wjson.macros.OrTypeGenerator.typeName
 import wjson.{*, given}
 import wjson.schema.JsonSchema
 
 import scala.annotation.tailrec
+import scala.collection.immutable.SortedSet
 import scala.collection.mutable
 import scala.quoted.*
 
@@ -42,63 +45,72 @@ object JsonSchemaGenerator:
 
                 case x if x <:< TypeRepr.of[String] =>
                     JsValue.obj("type" -> "string".toJson)
-                case x if x =:= TypeRepr.of[Int] || x =:= TypeRepr.of[Short] || x =:= TypeRepr.of[Long] =>
-                    JsValue.obj("type" -> "integer".toJson)
-                case x if x =:= TypeRepr.of[Float] || x =:= TypeRepr.of[Double] =>
+                case x if List(TypeRepr.of[Byte], TypeRepr.of[Short], TypeRepr.of[Int], TypeRepr.of[Long], TypeRepr.of[BigInt], TypeRepr.of[java.math.BigInteger]).exists(x =:= _) =>
+                    JsValue.obj("type" -> "integer")
+                case x if List(TypeRepr.of[Float], TypeRepr.of[Double], TypeRepr.of[BigDecimal], TypeRepr.of[java.math.BigDecimal]).exists(x =:= _) =>
                     JsValue.obj("type" -> "number".toJson)
                 case x if x =:= TypeRepr.of[Boolean] =>
                     JsValue.obj("type" -> "boolean".toJson)
 
-                case x@AppliedType(base, args) if base <:< Symbol.requiredClass("wjson.schema.JsonSchema.Pointer").typeRef =>
+                case x@AppliedType(base, args) if x <:< TypeRepr.of[JsonSchema.Pointer[?]] =>
                     val argTypeName = args(0).typeSymbol.fullName
-                    JsValue.obj("type" -> "string", "$comment" -> s"pointer to ${argTypeName}")
+                    JsValue.obj("type" -> "string", "$comment" -> s"pointer to $argTypeName")
 
-                case x if x.typeSymbol.flags.is(Flags.Enum) && !x.typeSymbol.flags.is(Flags.Case)
+                case x@AppliedType(base, args) if x <:< TypeRepr.of[JsonSchema.GlobalPointer[?]] =>
+                    val argTypeName = args(0).typeSymbol.fullName
+                    JsValue.obj("type" -> "string", "$comment" -> s"global pointer to $argTypeName")
+
+                case x if x.typeSymbol.flags.is(Flags.Enum) && !x.typeSymbol.flags.is(Flags.Case)  // enum type
                   && !x.typeSymbol.flags.is(Flags.Synthetic) =>
                     if byRef then
                         definitions.add(x)
                         JsValue.obj("$ref" -> s"#/definitions/${x.typeSymbol.fullName}".toJson)
                     else
-                        println("enter enum:" + x.show)
                         schemaOfEnum(x, definitions)
 
-                case x if x.typeSymbol.flags.is(Flags.Case) && !x.typeSymbol.flags.is(Flags.Synthetic) =>
+                case x if x.typeSymbol.flags.is(Flags.Case) && !x.typeSymbol.flags.is(Flags.Synthetic) => // case product or product
                     if byRef then
                         definitions.add(x)
                         JsValue.obj("$ref" -> s"#/definitions/${x.typeSymbol.fullName}".toJson)
                     else
                         schemaOfProduct(x, definitions)
 
-                case x@AppliedType(base, args) if base <:< Symbol.requiredClass("scala.collection.immutable.List").typeRef =>
+                case x@AppliedType(base, args) if x <:< TypeRepr.of[Seq[?]] =>
                     JsValue.obj("type" -> "array".toJson,
                         "items" -> schemaOf(args(0), true, definitions))
 
-                case x@AppliedType(base, args) if base <:< Symbol.requiredClass("scala.Array").typeRef =>
+                case x@AppliedType(base, args) if x <:< TypeRepr.of[Set[?]] =>
+                    JsValue.obj("type" -> "array".toJson,
+                        "items" -> schemaOf(args(0), true, definitions))
+
+                case x@AppliedType(base, args) if x <:< TypeRepr.of[SortedSet[?]] =>
+                    JsValue.obj("type" -> "array".toJson,
+                        "items" -> schemaOf(args(0), true, definitions))
+
+                case x@AppliedType(base, args) if x <:< TypeRepr.of[Array[?]] =>
                     JsValue.obj("type" -> "array",
                         "items" -> schemaOf(args(0), true,  definitions))
 
                 // TODO check Map[K, V]
-                case x@AppliedType(base, args) if base <:< Symbol.requiredClass("scala.collection.immutable.Map").typeRef =>
+                case x@AppliedType(base, args) if x <:< TypeRepr.of[Map[String, ?]] =>
                     JsValue.obj("type" -> "object",
                         "additionalProperties" -> schemaOf(args(1), true, definitions))
 
-                case x@AppliedType(base, args) if base <:< Symbol.requiredClass("scala.Option").typeRef =>
+                case x@AppliedType(base, args) if x <:< TypeRepr.of[Map[?, ?]] =>
+                    JsValue.obj("type" -> "array",
+                        "items" -> JsValue.obj("type" -> "object",
+                            "properties" -> JsValue.obj(
+                                "key" -> schemaOf(args(0), true, definitions),
+                                "value" -> schemaOf(args(1), true, definitions)
+                            )
+                        ))
+
+                case x@AppliedType(base, args) if x <:< TypeRepr.of[Option[?]] =>
                     schemaOf(args(0), true, definitions)
 
                 // TODO can we support or type? how to process the tag?
                 case x@OrType(left, right) =>
-                    val l = schemaOf(left, true, definitions)
-                    val r = schemaOf(right, true, definitions)
-
-                    val flatL =
-                        if l.contains("oneOf") then l.field("oneOf").asArr.elements.toList
-                        else List(l)
-
-                    val flatR =
-                        if r.contains("oneOf") then r.field("oneOf").asArr.elements.toList
-                        else List(r)
-
-                    JsValue.obj("oneOf" -> JsArray(flatL ++ flatR))
+                    schemaOfOrType(x, definitions)
 
                 case tpe@_ =>
                     val sym = TypeRepr.of[T].typeSymbol
@@ -119,7 +131,7 @@ object JsonSchemaGenerator:
             val symbol = TypeRepr.of[T].typeSymbol
             assert( symbol.flags is Flags.Enum )
 
-            val choices = symbol.children.map:
+            val choices: List[JsObject] = symbol.children.map:
                 case x if x.isTerm => // Simple Case
                     JsValue.obj("const" -> x.name.toJson)
                 case x if x.isType => // Product Case
@@ -136,7 +148,9 @@ object JsonSchemaGenerator:
                         case Some(desc) => schema + ("description" -> desc)
                         case None => schema
 
-            JsValue.obj("oneOf" -> choices.toJson)
+            val description = extractDescription(symbol)
+            JsValue.obj("oneOf" -> choices.toJson) ++
+              description.map( str => JsValue.obj("description" -> str)).getOrElse(JsValue.JsEmptyObject)
 
         private def schemaOfEnum(tpe: TypeRepr, definitions: mutable.Set[TypeRepr]): JsObject =
             tpe.asType match
@@ -148,21 +162,49 @@ object JsonSchemaGenerator:
                 case '[t] =>
                     schemaOfProduct[t](definitions)
 
+        private def schemaOfOrType(tpe: TypeRepr, definitions: mutable.Set[TypeRepr]): JsObject =
+            def items(tpe: TypeRepr): List[TypeRepr] =
+                tpe match
+                    case OrType(left, right) => items(left) ++ items(right)
+                    case _ => List(tpe)
 
-        // TODO support default value in Schema?
+            val itemTypes: List[TypeRepr] = items(tpe)
+            val tags: List[OrTypeGenerator.TagInfo] = OrTypeGenerator.getTagInfos(using quotes)(itemTypes)
+
+            tags.filter(_.kind.isPrimitive).groupBy(_.kind).filter(_._2.size > 1).foreach: (kind, tags) =>
+                val tagInfos = tags.map(tag => s"${typeName(tag.typ)}").mkString("[", ",", "]")
+                report.error(s"Duplicate primitive type ${kind} for $tagInfos")
+
+            tags.filter(it => !it.kind.isPrimitive).groupBy(_.tag).filter(_._2.size > 1).foreach: (tagName, tags) =>
+                val tagInfos = tags.map(tag => s"${typeName(tag.typ)}").mkString("[", ",", "]")
+                report.error(s"Duplicate tag $tagName for $tagInfos")
+
+            val choices: List[JsObject] = tags.map :tag =>
+                tag.typ match
+                    case '[t] => schemaOf[t](true, definitions)
+
+            JsValue.obj("oneOf" -> JsArray(choices))
+
         private case class FieldInfo(name: String, tpe: TypeRepr,
                                      symbol: Symbol,  // the field Symbol
                                      valdef: ValDef,  // the field init tree contains default value
                                      optional: Boolean
                                     )
+
+        private def nullable(tpe: quotes.reflect.TypeRepr): Boolean =
+            val elementTypes = OrTypeGenerator.elementTypes(using quotes)(tpe)
+            elementTypes.exists( tpe => tpe =:= TypeRepr.of[Null] )
+
         private def schemaOfProduct[T: Type](definitions: mutable.Set[TypeRepr]): JsObject =
             val typeSymbol = TypeRepr.of[T].typeSymbol
 
             val params: List[ValDef] = typeSymbol.primaryConstructor.tree.asInstanceOf[DefDef].paramss(0).params.asInstanceOf[List[ValDef]]
 
             val fieldInfos = typeSymbol.caseFields.zip(params).map :(field, param) =>
-                val optional = param.tpt.tpe <:< TypeRepr.of[Option[_]]
-                FieldInfo( name = field.name, tpe = param.tpt.tpe, symbol = field, valdef = param, optional = optional)
+                val optional = param.tpt.tpe <:< TypeRepr.of[Option[_]] || nullable(param.tpt.tpe)
+                val info = FieldInfo( name = field.name, tpe = param.tpt.tpe, symbol = field,
+                    valdef = param, optional = optional)
+                info
 
             val fields: List[(String, JsValue)] = fieldInfos.map :field =>
               val schema = schemaOf(field.tpe, true, definitions)
@@ -170,13 +212,15 @@ object JsonSchemaGenerator:
                   case Some(desc) => (field.name, schema + ("description" -> desc) )
                   case None => (field.name, schema)
 
+            val description = extractDescription(typeSymbol)
+
             val required = fieldInfos.filter(_.optional == false).map(f => JsString(f.name) )
             JsValue.obj(
                 "type" -> "object",
                 "properties" -> JsObject(fields),
                 "required" -> required,
                 "additionalProperties" -> false
-            )
+            ) ++ description.map( str => JsValue.obj("description" -> str)).getOrElse(JsValue.JsEmptyObject)
 
         @tailrec
         private def recur(root: JsObject, remains: mutable.Set[TypeRepr], processed: mutable.Set[TypeRepr]): JsObject =
@@ -192,7 +236,8 @@ object JsonSchemaGenerator:
                             root + ("definitions" -> (root.field("definitions").asObj + (fullName -> schema)))
                         else
                             root + ("definitions" -> JsValue.obj(fullName -> schema))
-                    recur(newRoot, remains - head, processed + head)
+                    val head0 = Set(head)
+                    recur(newRoot, remains diff head0, processed union  head0)
 
         // generate a JSON schema for given type
         def of[T: Type]: JsObject =

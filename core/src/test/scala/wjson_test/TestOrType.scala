@@ -66,9 +66,9 @@ class TestOrType extends AnyFunSuite {
     test("More Beans") {
 
       import demo2.* //
-      case class Root(bean: Bean1 | List[Bean2] | Array[String]) derives JsValueMapper
+      case class Root(bean: Bean1 | List[Bean2] | Vector[String]) derives JsValueMapper
 
-      val items: List[Bean1 | List[Bean2] | Array[String]] = List( Bean1("wang", 18), List(Bean2("wang", 18)), Array("hello") )
+      val items: List[Bean1 | List[Bean2] | Vector[String]] = List( Bean1("wang", 18), List(Bean2("wang", 18)), Vector("hello") )
       for( item <- items ) {
           val root: Root = Root(item)
           val js = root.toJson

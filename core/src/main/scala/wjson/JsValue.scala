@@ -16,6 +16,16 @@ enum JsValue:
     case JsArray(elements: Seq[JsValue])
     case JsObject(fields: Seq[(String, JsValue)])  // changed, preserve the order of fields
 
+    // compare JsValue ignore the order of fields
+    override def equals(obj: Any): Boolean = obj match
+      case x: JsBoolean => this.isInstanceOf[JsBoolean] && x.value == this.asInstanceOf[JsBoolean].value
+      case x: JsNumber => this.isInstanceOf[JsNumber] && x.value == this.asInstanceOf[JsNumber].value
+      case x: JsString => this.isInstanceOf[JsString] && x.value == this.asInstanceOf[JsString].value
+      case x: JsArray => this.isInstanceOf[JsArray] && x.elements == this.asInstanceOf[JsArray].elements
+      case x: JsObject => this.isInstanceOf[JsObject] && x.fields.toMap == this.asInstanceOf[JsObject].fields.toMap
+      case x: JsValue => this.eq(JsNull)
+      case _ => false
+
 
 object JsValue:
   val JsTrue: JsBoolean = JsBoolean(true)

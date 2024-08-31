@@ -1,0 +1,16 @@
+
+{
+  "$schema":"http://json-schema.org/draft-07/schema#",
+  "$id":"demo.TestSchemaGenerator._$type1",
+  "oneOf":[
+    {
+      "type":"string"
+    },
+    {
+      "type":"integer"
+    },
+    {
+      "type":"boolean"
+    }
+  ]
+}

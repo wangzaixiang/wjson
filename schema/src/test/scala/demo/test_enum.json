@@ -1,0 +1,44 @@
+
+{
+  "$schema":"http://json-schema.org/draft-07/schema#",
+  "$id":"demo.Color",
+  "oneOf":[
+    {
+      "const":"Red"
+    },
+    {
+      "const":"Green"
+    },
+    {
+      "const":"Blue"
+    },
+    {
+      "type":"object",
+      "additionalProperties":false,
+      "properties":{
+        "r":{
+          "type":"integer"
+        },
+        "g":{
+          "type":"integer"
+        },
+        "b":{
+          "type":"integer"
+        },
+        "alpha":{
+          "type":"integer"
+        },
+        "_$tag":{
+          "const":"Mixed"
+        }
+      },
+      "required":[
+        "r",
+        "g",
+        "b",
+        "alpha",
+        "_$tag"
+      ]
+    }
+  ]
+}
