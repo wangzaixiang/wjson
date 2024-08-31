@@ -1,7 +1,7 @@
 import sbt.Keys.{publishConfiguration, publishTo}
 
 ThisBuild / organization := "com.github.wangzaixiang"
-ThisBuild / version := "0.3.0-RC4"
+ThisBuild / version := "0.3.0-RC5"
 ThisBuild / scalaVersion := "3.3.3"
 ThisBuild / versionScheme := Some("early-semver")
 
