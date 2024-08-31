@@ -56,6 +56,11 @@ object JsonSchema:
   class dynamic extends StaticAnnotation
 
   /**
+   * a top level type can have a $schema field
+   */
+  class toplevel extends StaticAnnotation
+
+  /**
    * mark the field is an inside-document pointer
    */
   case class Pointer[T](value: String)

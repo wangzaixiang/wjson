@@ -21,6 +21,10 @@ object JsonSchemaGenerator:
               .find(_.tpe =:= TypeRepr.of[JsonSchema.description])
               .map { case Apply(_, List(Literal(StringConstant(str)))) => str }
 
+        private def isTopLevel(symbol: Symbol): Boolean =
+            symbol.annotations
+              .exists(_.tpe =:= TypeRepr.of[JsonSchema.toplevel])
+
 
         private def schemaOf(tpe: TypeRepr, byRef: Boolean, definitions: mutable.Set[TypeRepr]): JsObject =
             tpe.asType match
@@ -179,9 +183,20 @@ object JsonSchemaGenerator:
                 val tagInfos = tags.map(tag => s"${typeName(tag.typ)}").mkString("[", ",", "]")
                 report.error(s"Duplicate tag $tagName for $tagInfos")
 
+            val needTags = tags.count(it => !it.kind.isPrimitive) > 1
+
             val choices: List[JsObject] = tags.map :tag =>
                 tag.typ match
-                    case '[t] => schemaOf[t](true, definitions)
+                    case '[t] =>
+                        val needTag = needTags && !tag.kind.isPrimitive
+                        val schema = schemaOf[t](true, definitions)
+                        if needTag then
+                            JsValue.obj( "type" -> "object",
+                                "properties" -> JsValue.obj( "$tag" -> JsValue.obj("const" -> tag.tag),
+                                    "$value" -> schema),
+                                "required" -> List("$tag", "$value")
+                            )
+                        else schema
 
             JsValue.obj("oneOf" -> JsArray(choices))
 
@@ -212,15 +227,16 @@ object JsonSchemaGenerator:
                   case Some(desc) => (field.name, schema + ("description" -> desc) )
                   case None => (field.name, schema)
 
-            val description = extractDescription(typeSymbol)
+            val description = extractDescription(typeSymbol).map( str => JsValue.obj("description" -> str)).getOrElse(JsValue.JsEmptyObject)
+            val toplevel = if isTopLevel(typeSymbol) then JsValue.obj("$schema" -> true) else JsValue.JsEmptyObject
 
             val required = fieldInfos.filter(_.optional == false).map(f => JsString(f.name) )
             JsValue.obj(
                 "type" -> "object",
-                "properties" -> JsObject(fields),
+                "properties" -> (JsObject(fields) ++ toplevel),
                 "required" -> required,
                 "additionalProperties" -> false
-            ) ++ description.map( str => JsValue.obj("description" -> str)).getOrElse(JsValue.JsEmptyObject)
+            ) ++ description
 
         @tailrec
         private def recur(root: JsObject, remains: mutable.Set[TypeRepr], processed: mutable.Set[TypeRepr]): JsObject =
