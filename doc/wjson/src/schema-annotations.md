@@ -26,5 +26,15 @@
     - ipv4/ipv6
     - uri
     - uuid
-19. @js.open   mark a type `additionalProperties`= true
-20. required: all types marks required except for `Option[T]` or `T|Null`
+
+## 扩展
+1. @js.toplevel 
+   
+    表示改类型可以作为文档顶层元素，顶层元素在定义时，可选的支持 `$schema` 属性，用于指定 JSON Schema 的定义。
+    
+    tips: 可以在 JSON 文件中，手动指定 $schema, idea 编辑器会自动获取 schema 对文档进行校验
+   （不在需要额外配置 mapping）
+
+2. @js.version 
+3. @js.open:   mark a type `additionalProperties`= true
+4. @js.dynamic

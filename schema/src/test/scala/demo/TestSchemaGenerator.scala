@@ -68,7 +68,13 @@ case class CollectionBean
   map3: SortedMap[String, PrimaryBean]
 )
 
-case class User(name: String)
+@js.toplevel
+case class User //123
+(
+  name: String,
+  age: Int,
+  gender: Boolean
+)
 
 enum Color:
     case Red, Green, Blue
@@ -76,28 +82,35 @@ enum Color:
 
 class TestSchemaGenerator extends AnyFunSuite {
 
+    test("user"){
+        val schema = JsonSchemaGenerator.of[User].parseJson
+        println(schema.showPretty)
+        val expect = Source.fromResource("demo/user.schema.json5").mkString.parseJson
+        assert(schema == expect)
+    }
+
     test("primary"){
         val schema = JsonSchemaGenerator.of[PrimaryBean].parseJson
-        val expect = Source.fromResource("demo/test_primary.json").mkString.parseJson
+        val expect = Source.fromResource("demo/primary.schema.json5").mkString.parseJson
         println(schema.showPretty)
         assert(schema == expect)
     }
 
     test("optional"){
         val schema = JsonSchemaGenerator.of[OptionPrimaryBean].parseJson
-        val expect = Source.fromResource("demo/test_optional.json").mkString.parseJson
+        val expect = Source.fromResource("demo/optional.schema.json5").mkString.parseJson
         assert(schema == expect)
     }
 
     test("collection bean"){
         val schema = JsonSchemaGenerator.of[CollectionBean].parseJson
-        val expect = Source.fromResource("demo/test_collection.json").mkString.parseJson
+        val expect = Source.fromResource("demo/collection.schema.json5").mkString.parseJson
         assert(schema == expect)
     }
 
     test("enum") {
         val schema = JsonSchemaGenerator.of[Color].parseJson
-        val expect = Source.fromResource("demo/test_enum.json").mkString.parseJson
+        val expect = Source.fromResource("demo/color.schema.json5").mkString.parseJson
         assert(schema == expect)
     }
 
@@ -105,7 +118,7 @@ class TestSchemaGenerator extends AnyFunSuite {
         type type1 = String | Int | Boolean
 
         val schema = JsonSchemaGenerator.of[type1].parseJson
-        val expect = Source.fromResource("demo/test_or_type1.json").mkString.parseJson
+        val expect = Source.fromResource("demo/or_type1.schema.json5").mkString.parseJson
         assert(schema == expect)
     }
 
@@ -113,18 +126,22 @@ class TestSchemaGenerator extends AnyFunSuite {
         case class Bean(name: String | Null)
 
         val schema = JsonSchemaGenerator.of[Bean].parseJson
-        val expect = Source.fromResource("demo/test_or_type2.json").mkString.parseJson
+        val expect = Source.fromResource("demo/or_type2.schema.json5").mkString.parseJson
         assert(schema == expect)
 
     }
 
-    test("or type 3"){
+    test("or type 3"){ //12
         type T1 = String | Int | User | Null
         type T2 = Option[User] | Option[String] | Int
-        case class Bean(name: T1, other: T2) derives JsValueMapper; //8
+        type T3 = PrimaryBean | OptionPrimaryBean | List[PrimaryBean]
+
+        @js.toplevel
+        case class Bean(name: T1, other: T2, tags: List[T3]) derives JsValueMapper; //8
 
         val schema = JsonSchemaGenerator.of[Bean].parseJson
-        val expect = Source.fromResource("demo/test_or_type3.json").mkString.parseJson
+        println(schema.showPretty)
+        val expect = Source.fromResource("demo/or_type3.schema.json5").mkString.parseJson
         assert(schema == expect)
     }
 

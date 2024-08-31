@@ -1,0 +1,7 @@
+{
+    $schema: "user.schema.json5",
+    name: "orbstack",
+    age: 10,
+    gender: true,
+//    color: "red",
+}

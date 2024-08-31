@@ -1,0 +1,77 @@
+{
+  // test the schema's validation
+  "$schema": "or_type3.schema.json5",
+  // "a": 10,  -- not supported
+  name: "hello",
+  other: { //  User
+    name: "wang",
+    age: 10,
+    gender: true
+  },
+  tags: [ // each item is an Or Type
+    {
+      "$tag": "scala.collection.immutable.List[demo.PrimaryBean]",
+      "$value": [
+        {
+          bool: false,
+          byte: 1,
+          short: 2,
+          int: 3,
+          long: 4,
+          float: 5.0,
+          double: 6.0,
+          string: "hello world",
+          scalaBigDecimal: 7.0,
+          javaBigDecimal: 8.0,
+          scalaBigInt: 9,
+          javaBigInt: 10,
+          _bool: false,
+          _string: "hello world",
+          _number: 10,
+          _array: [],
+          _object: {
+          }
+        }
+      ]
+    },
+    {
+      $tag: "demo.PrimaryBean",
+      $value: {
+        bool: false,
+        byte: 1,
+        short: 2,
+        int: 3,
+        long: 4,
+        float: 5.0,
+        double: 6.0,
+        string: "hello world",
+        scalaBigDecimal: 7.0,
+        javaBigDecimal: 8.0,
+        scalaBigInt: 9,
+        javaBigInt: 10,
+        _bool: false,
+        _string: "hello world",
+        _number: 10,
+        _array: [],
+        _object: {
+        }
+      }
+    },
+    {
+      $tag: "demo.OptionPrimaryBean",
+      $value: {
+        bool: false,
+        byte: 1,
+        int: 2,
+        scalaBigDecimal: 7.0,
+        javaBigInt: 10,
+        _bool: false,
+        _string: "hello world",
+        _number: 10,
+        _array: [],
+        _object: {
+        }
+      }
+    }
+  ]
+}

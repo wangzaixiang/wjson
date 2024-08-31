@@ -1,0 +1,6 @@
+[book]
+authors = ["wangzaixiang"]
+language = "zh-CN"
+multilingual = false
+src = "src"
+title = "wjson: a JSON API for scala"
