@@ -29,13 +29,11 @@ class TestOrType extends AnyFunSuite {
         }
     }
 
-
     test("ortype 2") { // 1
 
         type T1 = Option[String] | Option[Int] | List[String]
         type T2 = User | Option[String] | Int
         case class Bean(name: T1, other: T2) derives JsValueMapper; //8
-        //
 
         val names: List[T1] = List(Some("hello"), Some(5), List("aa", "bb"), Nil)
         val others: List[T2] = List(Some("hello"), Some("world"), User("wang"), None, 5)
@@ -65,25 +63,18 @@ class TestOrType extends AnyFunSuite {
         assert(v21 == v2)
     }
 
-
-
     test("More Beans") {
 
       import demo2.* //
-      case class Root(bean: Bean1 | List[Bean2]) derives JsValueMapper
+      case class Root(bean: Bean1 | List[Bean2] | Array[String]) derives JsValueMapper
 
-      {
-            val root: Root = Root(Bean1("wang", 18))
-            val js = root.toJson
-            println(js.show)
-            assert(root == js.convertTo[Root])
-      } //
-      {
-          val root: Root = Root( bean = List(Bean2("wang", 18))  )
+      val items: List[Bean1 | List[Bean2] | Array[String]] = List( Bean1("wang", 18), List(Bean2("wang", 18)), Array("hello") )
+      for( item <- items ) {
+          val root: Root = Root(item)
           val js = root.toJson
           println(js.show)
           assert(root == js.convertTo[Root])
-      }
+      } //
 
     }
 

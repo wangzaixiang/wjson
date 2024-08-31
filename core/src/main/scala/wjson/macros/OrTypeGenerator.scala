@@ -4,6 +4,7 @@ import wjson.*
 import ADTMappingMacro.*
 
 import scala.annotation.tailrec
+import scala.compiletime.testing.ErrorKind.Typer
 import scala.quoted.*
 
 /**
@@ -28,29 +29,66 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
     else if tpe <:< TypeRepr.of[Option[?]] then
         tpe.asType match
             case '[Option[t]] => tagOf(TypeRepr.of[t])
-        else tpe.show
+    else
+        // How to TODO scala.Int => int, or scala.Predef.String => string?
+        tpe.show
         // tpe.show(using Printer.TypeReprShortCode)
         // avoid tpe.typeSymbol.fullName
 
+  enum JsKind:
+    case IsPrimitive, IsArray, IsObject
+
+//  @tailrec
+//  private def isJsonPrimitive(using Quotes)(tpe: quotes.reflect.TypeRepr): Boolean =
+//    import quotes.reflect.*
+//    if tpe =:= TypeRepr.of[String] || tpe =:= TypeRepr.of[Int] || tpe =:= TypeRepr.of[Long] ||
+//       tpe =:= TypeRepr.of[Double] || tpe =:= TypeRepr.of[Boolean] || tpe =:= TypeRepr.of[Null] then true
+//    else if tpe <:< TypeRepr.of[Option[?]] then
+//      tpe.asType match
+//        case '[Option[t]] => isJsonPrimitive(TypeRepr.of[t])
+//    else false
+
   @tailrec
-  private def isJsonPrimitive(using Quotes)(tpe: quotes.reflect.TypeRepr): Boolean =
+  private def getJsKind(using Quotes)(tpe: quotes.reflect.TypeRepr): JsKind =
     import quotes.reflect.*
-    if tpe =:= TypeRepr.of[String] || tpe =:= TypeRepr.of[Int] || tpe =:= TypeRepr.of[Long] ||
-       tpe =:= TypeRepr.of[Double] || tpe =:= TypeRepr.of[Boolean] || tpe =:= TypeRepr.of[Null] then true
-    else if tpe <:< TypeRepr.of[Option[?]] then
-      tpe.asType match
-        case '[Option[t]] => isJsonPrimitive(TypeRepr.of[t])
-    else false
+    if tpe <:< TypeRepr.of[Option[?]] then tpe.asType match
+            case '[Option[t]] => getJsKind(TypeRepr.of[t])
+    else if tpe =:= TypeRepr.of[String] then JsKind.IsPrimitive
+    else if tpe =:= TypeRepr.of[Byte] then JsKind.IsPrimitive
+    else if tpe =:= TypeRepr.of[Short] then JsKind.IsPrimitive
+    else if tpe =:= TypeRepr.of[Int] then JsKind.IsPrimitive
+    else if tpe =:= TypeRepr.of[Long] then JsKind.IsPrimitive
+    else if tpe =:= TypeRepr.of[Float] then JsKind.IsPrimitive
+    else if tpe =:= TypeRepr.of[Double] then JsKind.IsPrimitive
+    else if tpe =:= TypeRepr.of[BigDecimal] then JsKind.IsPrimitive
+    else if tpe =:= TypeRepr.of[BigInt] then JsKind.IsPrimitive
+    else if tpe =:= TypeRepr.of[java.math.BigDecimal] then JsKind.IsPrimitive
+    else if tpe =:= TypeRepr.of[java.math.BigInteger] then JsKind.IsPrimitive
+    else if tpe =:= TypeRepr.of[Boolean] then JsKind.IsPrimitive
+    else if tpe =:= TypeRepr.of[Null] then JsKind.IsPrimitive
+
+    else if tpe <:< TypeRepr.of[JsValue.JsBoolean] then JsKind.IsPrimitive
+    else if tpe <:< TypeRepr.of[JsValue.JsNumber] then JsKind.IsPrimitive
+    else if tpe <:< TypeRepr.of[JsValue.JsString] then JsKind.IsPrimitive
+    else if tpe <:< TypeRepr.of[JsValue.JsArray] then JsKind.IsArray
+    else if tpe <:< TypeRepr.of[JsValue.JsObject] then JsKind.IsObject
+
+    else if tpe <:< TypeRepr.of[Array[?]] then JsKind.IsArray
+    else if tpe <:< TypeRepr.of[Seq[?]] then JsKind.IsArray
+    else if tpe <:< TypeRepr.of[Set[?]] then JsKind.IsArray
+    else if tpe <:< TypeRepr.of[Map[String, ?]] then JsKind.IsObject
+    else if tpe <:< TypeRepr.of[Map[?, ?]] then JsKind.IsArray
+    else JsKind.IsObject
 
   override def generate(using Quotes)(deps: Map[quotes.reflect.TypeRepr, quotes.reflect.Ref]): Expr[JsValueMapper[T]] =
     import quotes.reflect.*
 
-    case class TagInfo(tpe: TypeRepr, tag: String, isOption: Boolean, isJsonPrimitive: Boolean)
+    case class TagInfo(tpe: TypeRepr, tag: String, isOption: Boolean, kind: JsKind)
 
     val elemTpes: List[TypeRepr] = elementTypes(TypeRepr.of[T])
-    val tags: List[TagInfo] = elemTpes.map(tpe => TagInfo(tpe, tagOf(tpe), tpe <:< TypeRepr.of[Option[?]], isJsonPrimitive(tpe)))
+    val tags: List[TagInfo] = elemTpes.map(tpe => TagInfo(tpe, tagOf(tpe), tpe <:< TypeRepr.of[Option[?]], getJsKind(tpe)))
     val tagsByTpe: Map[TypeRepr, TagInfo] = tags.map( tag => tag.tpe -> tag).toMap
-    val hasMultiTags: Boolean = tags.filterNot(tag => tag.isJsonPrimitive).size > 1
+    val hasMultiTags: Boolean = tags.count(tag => tag.kind != JsKind.IsPrimitive) > 1
 
     tags.groupBy(_.tag).filter(_._2.size > 1).foreach { case (tagName, tags) =>
       val tagInfos = tags.map(tag => s"${tag.tpe.show}").mkString("[", ",", "]")
@@ -64,17 +102,26 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
       val tag = tagsByTpe(TypeRepr.of[t])
       val tagExpr: Expr[String] = Expr(tag.tag)
       val tpe = TypeRepr.of[t]
+
       if tpe =:= TypeRepr.of[String] then '{ JsString(${ obj.asExprOf[String] }) }
+      else if tpe =:= TypeRepr.of[Byte] then '{ JsNumber(${ obj.asExprOf[Byte] }) }
+      else if tpe =:= TypeRepr.of[Short] then '{ JsNumber(${ obj.asExprOf[Short] }) }
       else if tpe =:= TypeRepr.of[Int] then '{ JsNumber(${ obj.asExprOf[Int] }) }
       else if tpe =:= TypeRepr.of[Long] then '{ JsNumber(${ obj.asExprOf[Long] }) }
+      else if tpe =:= TypeRepr.of[Float] then '{ JsNumber(${ obj.asExprOf[Float] }) }
       else if tpe =:= TypeRepr.of[Double] then '{ JsNumber(${ obj.asExprOf[Double] }) }
       else if tpe =:= TypeRepr.of[Boolean] then '{ JsBoolean(${ obj.asExprOf[Boolean] }) }
+      else if tpe =:= TypeRepr.of[BigDecimal] then '{ JsNumber(${ obj.asExprOf[BigDecimal] }.doubleValue) }
+      else if tpe =:= TypeRepr.of[java.math.BigDecimal] then '{ JsNumber(${ obj.asExprOf[java.math.BigDecimal] }.doubleValue) }
+      else if tpe =:= TypeRepr.of[BigInt] then '{ JsNumber(${ obj.asExprOf[BigInt] }.longValue) }
+      else if tpe =:= TypeRepr.of[java.math.BigInteger] then '{ JsNumber(${ obj.asExprOf[java.math.BigInteger] }.intValue) }
+
       else if tpe =:= TypeRepr.of[Null] then '{ JsNull }
       else
-        val simple = '{ ${mapper}.toJson( ${obj}) }
-        if tag.isJsonPrimitive then simple
+        val simple = '{ ${mapper}.toJson( ${obj}) }  // maybe JsObject or JsArray
+        if tag.kind == JsKind.IsPrimitive then simple
         else if hasMultiTags then
-        '{ JsValue.obj( "$tag" ->  JsString($tagExpr), "$value" -> ${ mapper }.toJson(${ obj }) ) }
+        '{ JsValue.obj( "$or" ->  JsString($tagExpr), "$value" -> ${ mapper }.toJson(${ obj }) ) }
         else simple
 
     def toJsonImpl(obj: Expr[T], hasMultiTag: Boolean): Expr[JsValue] =
@@ -143,12 +190,13 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
       if elemTpes.exists(tpe => tpe =:= TypeRepr.of[Boolean]) then '{ ${ value }.asInstanceOf[T] }
       else if elemTpes.exists(tpe => tpe =:= TypeRepr.of[Option[Boolean]]) then '{ Some(${ value }).asInstanceOf[T] }
       else '{ throw new RuntimeException("No boolean value allowed") }
-      
+
+    // TODO tag need a flag: isArray ir isObject
     def fromJsArray(array: Expr[JsArray]): Expr[T] =
       if hasMultiTags then
         '{ throw new RuntimeException("No array type allowed") }
       else
-        tags.find(tag => !tag.isJsonPrimitive) match
+        tags.find(tag => tag.kind == JsKind.IsArray) match
           case Some(tag: TagInfo) =>
             tag.tpe.asType match
                 case '[t] =>
@@ -161,35 +209,43 @@ class OrTypeGenerator[T: Type] extends Generator[T]:
     def fromJsObject(jso: Expr[JsObject]): Expr[T] =
       if hasMultiTags then
         '{
-          assert($jso.contains("$tag"), "required $tag field in Json")
+          assert($jso.contains("$or"), "required $or field in Json")
           assert($jso.contains("$value"), "required $value field in Json")
 
-          val tag = $jso.field("$tag").asStr.value
+          val tag = $jso.field("$or").asStr.value
           val value = $jso.field("$value")
           ${ fromJsObjectByTag('{tag }, '{value}) }
         }
       else  // at most 1 non-primitive type
-        tags.find(tag => !tag.isJsonPrimitive) match
+        tags.find(tag => tag.kind == JsKind.IsObject) match
           case Some(tag: TagInfo) =>
-            fromJsObjectByTag(Expr(tag.tag), jso)
+            fromJsObjectByGivenTag(tag.tag, jso)
           case None =>
             '{ throw new RuntimeException("No object type allowed") }
 
+    def fromJsObjectByGivenTag(tagName: String, value: Expr[JsValue]): Expr[T] =
+        val tag = tags.find(tag => tag.tag == tagName).get
+        assert(tag.kind == JsKind.IsObject, "required object type")
+        tag.tpe.asType match
+            case '[t] =>
+                val dep: Expr[JsValueMapper[t]] = summonJsValueMapper[t](deps) match
+                    case Some(x) => x
+                    case None => throw new RuntimeException(s"Cannot find JsValueMapper for ${tagOf(TypeRepr.of[t])}")
+
+                '{ ${dep}.fromJson(${value}) }.asExprOf[T]
+
+    // maybe match JsObject or JsArray
     def fromJsObjectByTag(tagName: Expr[String | Null], value: Expr[JsValue]): Expr[T] =
       val cases: List[CaseDef] = elemTpes.filterNot(tpe => tpe =:= TypeRepr.of[Null]).map(_.asType) flatMap :
         case '[t] =>
           val tag = tagsByTpe(TypeRepr.of[t])
-          if tag.isJsonPrimitive then
-            None
+          if tag.kind == JsKind.IsPrimitive then
+            None   // only process non-primitive type
           else
             val dep: Expr[JsValueMapper[t]] = summonJsValueMapper[t](deps) match
               case Some(x) => x
               case None => throw new RuntimeException(s"Cannot find JsValueMapper for ${tagOf(TypeRepr.of[t])}")
 
-//            val sym = Symbol.newVal(Symbol.spliceOwner, "_x", TypeRepr.of[t], Flags.EmptyFlags, Symbol.noSymbol)
-//            val refSym: Expr[t] = Ref(sym).asExprOf[t]
-//            val bindPattern = Typed(Wildcard(), TypeTree.of[t])
-//            val pattern = Bind(sym, bindPattern)
             val body = '{ ${ dep }.fromJson(${ value }).asInstanceOf[T] }
             Some(CaseDef(Literal(StringConstant(tag.tag)), None, body.asTerm))
 
