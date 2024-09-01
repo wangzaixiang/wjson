@@ -24,7 +24,7 @@ class TestOrType extends AnyFunSuite {
             val bean = Bean(name, other)
             val js = bean.toJson
             println(js.show)
-            val bean2 = js.convertTo[Bean]
+            val bean2 = js.toBean[Bean]
             assert(bean2 == bean)
         }
     }
@@ -42,7 +42,7 @@ class TestOrType extends AnyFunSuite {
             val bean = Bean(name, other)
             val js = bean.toJson
             println(js.show)
-            val bean2 = js.convertTo[Bean]
+            val bean2 = js.toBean[Bean]
             assert(bean2 == bean)
         } //
     }
@@ -56,8 +56,8 @@ class TestOrType extends AnyFunSuite {
         val js1 = v1.toJson
         val js2 = v2.toJson
 
-        val v11 = js1.convertTo[Bean]
-        val v21 = js2.convertTo[Bean]
+        val v11 = js1.toBean[Bean]
+        val v21 = js2.toBean[Bean]
 
         assert(v11 == v1)
         assert(v21 == v2)
@@ -73,7 +73,7 @@ class TestOrType extends AnyFunSuite {
           val root: Root = Root(item)
           val js = root.toJson
           println(js.show)
-          assert(root == js.convertTo[Root])
+          assert(root == js.toBean[Root])
       } //
 
     }

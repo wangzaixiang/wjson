@@ -34,7 +34,7 @@ class TestAdtMapping extends AnyFunSuite:
       f1
     )
     val js = family.toJson // 4
-    val family2 = js.convertTo[Family]
+    val family2 = js.toBean[Family]
 
     assert(family2 == family)
   }

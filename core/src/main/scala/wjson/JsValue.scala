@@ -45,6 +45,7 @@ object JsValue:
     def contains(name: String): Boolean = value.fields.exists(_._1 == name)
     def field(name: String): JsValue = value.fields.find(_._1 == name).map(_._2).get
     def fieldOpt(name: String): Option[JsValue] = value.fields.find(_._1 == name).map(_._2)
+    def keys(): Seq[String] = value.fields.map(_._1)
 
     def merge(kvs: (String, JsValue)*): JsObject =
       val keys1 = value.fields.map(_._1).toSet
@@ -60,6 +61,9 @@ object JsValue:
     @targetName("appendSeq")
     def ++(other: Seq[(String, JsValue)]): JsObject = merge(other:_*)
 
+    def remove(name: String*): JsObject =
+        JsObject(value.fields.filterNot(x => name.contains(x._1)))
+
     @targetName("append")
     def +(kv: (String, JsValue)): JsObject =
       if value.fields.exists(_._1 == kv._1) then
@@ -68,14 +72,22 @@ object JsValue:
 
   extension (value: JsArray)
 
-    @targetName("append")
+    @targetName("appendItem")
     def :+(elem: JsValue): JsArray = JsArray(value.elements :+ elem)
 
-    @targetName("appendSeq")
+    @targetName("append")
     def ++(other: JsArray): JsArray = JsArray(value.elements ++ other.elements)
 
-    @targetName("prepend")
+    @targetName("appendSeq")
+    def ++(other: Seq[JsValue]): JsArray = JsArray(value.elements ++ other)
+
+    @targetName("prependItem")
     def +:(elem: JsValue): JsArray = JsArray(elem +: value.elements)
+
+    def apply(index: Int): JsValue = value.elements(index)
+
+    def updated(index: Int, elem: JsValue): JsArray =
+      JsArray(value.elements.updated(index, elem))
 
   extension (value: JsValue)
     def show: String = show(0)

@@ -1,4 +1,4 @@
-# wJson Pattern: 一个简单、直观的Scala JSON库
+# wjson Pattern: 一个简单、直观的Scala JSON库
 
 JSON作为数据交换标准，使用越来越广泛。对输入的 JSON 进行模式匹配、信息提取，并进行进一步的加工处理，是一个非常常见的场景。
 
@@ -24,7 +24,7 @@ wjson 自定义了一个 JSON Pattern 语言，这个语言参考了：[rejson](
 
 先看一个简单的 wjson pattern 示例：
 
-```json
+```json5
 // JSON data: curl https://api.github.com/repos/wangzaixiang/wjson/commits?per_page=1
 {
 "sha": "650e56cd380c311909cd50408bbb4884f1f5d21e",
@@ -67,7 +67,7 @@ wjson 自定义了一个 JSON Pattern 语言，这个语言参考了：[rejson](
 }
 ```
 
-```json
+```jsonpattern
 // JSON Pattern
 {
   sha: @sha,
@@ -78,7 +78,7 @@ wjson 自定义了一个 JSON Pattern 语言，这个语言参考了：[rejson](
 ```
 对上述的示例 JSON，我们可以使用如下的 JSON pattern 来对其进行匹配，并完成相应字段的提取：
 
-```scala
+```scala 3
 val info = "...json string..." 
   info.parseJson match
       case rejson"""
@@ -106,19 +106,19 @@ wjson pattern 是 JSON 语法的一个扩展：
 
 1. 在 # 之后的内容，是注释，不会影响匹配
 2. 支持基本类型：null, boolean(true, false), number, string（'hello' or "hello"）
-   ```json
+   ```jsonpattern
         [ 1, 2.0, true, false, "hello", null ]
         'hello' # single quote string
     ```
 3. 支持复杂类型： array: `[ ... ]`, object `{ name: value }`。 在 object 中可以使用 类似于 JSON5 的语法，以增强可读性
-    ```json
-      [ 1, 2, 3] # array
+    ```jsonpattern
+      [ 1, 2, 3]                    # array
       { "name": "John", "age": 20 }
       { 'name': 'John', 'age': 20 }  # 与上一行等效
       { name: 'John', age: 20 }  # 与上一行等效
     ```
 4. 在所有可以是值的地方，可以使用 name@value 的语法，将value 的值绑定到name变量中返回。
-   ```json
+   ```jsonpattern
     a @ 1  # 匹配 1 且将值绑定到 a 变量
     b @ [ 1,2,3 ] # 匹配 [1,2,3] 且将值绑定到 b 变量
     c @ { name: "John", age: 20 }  # 匹配 { name: "John", age: 20 } 且将值绑定到 c 变量
@@ -126,19 +126,19 @@ wjson pattern 是 JSON 语法的一个扩展：
     { name: n@string, age: a@number }  # 匹配 { name: "John", age: 20 } 且将 "John" 绑定到 n 变量，20 绑定到 a 变量
    ```
 5. 类型匹配： "boolean", "string", "number", "integer", "array", "object" 匹配对应的JS类型
-    ```json 
+    ```jsonpattern
     # input: { name: "John", age: 20, leader: true }
     { name: name @ string, age: age @ number, leader: leader @ boolean }
     # 匹配成功，并将 name 绑定到 "John", age 绑定到 20, leader 绑定到 true
     ```
 6. "_" 匹配任意单值
-    ```json 
+    ```jsonpattern 
     [ 1, 2, _, 4]  #  match: [ 1,2,3,4], not match: [1,2,3,5,4]
     { name: _, age: 20 } # match { name: "John", age: 20 } but not { age: 20 }
     ```
 
 7. "_*" 在数组中，可以匹配 0 到多个数组成员，在对象中，可以匹配未被指定的所有其他字段。
-    ```json 
+    ```jsonpattern 
     { name: "John", other@_* }
     # match { name: "Johe", age:20 , leader:true} and others := { age: 20, leader: true}
     [ 1,2, o@_*, 10 ] 
@@ -146,23 +146,23 @@ wjson pattern 是 JSON 语法的一个扩展：
     ```
 
 8. 可以使用 tag"content"的方式扩展匹配规则，这个规则可以有用户来使用自定义的方式对值进行匹配。wjson中提供了 eval"expr" 和 r"expr" 两个参考实现，mvel使用MVEL表达式引擎来匹配一个JS值，r使用正则表达式来匹配值。
-    ```json 
+    ```jsonpattern
     { name: "John", age: eval"it >= 0 && it <= 100", email: r"\w+@(\w\.)*\w" }
     # match { name: "John", age: 20,  email: "john@qq.com" }
     ```
 9. 可以使用 a/b/c 的路径来匹配，等效于 { a : { b: {c : _ } } } 。
-    ```json 
+    ```jsonpattern 
     { a/b/c: "John" } 
    # match { a: { b:  {c : "John" } } }
     ```
 
 10. 可以使用 `/*` 来匹配数组中的所有成员，等效于 `[ _ ]` 。
-    ```json
+    ```jsonpattern
     { users/*/name: "John" }
     ```
     
 11. 可以使用 `a[ pattern ]` 或者 `a[n]` 的方式来对数组中的成员进行条件筛选(或选中第n个成员)。
-     ```json
+     ```jsonpattern
      # { users: [ { name: "John", age: 20, email: "john@qq.com" },
      #            { name: "rose“, ageL 25, email: "rose@qq.com" } ]  }
      { users[ {name:"John"} ]/email: @email } 

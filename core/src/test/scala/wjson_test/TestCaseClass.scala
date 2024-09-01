@@ -18,7 +18,7 @@ class TestCaseClass extends AnyFunSuite {
     assert( address.toJson == js )   // dont generate anonymous mapper here
     assert( address.toJson == js )   // dont generate anonymous mapper here
 
-    val address2 = js.convertTo[Address1]   // dont generate anonymous mapper here
+    val address2 = js.toBean[Address1]   // dont generate anonymous mapper here
     assert( address2 == address)
   }
 
@@ -27,12 +27,12 @@ class TestCaseClass extends AnyFunSuite {
     val user = User("John", 20, None)
     val jso =  json"""{"name":"John", "age":20 }"""
     assert( user.toJson == jso)
-    assert( jso.convertTo[User] == user)
+    assert( jso.toBean[User] == user)
 
     val user2 = User("John", 20, Some("John@qq.com"))
     val jso2 = json"""{"name":"John", "age":20, "email":"John@qq.com"}"""
     assert( user2.toJson == jso2)
-    assert( jso2.convertTo[User] == user2)
+    assert( jso2.toBean[User] == user2)
   }
 
   test("default field") {
@@ -40,9 +40,9 @@ class TestCaseClass extends AnyFunSuite {
     val user = User2("John", 20)
     val jso =  json"""{"name":"John", "age":20, "email": "xx@qq.com" }"""
     assert( user.toJson == jso)
-    assert( jso.convertTo[User2] == user)
+    assert( jso.toBean[User2] == user)
 
-    assert( json"""{"name":"John"}""".convertTo[User2] == User2("John", 18, Some("xx@qq.com")) )
+    assert( json"""{"name":"John"}""".toBean[User2] == User2("John", 18, Some("xx@qq.com")) )
     assert( User2("John", email=None).toJson == json"""{"name":"John", "age":18}""")
   }
 
@@ -52,14 +52,14 @@ class TestCaseClass extends AnyFunSuite {
 
     assert(user.toJson == json"""{"name":"John", "age":20, "address":{"city":"guangzhou", "state":"gd" } }""")
 
-    assert( user.toJson.convertTo[User3] == user)
+    assert( user.toJson.toBean[User3] == user)
   }
 
   test("Map[String, JsValue] fields") {
     case class User3(name: String, age:Int, address: JsObject, features: Map[String, JsValue])  derives JsValueMapper
 
     val jsonStr = json"""{"name":"John", "age":20, "address":{"state": "gd", "city":"guangzhou"}, "features":{"love":"read a book"}}"""
-    assert( jsonStr.convertTo[User3] ==
+    assert( jsonStr.toBean[User3] ==
       User3("John", 20, json"""{"state":"gd", "city":"guangzhou"}""".asObj, Map("love"->"read a book")) )
   }
 
@@ -71,7 +71,7 @@ class TestCaseClass extends AnyFunSuite {
 
 
 
-    assert( user4.toJson.convertTo[User4] == user4)
+    assert( user4.toJson.toBean[User4] == user4)
   }
 
   test("explict given value") {
@@ -84,7 +84,7 @@ class TestCaseClass extends AnyFunSuite {
     assert( address.toJson == js )  // dont generate anonymous mapper here
     assert( address.toJson == js )  // dont generate anonymous mapper here
 
-    val address2 = js.convertTo[Address2]  // dont generate anonymous mapper here
+    val address2 = js.toBean[Address2]  // dont generate anonymous mapper here
     assert( address2 == address)
   }
 
@@ -96,7 +96,7 @@ class TestCaseClass extends AnyFunSuite {
     assert( address.toJson == js )  // generate anonymous mapper here 1
     assert( address.toJson == js )  // generate anonymous mapper here 2
 
-    val address2 = js.convertTo[Address3]  // generate anonymous mapper here 3
+    val address2 = js.toBean[Address3]  // generate anonymous mapper here 3
     assert( address2 == address)
   }
 
@@ -108,7 +108,7 @@ class TestCaseClass extends AnyFunSuite {
     val user = User1("John", 30, Address1("Main St", "New York"))
     assert( user.toJson == JsValue.obj("name"->"John","age"->30,
       "address"->JsValue.obj("street"->"Main St","city"->"New York")))
-    assert( json"""{"name":"John","age":30,"address":{"street":"Main St","city":"New York"}}""".convertTo[User1] == user)
+    assert( json"""{"name":"John","age":30,"address":{"street":"Main St","city":"New York"}}""".toBean[User1] == user)
 
   }
 
@@ -122,7 +122,7 @@ class TestCaseClass extends AnyFunSuite {
 
     assert( js == JsValue.obj("name"->"Mary","age"->10,
       "owner"->JsValue.obj("name"->"John","age"->30)))
-    assert( js.convertTo[User2] == child)
+    assert( js.toBean[User2] == child)
 
   }
 

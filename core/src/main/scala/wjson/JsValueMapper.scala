@@ -17,7 +17,7 @@ extension [T: JsValueMapper](obj: T)
   inline def toJson: JsValue = summon[JsValueMapper[T]].toJson(obj)
 
 extension (js: JsValue)
-  inline def convertTo[T: JsValueMapper]: T = summon[JsValueMapper[T]].fromJson(js)
+  inline def toBean[T: JsValueMapper]: T = summon[JsValueMapper[T]].fromJson(js)
 
 /**
  * T can implicitly convert to JsValue

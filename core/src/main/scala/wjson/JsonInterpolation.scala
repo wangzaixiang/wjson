@@ -21,10 +21,8 @@ class JsonInterpolation(sc: StringContext) {
   protected def parse(input: ParserInput): JsValue =
     new JsonParser(input).parseJsValue()
 
-
   def apply(args: JsValue*): JsValue =
     parse( ParserInput(sc, args) )
-//    new JsonParser(ParserInput(sc, args) ).parseJsValue()
 
   def unapplySeq(input: JsValue): Option[Seq[JsValue]] = {
 
@@ -32,7 +30,6 @@ class JsonInterpolation(sc: StringContext) {
       .map(x => Placeholder(x) )
 
     val pi = ParserInput(sc, placeHolders)
-//    val pattern = new JsonParser(pi ).parseJsValue()
     val pattern = parse( pi )
 
     val results = collection.mutable.ArrayBuffer[JsValue]()
