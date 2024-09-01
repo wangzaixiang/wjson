@@ -1,7 +1,7 @@
 import sbt.Keys.{publishConfiguration, publishTo}
 
 ThisBuild / organization := "com.github.wangzaixiang"
-ThisBuild / version := "0.3.0-RC5"
+ThisBuild / version := "0.5.0-RC1"
 ThisBuild / scalaVersion := "3.3.3"
 ThisBuild / versionScheme := Some("early-semver")
 
@@ -41,7 +41,7 @@ ThisBuild / pomExtra := (
 lazy val wjsonRoot = (project in file("."))
   .aggregate(core)
   .aggregate(schema)
-  .aggregate(schemaGenerator)
+  .aggregate(tasty2schema)
   .aggregate(pattern)
   .settings(
     name := "wjson",
@@ -72,7 +72,6 @@ lazy val pattern = project.in(file("pattern"))
     )
   )
 
-// ADT support for JSON
 lazy val schema = project.in(file("schema"))
   .dependsOn(core)
   .settings(
@@ -82,12 +81,13 @@ lazy val schema = project.in(file("schema"))
     )
   )
 
-lazy val schemaGenerator = project.in(file("schema-generator"))
+lazy val tasty2schema = project.in(file("tasty2schema"))
   .dependsOn(core, schema)
   .settings(
-    name := "wjson-schema-generator",
+    name := "wjson-tasty2schema",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.2.15" % "test",
       "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value,
-    )
+    ),
+    mainClass := Some("wjson.schema.generator.tasty2schema"),
   )

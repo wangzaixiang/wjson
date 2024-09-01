@@ -7,13 +7,14 @@ import scala.tasty.inspector.{Inspector, Tasty, TastyInspector}
 
 object TastySchemaGenerator:
 
-    // TODO generate all top level ADTs
     class JsonSchemaInspector extends Inspector:
 
         var schema: Option[JsObject] = None
 
         override def inspect(using quotes: Quotes)(tastys: List[Tasty[quotes.type]]): Unit =
             import quotes.reflect.*
+
+            assert(tastys.length == 1, "Only one tasty file is supported, the first one is used as root.")
             val tasty = tastys(0)
             val tree = tasty.ast
 
@@ -30,15 +31,32 @@ object TastySchemaGenerator:
                             else if isCase && !isSynthetic then Some(symbol.typeRef)
                             else None
                         case _ => None
-            val definitions = collection.mutable.Set[TypeRepr]() ++ toplevelADTType
+            val definitions = toplevelADTType.map(_.asType).toList
             val generator = new wjson.schema.generator.JsonSchemaGenerator.Generator(quotes)
 
             schema = toplevelADTType(0).asType match
-                case '[t] => Some( generator.of[t] )
+                case '[t] => Some( generator.of[t](definitions) )
 
-    def generateSchema(tastyPath: String, schemaPath: String) =
+    @main
+    def tasty2schema(tastyPath: String, schemaPath: String): Unit =
         val inspector = new JsonSchemaInspector
         TastyInspector.inspectTastyFiles(List(tastyPath))(inspector)
-        inspector.schema.get.showPretty
+        inspector.schema match
+            case Some(schema) =>
+                val schema = inspector.schema.get.showPretty
+
+                val isConsole = schemaPath == "-"
+
+                val writer = if isConsole then new java.io.PrintWriter(Console.out)
+                             else new java.io.PrintWriter(schemaPath)
+                writer.write(schema)
+                writer.flush()
+
+                // when running inside sbt, don't close the console
+                if !isConsole then writer.close()
+            case None =>
+                println("tasty file parsed failed, maybe need classpath for dependencies")
+        
+
 
 

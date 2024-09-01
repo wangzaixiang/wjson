@@ -255,9 +255,13 @@ object JsonSchemaGenerator:
                     val head0 = Set(head)
                     recur(newRoot, remains diff head0, processed union  head0)
 
-        // generate a JSON schema for given type
-        def of[T: Type]: JsObject =
-            val definitions = mutable.Set[TypeRepr]()
+        private def typeReprOf(typ: Type[?]): TypeRepr = typ match
+            case '[t] => TypeRepr.of[t]
+
+        def of[T: Type]: JsObject = of[T](Nil)
+
+        def of[T: Type](types: List[Type[?]]): JsObject =
+            val definitions = mutable.Set[TypeRepr]() ++ types.map( typeReprOf )
             val root = JsValue.obj(
                 "$schema" -> "http://json-schema.org/draft-07/schema#",
                 "$id" -> TypeRepr.of[T].typeSymbol.fullName
